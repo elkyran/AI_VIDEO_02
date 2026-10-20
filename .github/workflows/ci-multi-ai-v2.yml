@@ -1,0 +1,115 @@
+name: Multi-AI V2 CI
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/multi_ai_v2_schemas/**'
+      - '.github/workflows/**'
+      - 'pyproject.toml'
+      - '.env.example'
+  push:
+    branches:
+      - 'feature/multi-ai-coordinator-v2'
+      - 'assistant/**'
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/multi_ai_v2_schemas/**'
+      - '.github/workflows/**'
+      - 'pyproject.toml'
+      - '.env.example'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: multi-ai-v2-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-regression:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install bounded test dependencies
+        shell: powershell
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -m pip install --disable-pip-version-check PyYAML==6.0.3
+
+      - name: Compile Python sources
+        shell: powershell
+        run: python -X utf8 -m compileall -q app scripts tests
+
+      - name: Validate workflow YAML
+        shell: powershell
+        run: |
+          python -X utf8 -c "from pathlib import Path; import yaml; files=list(Path('.github/workflows').glob('*.yml'))+list(Path('.github/workflows').glob('*.yaml')); assert files, 'no workflows found'; [yaml.safe_load(p.read_text(encoding='utf-8')) for p in files]; print(f'validated {len(files)} workflow files')"
+
+      - name: Validate PowerShell syntax
+        shell: powershell
+        run: |
+          $hadErrors = $false
+          foreach ($file in Get-ChildItem -Path scripts -Recurse -Filter *.ps1) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $file.FullName,
+              [ref]$tokens,
+              [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $hadErrors = $true
+              Write-Error ("PowerShell parse failure in {0}: {1}" -f $file.FullName, ($parseErrors -join '; '))
+            }
+          }
+          if ($hadErrors) { throw 'PowerShell parser found errors' }
+
+      - name: Verify checked-in schema files
+        shell: powershell
+        run: |
+          python -X utf8 scripts/export_multi_ai_v2_schemas.py
+          git diff --exit-code -- config/multi_ai_v2_schemas
+
+      - name: Run Multi-AI V2 unit tests
+        shell: powershell
+        run: python -X utf8 -m unittest -v tests.test_multi_ai_v2
+
+      - name: Run existing regression groups
+        shell: powershell
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'multi-ai-v2-regression'
+          python -X utf8 scripts/check_multi_ai.py --groups contracts queue adapters mai05 panel legacy --output $out --task-id CI-MULTI-AI-V2
+
+      - name: Scan Git export for obvious secrets and oversized files
+        shell: powershell
+        run: |
+          python -X utf8 scripts/check_git_export.py
+          git restore --worktree --staged -- reports/development/2026-10-20_GITHUB/export_check.json
+
+      - name: Verify clean, whitespace-safe checkout
+        shell: powershell
+        run: |
+          git diff --check
+          $dirty = git status --porcelain
+          if ($dirty) {
+            Write-Host $dirty
+            throw 'CI checks modified tracked or untracked repository files'
+          }
