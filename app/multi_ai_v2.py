@@ -21,6 +21,7 @@ from .registry import Registry, StudioError, canonical_json, content_hash, works
 from .v2_contracts import Brief, Task, Result, Review, TrustedVideoProbe
 from .v2_storage import ArtifactStore
 from .v2_video import VideoEvidence
+from .v2_acceptance import V2ResultGate
 
 STAGES = (
     ('SOURCE_INDEX', 'gemini_story'), ('CANON_BUILD', 'gemini_story'),
@@ -109,9 +110,11 @@ class RunCoordinator:
             video_evidence_root = local_root(video_evidence_root)
             if video_evidence_root.is_relative_to(self.root) or self.root.is_relative_to(video_evidence_root):
                 raise ValueError('Host video evidence must be separate from model-writable run storage')
-        self.queue = Coordinator(self.root, adapters=adapters)
         self.store = ArtifactStore(self.root)
         self.video_evidence = VideoEvidence(video_evidence_root, self.store, clock)
+        # Gate is ready before Coordinator recovery can inspect persisted completions.
+        self.result_gate = V2ResultGate(self.root, self.store, self.video_evidence)
+        self.queue = Coordinator(self.root, adapters=adapters, result_gate=self.result_gate)
         try:
             with Registry(self.root) as registry:
                 registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_runs (
@@ -284,56 +287,21 @@ class RunCoordinator:
 
     @run_locked
     def accept_result(self, value):
-        """Local host boundary; acceptance_key is the existing queue attempt ID.
-
-        Retain the queue's schema validation, immutable completion file and CAS.
-        The fingerprint lives in ai_tasks.result, never in a second result table.
-        """
+        """Host API: use exactly the same gate and queue CAS as automatic completion."""
         result = Result.model_validate(value)
-        fingerprint = digest(result.model_dump())
-        accepted = {'status': 'ACCEPTED', 'acceptance_key': result.acceptance_key,
-                    'result_sha256': fingerprint}
         with Registry(self.root) as registry, registry.transaction():
             row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (result.task_id,)).fetchone()
             if not row:
                 raise StudioError('TASK_NOT_FOUND', 'Result task is not registered')
             task = self.queue._task(row)
-            contract = Task.model_validate(task['context']['v2_contract'])
-            run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (result.run_id,)).fetchone()
-            if (not run or row['project_id'] != result.run_id or task['project_id'] != result.run_id or contract.run_id != result.run_id
-                    or contract.task_id != result.task_id):
-                raise StudioError('RESULT_RUN_MISMATCH', 'Task belongs to a different run')
-            if (result.input_version != contract.input_version or result.input_hashes != contract.input_hashes
-                    or task['input_versions'] != result.input_hashes or row['status'] == 'stale'):
-                raise StudioError('STALE_RESULT', 'Result inputs are no longer current')
-            if result.expected_output_schema != contract.expected_output_schema or result.expected_output_schema != task['expected_output']:
-                raise StudioError('SCHEMA_INVALID', 'Output schema differs from registered task')
-            if result.simulated != (run['mode'] == 'fake') or result.payload.get('simulated') is not result.simulated:
-                raise StudioError('ARTIFACT_INVALID', 'Result simulation provenance differs from run')
-            for artifact in result.artifacts:
-                self.store.verify(artifact)
-            previous = (task.get('result') or {}).get('v2_acceptance')
-            if previous:
-                if previous != accepted:
-                    raise StudioError('IDEMPOTENCY_CONFLICT', 'Accepted result is immutable')
-                stored = task['result']
-                if content_hash(workspace_path(self.root, stored['path'])) != stored['sha256']:
-                    raise StudioError('ARTIFACT_INVALID', 'Accepted completion changed')
-                return accepted
-            if row['status'] != 'running' or row['current_attempt'] != result.acceptance_key:
-                raise StudioError('RESULT_NOT_CURRENT', 'Result requires the current running attempt')
             attempt = registry.db.execute('SELECT * FROM ai_attempts WHERE id=?', (result.acceptance_key,)).fetchone()
-            if (not attempt or attempt['task_id'] != result.task_id or attempt['status'] != 'running'
-                    or json.loads(attempt['input_versions']) != result.input_hashes):
-                raise StudioError('STALE_RESULT', 'Attempt is no longer current')
-            self.queue._write_completion(registry, attempt, result.payload)
-            if not self.queue._accept(registry, result.acceptance_key):
+            if not attempt:
+                raise StudioError('RESULT_NOT_CURRENT', 'Unknown acceptance attempt')
+            if (task.get('result') or {}).get('v2_acceptance'):
+                return self.result_gate(registry, row, task, attempt, result.payload, result.model_dump())['result_metadata']['v2_acceptance']
+            if not self.queue._complete(registry, attempt, result.payload, result.model_dump()):
                 raise StudioError('RESULT_NOT_CURRENT', 'Queue rejected result CAS')
-            stored = json.loads(registry.db.execute('SELECT result FROM ai_tasks WHERE id=?', (result.task_id,)).fetchone()[0])
-            stored['v2_acceptance'] = accepted
-            registry.db.execute('UPDATE ai_tasks SET result=? WHERE id=? AND current_attempt=? AND status=\'completed\'',
-                                (canonical_json(stored), result.task_id, result.acceptance_key))
-        return accepted
+            return json.loads(registry.db.execute('SELECT result FROM ai_tasks WHERE id=?', (result.task_id,)).fetchone()[0])['v2_acceptance']
 
     def record_video_probe(self, evidence):
         """Trusted host API only; no model-output path calls this method."""
@@ -349,11 +317,12 @@ class RunCoordinator:
                                 (evidence_id, reason))
 
     def accept_review(self, value, *, evidence_id=None, video_artifact=None, **binding):
+        """Read-only compatibility helper. Never accepts a result or completes a task."""
         review = Review.model_validate(value)
-        if review.review_mode == 'full_video':
+        if review.subject_type == 'render' and (review.evidence_mode == 'video_audio' or review.verdict == 'ready_for_review'):
             with Registry(self.root) as registry:
                 self.video_evidence.accept(registry, evidence_id, binding, video_artifact,
-                                           review.materials_actually_reviewed)
+                                           [video_artifact.path] if hasattr(video_artifact, 'path') else [])
         return review
 
     @run_locked
