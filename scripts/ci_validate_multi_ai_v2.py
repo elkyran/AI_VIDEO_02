@@ -22,6 +22,7 @@ from app.v2_contracts import Artifact, Brief, Result, Review, Task
 
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 SETUP_PYTHON_SHA = "ece7cb06caefa5fff74198d8649806c4678c61a1"
+UPLOAD_ARTIFACT_SHA = "ea165f8d65b6e75b540449e92b4886f43607fa02"
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -51,6 +52,12 @@ def steps_for(workflow: dict, job: str) -> list[dict]:
 def action_step(steps: list[dict], prefix: str) -> dict:
     matches = [step for step in steps if isinstance(step, dict) and str(step.get("uses", "")).startswith(prefix)]
     require(len(matches) == 1, f"Expected exactly one {prefix} step")
+    return matches[0]
+
+
+def named_step(steps: list[dict], name: str) -> dict:
+    matches = [step for step in steps if isinstance(step, dict) and step.get("name") == name]
+    require(len(matches) == 1, f"Expected exactly one step named {name}")
     return matches[0]
 
 
@@ -107,6 +114,16 @@ def validate_ci_workflow() -> None:
     setup_ref = setup["uses"].split("@", 1)[1]
     require(setup_ref == SETUP_PYTHON_SHA and HEX40.fullmatch(setup_ref) is not None,
             "setup-python action must remain commit-pinned")
+    upload = action_step(steps, "actions/upload-artifact@")
+    upload_ref = upload["uses"].split("@", 1)[1]
+    require(upload_ref == UPLOAD_ARTIFACT_SHA and HEX40.fullmatch(upload_ref) is not None,
+            "upload-artifact action must remain commit-pinned")
+    require(upload.get("if") == "${{ always() }}", "CI evidence must be retained even when regression tests fail")
+    clean = named_step(steps, "Verify clean, whitespace-safe checkout")
+    require(clean.get("if") == "${{ always() }}", "Checkout cleanliness must be checked even after failures")
+    install = named_step(steps, "Install bounded test dependencies")
+    require("jsonschema==4.26.0" in str(install.get("run", "")),
+            "CI must install the pinned jsonschema dependency used by regression tests")
 
 
 def generated_schemas() -> dict[str, dict]:
@@ -133,7 +150,6 @@ def validate_schema_drift() -> None:
             f"Schema file set drift: checked-in={sorted(checked_in)} generated={sorted(generated)}")
     mismatches = [name for name in sorted(generated) if generated[name] != checked_in[name]]
     require(not mismatches, "Schema drift detected: " + ", ".join(mismatches))
-    # Canonical temporary generation proves the check does not rewrite repository files.
     with tempfile.TemporaryDirectory(prefix="multi_ai_v2_schema_ci_") as folder:
         destination = Path(folder)
         for name, value in generated.items():
