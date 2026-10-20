@@ -5,6 +5,7 @@ from typing import Literal
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .contracts import Identifier, Sha256, relative_path
+from .editorial import Review  # Compatibility alias: the exact CLI model/schema.
 
 
 class Contract(BaseModel):
@@ -95,19 +96,6 @@ def issue_owner(category):
     return {'canon': 'gemini_story', 'causality': 'gemini_story', 'text': 'gemini_story',
             'visual': 'gemini_visual', 'pacing': 'gemini_visual', 'mlt': 'codex',
             'file': 'python', 'hash': 'python'}[category]
-
-
-class Review(Contract):
-    review_mode: Literal['full_video', 'frames_and_timeline', 'partial']
-    verdict: Literal['pass', 'fix_required', 'blocked']
-    materials_actually_reviewed: list[str]
-    issues: list[Issue]
-
-    @model_validator(mode='after')
-    def evidence(self):
-        if self.verdict == 'pass' and (self.issues or not self.materials_actually_reviewed):
-            raise ValueError('Pass requires reviewed materials and no unresolved issues')
-        return self
 
 
 class TrustedVideoProbe(Contract):

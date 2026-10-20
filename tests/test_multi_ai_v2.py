@@ -268,6 +268,10 @@ class V2Tests(unittest.TestCase):
 
     def test_schema_drift_without_rewriting_sources(self):
         from app.editorial import Scene, EditPlan
+        from app.editorial import Review as CanonicalReview
+        from app.ai_cli_runtime import output_schema
+        self.assertIs(Review, CanonicalReview)
+        self.assertEqual(Review.model_json_schema(), output_schema('review'))
         repo=Path(__file__).resolve().parents[1]
         checked=repo/'config/multi_ai_v2_schemas'
         before={p.name:p.read_bytes() for p in checked.glob('*.json')}
