@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import closing
+from functools import wraps
 import hashlib
 import json
 import os
@@ -42,6 +43,15 @@ EXIT_CODES = {'SUCCEEDED': 0, 'SIMULATION_SUCCEEDED': 0, 'IN_PROGRESS': 2,
               'WAITING_AUTH': 3, 'WAITING_QUOTA': 4, 'BLOCKED_UNSUPPORTED': 5,
               'FAILED_RETRYABLE': 6, 'FAILED_FINAL': 7, 'STALE': 8, 'ERROR': 9,
               'CANCELLED': 10}
+
+
+def run_locked(method):
+    """Keep ownership check and global-queue action atomic under the existing lock."""
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        with self.queue._lock:
+            return method(self, *args, **kwargs)
+    return call
 
 
 def digest(value):
@@ -116,6 +126,7 @@ class RunCoordinator:
             self.queue.close()
             raise
 
+    @run_locked
     def create(self, brief, key):
         brief = Brief.model_validate(brief)
         if brief.production_mode == 'fake' and any(not getattr(a, 'is_simulated', False) for a in self.queue.adapters.values()):
@@ -226,6 +237,7 @@ class RunCoordinator:
         registry.db.execute('UPDATE ai_v2_control SET active_run_id=? WHERE singleton=1', (active,))
         return active
 
+    @run_locked
     def status(self, run_id):
         with Registry(self.root) as registry, registry.transaction():
             result = self._state(registry, run_id)
@@ -240,6 +252,7 @@ class RunCoordinator:
                 raise StudioError('RUN_NOT_ACTIVE', 'This run cannot control another run\'s queue')
             return state
 
+    @run_locked
     def advance(self, run_id, ticks=1):
         if not 1 <= ticks <= 100: raise ValueError('ticks must be 1..100')
         initial = self._require_owner(run_id)
@@ -249,11 +262,13 @@ class RunCoordinator:
         for _ in range(ticks): self.queue.tick()
         return self.status(run_id)
 
+    @run_locked
     def pause(self, run_id):
         state = self._require_owner(run_id)
         if state['status'] not in TERMINAL: self.queue.pause()
         return self.status(run_id)
 
+    @run_locked
     def stop(self, run_id):
         state = self._require_owner(run_id)
         if state['status'] not in TERMINAL: self.queue.stop()
@@ -278,6 +293,7 @@ class RunCoordinator:
                 raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Full video requires matching trusted control-video evidence')
         return review
 
+    @run_locked
     def manifest(self, run_id):
         state = self.status(run_id)
         return self.store.put_json(run_id, state, simulated=state['simulated']).model_dump()
