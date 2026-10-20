@@ -1,4 +1,5 @@
 name: AI_VIDEO_02 request
+
 on:
   workflow_dispatch:
     inputs:
@@ -18,41 +19,69 @@ on:
       source_profile:
         default: owner_supplied
         type: string
-      production_mode:
-        type: choice
-        options: [fake, production]
-        default: fake
       auto_fix_cycles:
         default: '1'
         type: string
       output_profile:
         default: ruslan-local-narration
         type: string
+
 permissions:
   contents: read
+
 concurrency:
   group: ai-video-02-local-production
   cancel-in-progress: false
   queue: max
+
 jobs:
   request:
-    if: github.event.repository.private == true
+    # A credentialed self-hosted runner must never execute code selected from a
+    # feature branch. Production remains disabled; omitted production_mode uses
+    # the Brief contract's safe default: fake.
+    if: github.event.repository.private == true && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, Windows, ai-video-02]
     timeout-minutes: 30
     env:
       VIDEO_REQUEST_JSON: ${{ toJSON(inputs) }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify trusted workflow source
+        shell: powershell
+        run: |
+          if ('${{ github.ref }}' -ne 'refs/heads/main') {
+            throw 'Self-hosted execution is allowed only from refs/heads/main'
+          }
+
+      - name: Checkout exact trusted revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          clean: false
+          clean: true
+          fetch-depth: 1
           persist-credentials: false
-      - name: Validate local environment
+          ref: ${{ github.sha }}
+
+      - name: Verify clean exact checkout
+        shell: powershell
+        run: |
+          $head = (git rev-parse HEAD).Trim()
+          if ($head -ne '${{ github.sha }}') {
+            throw "Unexpected checkout SHA: $head"
+          }
+          $dirty = git status --porcelain
+          if ($dirty) {
+            throw "Runner checkout is not clean:`n$dirty"
+          }
+
+      - name: Validate local fake environment
         shell: powershell
         run: ./scripts/healthcheck.ps1
-      - name: Submit and advance bounded run
+
+      - name: Submit and advance bounded fake run
         shell: powershell
         run: |
           if (-not $env:STUDIO_PYTHON) { throw 'STUDIO_PYTHON is required on the runner' }
           & $env:STUDIO_PYTHON -X utf8 scripts/dispatch_multi_ai_v2.py
           exit $LASTEXITCODE
-      # No credential files, SQLite, media, arbitrary task folders or raw client logs uploaded.
+
+      # No credential files, SQLite databases, media, arbitrary task folders,
+      # or raw client logs are uploaded by this workflow.
