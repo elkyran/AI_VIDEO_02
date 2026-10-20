@@ -12,6 +12,7 @@ import wave
 
 from app.registry import StudioError, content_hash
 from app.speech_review import review_build_speech
+from scripts.transcribe_audio import validate_runtime_options
 
 
 class SpeechCacheTests(unittest.TestCase):
@@ -51,9 +52,10 @@ class SpeechCacheTests(unittest.TestCase):
                 for path in (subtitle,raw):path.write_text('1\n00:00:00,000 --> 00:00:01,500\nРокси рядом.\n',encoding='utf-8')
                 rows=[{'block_id':entry['block_id'],'path':entry['path'],'text':entry['text'],'start_seconds':entry['start_seconds'],
                        'expected_negations':[],'recognized_negations':[],'wer':.25,'warnings':['critical_terms_mismatch']} for entry in data['segments']]
+                execution=validate_runtime_options(self.config.get('asr_device','cpu'),
+                    self.config.get('asr_compute_type','int8'),self.config.get('asr_dll_directories',[]))
                 report.write_text(json.dumps({'model':self.config['asr_model'],'status':'automated_warning','segments':rows,
-                    'device':self.config.get('asr_device','cpu'),'compute_type':self.config.get('asr_compute_type','int8'),
-                    'dll_directories':self.config.get('asr_dll_directories',[]),
+                    **execution,
                     'subtitles':{'path':str(subtitle)},'raw_subtitles':{'path':str(raw)}}),encoding='utf-8')
         self.ctx=Context()
 

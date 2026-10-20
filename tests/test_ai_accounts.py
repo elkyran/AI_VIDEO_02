@@ -108,7 +108,7 @@ class AccountsTests(unittest.TestCase):
         env = isolated_environment("gemini", self.root / "gemini-2", source)
         self.assertEqual(source, before)
         self.assertEqual(set(env), {"PATH", "SystemRoot", "HOME", "USERPROFILE", "GEMINI_CLI_HOME", "GEMINI_TELEMETRY_ENABLED"})
-        self.assertEqual(env["GEMINI_CLI_HOME"], str(self.root / "gemini-2"))
+        self.assertEqual(Path(env["GEMINI_CLI_HOME"]).resolve(), (self.root / "gemini-2").resolve())
 
     def test_missing_client_does_not_launch_and_wizard_can_skip_resume(self):
         self.manager.update_clients({})
