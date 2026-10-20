@@ -17,7 +17,7 @@ import time
 from .ai_adapters import sanitize
 from .multi_ai import Coordinator
 from .registry import Registry, StudioError, canonical_json, workspace_path, write_generated_json
-from .v2_contracts import Brief, Task
+from .v2_contracts import Brief, Task, Review, TrustedVideoProbe
 from .v2_storage import ArtifactStore
 
 STAGES = (
@@ -35,6 +35,8 @@ BLOCKERS = ['gemini_story: installed authenticated agy CLI and JSON smoke requir
             'production_import: approved Scene-to-existing-script bridge required',
             'runner: registration and live workflow_dispatch required',
             'drive: configured destination and cloud delivery verification required']
+TERMINAL = frozenset({'SUCCEEDED', 'SIMULATION_SUCCEEDED', 'FAILED_FINAL', 'STALE',
+                      'BLOCKED_UNSUPPORTED', 'CANCELLED'})
 
 
 def digest(value):
@@ -83,6 +85,13 @@ class RunCoordinator:
                 registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_runs (
                     run_id TEXT PRIMARY KEY, request_hash TEXT NOT NULL,
                     brief TEXT NOT NULL, mode TEXT NOT NULL, created REAL NOT NULL)''')
+                registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_control (
+                    singleton INTEGER PRIMARY KEY CHECK(singleton=1), active_run_id TEXT)''')
+                registry.db.execute('INSERT OR IGNORE INTO ai_v2_control VALUES(1,NULL)')
+                registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_capabilities (
+                    capability_key TEXT PRIMARY KEY, evidence TEXT NOT NULL)''')
+                with registry.transaction():
+                    self._refresh_active(registry)
             self.queue.set_rotation(False)
             self.queue.set_role('writer', provider='gemini')
             self.queue.set_role('director', provider='codex')
@@ -103,11 +112,22 @@ class RunCoordinator:
         clean = sanitize(brief.model_dump())
         request_hash = digest(clean)
         with Registry(self.root) as registry, registry.transaction():
+            active = self._refresh_active(registry)
             prior = registry.db.execute('SELECT request_hash FROM ai_v2_runs WHERE run_id=?', (run_id,)).fetchone()
             if prior and prior[0] != request_hash:
                 raise StudioError('IDEMPOTENCY_CONFLICT', 'Run key already refers to another brief')
+            if active and active != run_id and not prior:
+                raise StudioError('ACTIVE_RUN_EXISTS', f'Unfinished run already owns this root: {active}')
+            if prior:
+                # A terminal historical run is readable/idempotent but never reconciled
+                # into the queue controlled by a newer run.
+                existing = self._state(registry, run_id)
+                if existing['status'] in TERMINAL:
+                    return existing
             registry.db.execute('INSERT OR IGNORE INTO ai_v2_runs VALUES(?,?,?,?,?)',
                                 (run_id, request_hash, canonical_json(clean), brief.production_mode, time.time()))
+            if not active:
+                registry.db.execute('UPDATE ai_v2_control SET active_run_id=? WHERE singleton=1', (run_id,))
         if brief.production_mode == 'fake':
             # Reconcile an interrupted creation deterministically; enqueue itself is idempotent.
             previous = []
@@ -151,33 +171,95 @@ class RunCoordinator:
                 p.parent.mkdir(parents=True, exist_ok=True)
                 with p.open('x', encoding='utf-8') as stream: stream.write(value)
 
-    def status(self, run_id):
-        with Registry(self.root) as registry:
-            row = registry.db.execute('SELECT * FROM ai_v2_runs WHERE run_id=?', (run_id,)).fetchone()
-        if not row: raise ValueError('Unknown run')
-        all_tasks = self.queue.snapshot()['tasks']
-        tasks = {t['task_id']: t for t in all_tasks if t['project_id'] == run_id}
+    def _state(self, registry, run_id):
+        row = registry.db.execute('SELECT * FROM ai_v2_runs WHERE run_id=?', (run_id,)).fetchone()
+        if not row: raise StudioError('RUN_NOT_FOUND', 'Unknown run')
+        tasks = {t['id']: self.queue._task(t) for t in registry.db.execute(
+            'SELECT * FROM ai_tasks WHERE project_id=? ORDER BY created,id', (run_id,))}
         normalized = [{'task_id': t['task_id'], 'status': task_status(t, tasks),
                        'attempt': t['attempt'], 'error': t.get('error'), 'simulated': True,
                        'result_ref': t['result']['path'] if t.get('result') else None} for t in tasks.values()]
         done = len(tasks) == len(STAGES) and all(t['status'] == 'SUCCEEDED' for t in normalized)
         failure = any(t['status'] in {'FAILED_FINAL', 'STALE'} for t in normalized)
-        waiting = any(t['status'] in {'WAITING_QUOTA', 'WAITING_AUTH'} for t in normalized)
         return {'run_id': run_id, 'mode': row['mode'], 'status': 'SIMULATION_SUCCEEDED' if done else
                 'BLOCKED_UNSUPPORTED' if row['mode'] == 'production' else 'FAILED_FINAL' if failure else
-                'WAITING_ACCESS' if waiting else 'IN_PROGRESS',
+                'WAITING_QUOTA' if any(t['status']=='WAITING_QUOTA' for t in normalized) else
+                'WAITING_AUTH' if any(t['status']=='WAITING_AUTH' for t in normalized) else
+                'FAILED_RETRYABLE' if any(t['status']=='FAILED_RETRYABLE' for t in normalized) else 'IN_PROGRESS',
                 'simulated': row['mode'] == 'fake', 'ready_for_user': False,
                 'tasks': normalized, 'blockers': BLOCKERS if row['mode'] == 'production' else [],
                 'model_requests': 0, 'tokens': None, 'video_qa': 'NOT_RUN', 'editorial_qa': 'NOT_RUN'}
 
+    def _refresh_active(self, registry):
+        """Persist ownership and retire terminal queue tails, without another scheduler."""
+        unfinished = []
+        for row in registry.db.execute('SELECT run_id FROM ai_v2_runs ORDER BY created').fetchall():
+            run_id = row['run_id']
+            live = registry.db.execute("SELECT 1 FROM ai_attempts a JOIN ai_tasks t ON t.id=a.task_id "
+                "WHERE t.project_id=? AND a.status IN ('running','stopping') LIMIT 1", (run_id,)).fetchone()
+            if self._state(registry, run_id)['status'] not in TERMINAL or live:
+                unfinished.append(run_id)
+            else:
+                # Global legacy resume must never reactivate a retired run's tails.
+                registry.db.execute("UPDATE ai_tasks SET status='blocked' WHERE project_id=? "
+                    "AND status IN ('pending','waiting_access','interrupted')", (run_id,))
+        if len(unfinished) > 1:
+            raise StudioError('ACTIVE_RUN_CONFLICT', 'Multiple unfinished historical v2 runs require explicit reconciliation')
+        active = unfinished[0] if unfinished else None
+        registry.db.execute('UPDATE ai_v2_control SET active_run_id=? WHERE singleton=1', (active,))
+        return active
+
+    def status(self, run_id):
+        with Registry(self.root) as registry, registry.transaction():
+            result = self._state(registry, run_id)
+            self._refresh_active(registry)
+            return result
+
+    def _require_owner(self, run_id):
+        with Registry(self.root) as registry, registry.transaction():
+            state = self._state(registry, run_id)
+            active = self._refresh_active(registry)
+            if active and active != run_id:
+                raise StudioError('RUN_NOT_ACTIVE', 'This run cannot control another run\'s queue')
+            return state
+
     def advance(self, run_id, ticks=1):
         if not 1 <= ticks <= 100: raise ValueError('ticks must be 1..100')
-        initial = self.status(run_id)
-        if initial['mode'] == 'production': return initial
+        initial = self._require_owner(run_id)
+        if initial['status'] in TERMINAL: return initial
         # Explicit resume is the only restart path; no automatic quota rotation.
         self.queue.resume()
         for _ in range(ticks): self.queue.tick()
         return self.status(run_id)
+
+    def pause(self, run_id):
+        state = self._require_owner(run_id)
+        if state['status'] not in TERMINAL: self.queue.pause()
+        return self.status(run_id)
+
+    def stop(self, run_id):
+        state = self._require_owner(run_id)
+        if state['status'] not in TERMINAL: self.queue.stop()
+        return self.status(run_id)
+
+    def record_video_probe(self, evidence):
+        """Trusted host API only; no model-output path calls this method."""
+        probe = TrustedVideoProbe.model_validate(evidence)
+        key = digest([probe.provider, probe.client_version, probe.model, probe.control_video_hash])
+        with Registry(self.root) as registry, registry.transaction():
+            registry.db.execute('INSERT OR REPLACE INTO ai_v2_capabilities VALUES(?,?)',
+                                (key, canonical_json(probe.model_dump())))
+        return key
+
+    def accept_review(self, value, *, provider, client_version, model, control_video_hash):
+        review = Review.model_validate(value)
+        if review.review_mode == 'full_video':
+            key = digest([provider, client_version, model, control_video_hash])
+            with Registry(self.root) as registry:
+                row = registry.db.execute('SELECT evidence FROM ai_v2_capabilities WHERE capability_key=?', (key,)).fetchone()
+            if not row or TrustedVideoProbe.model_validate_json(row[0]).status != 'VERIFIED':
+                raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Full video requires matching trusted control-video evidence')
+        return review
 
     def manifest(self, run_id):
         state = self.status(run_id)
@@ -206,8 +288,7 @@ def main(argv=None):
                 result = coordinator.status(args.run_id)
                 if args.command == 'advance': result = coordinator.advance(args.run_id, args.ticks)
                 elif args.command in {'pause', 'stop'}:
-                    getattr(coordinator.queue, args.command)()
-                    result = coordinator.status(args.run_id)
+                    result = getattr(coordinator, args.command)(args.run_id)
                 elif args.command == 'manifest': result = coordinator.manifest(args.run_id)
         print(json.dumps(sanitize(result), ensure_ascii=False, allow_nan=False))
         return 2 if result.get('status') == 'BLOCKED_UNSUPPORTED' else 0

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Literal
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .contracts import Identifier, Sha256, relative_path
 
@@ -88,13 +89,27 @@ class Review(Contract):
     review_mode: Literal['full_video', 'frames_and_timeline', 'partial']
     verdict: Literal['pass', 'fix_required', 'blocked']
     materials_actually_reviewed: list[str]
-    full_video_probe_verified: bool = False
     issues: list[Issue]
 
     @model_validator(mode='after')
     def evidence(self):
-        if self.review_mode == 'full_video' and not self.full_video_probe_verified:
-            raise ValueError('Full video review requires a verified control-video probe')
         if self.verdict == 'pass' and (self.issues or not self.materials_actually_reviewed):
             raise ValueError('Pass requires reviewed materials and no unresolved issues')
+        return self
+
+
+class TrustedVideoProbe(Contract):
+    """Host-authored capability evidence, never accepted as part of a model Review."""
+    provider: Identifier
+    client_version: str = Field(min_length=1, max_length=160)
+    model: str = Field(min_length=1, max_length=160)
+    control_video_hash: Sha256
+    result_hash: Sha256
+    checked_at: str
+    status: Literal['VERIFIED', 'UNVERIFIED', 'BLOCKED']
+
+    @model_validator(mode='after')
+    def timestamp(self):
+        if datetime.fromisoformat(self.checked_at.replace('Z', '+00:00')).tzinfo is None:
+            raise ValueError('Probe checked_at requires a timezone')
         return self

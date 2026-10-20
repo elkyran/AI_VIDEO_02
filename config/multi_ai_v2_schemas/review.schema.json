@@ -106,11 +106,6 @@
       "title": "Materials Actually Reviewed",
       "type": "array"
     },
-    "full_video_probe_verified": {
-      "default": false,
-      "title": "Full Video Probe Verified",
-      "type": "boolean"
-    },
     "issues": {
       "items": {
         "$ref": "#/$defs/Issue"
