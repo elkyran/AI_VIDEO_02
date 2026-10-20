@@ -88,5 +88,5 @@ class VideoEvidence:
             self.store.verify(artifact)
             if artifact.path not in materials:
                 raise ValueError('Video artifact was not actually reviewed')
-        except (ValueError, TypeError, KeyError, OSError) as exc:
+        except (ValueError, TypeError, KeyError, OSError, StudioError) as exc:
             raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Full video requires current matching host evidence and video material') from exc

@@ -105,13 +105,12 @@ class RunCoordinator:
         self.root = local_root(root)
         if legacy_queue_conflict(self.root):
             raise ValueError('Existing legacy/production queue must not be repurposed as a v2 workspace')
-        self.queue = Coordinator(self.root, adapters=adapters)
-        self.store = ArtifactStore(self.root)
         if video_evidence_root is not None:
             video_evidence_root = local_root(video_evidence_root)
-            if video_evidence_root == self.root or video_evidence_root.is_relative_to(self.root):
-                self.queue.close()
+            if video_evidence_root.is_relative_to(self.root) or self.root.is_relative_to(video_evidence_root):
                 raise ValueError('Host video evidence must be separate from model-writable run storage')
+        self.queue = Coordinator(self.root, adapters=adapters)
+        self.store = ArtifactStore(self.root)
         self.video_evidence = VideoEvidence(video_evidence_root, self.store, clock)
         try:
             with Registry(self.root) as registry:
@@ -301,7 +300,7 @@ class RunCoordinator:
             task = self.queue._task(row)
             contract = Task.model_validate(task['context']['v2_contract'])
             run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (result.run_id,)).fetchone()
-            if (not run or task['project_id'] != result.run_id or contract.run_id != result.run_id
+            if (not run or row['project_id'] != result.run_id or task['project_id'] != result.run_id or contract.run_id != result.run_id
                     or contract.task_id != result.task_id):
                 raise StudioError('RESULT_RUN_MISMATCH', 'Task belongs to a different run')
             if (result.input_version != contract.input_version or result.input_hashes != contract.input_hashes

@@ -105,6 +105,20 @@ class SpeechCacheTests(unittest.TestCase):
             self.assertFalse(result['cache_hit']);self.assertNotEqual(result['cache_key'],previous)
             previous=result['cache_key']
 
+    def test_dll_alias_and_canonical_path_have_identical_execution_evidence(self):
+        (self.root/'alias').mkdir()
+        alias=self.root/'alias'/'..'
+        self.ctx.config={**self.ctx.config,'asr_dll_directories':[str(alias)]}
+        first=self.run_review()
+        evidence=json.loads(first['report'].read_text())
+        self.assertEqual(evidence['dll_directories'],[str(self.root.resolve())])
+        self.ctx.config['asr_dll_directories']=[str(self.root.resolve())]
+        second=self.run_review()
+        self.assertTrue(second['cache_hit'])
+        self.assertEqual(first['cache_key'],second['cache_key'])
+        self.assertEqual(json.loads(second['report'].read_text()),evidence)
+        self.assertEqual(self.ctx.calls,1)
+
     def test_changed_wav_or_audio_manifest_cannot_reuse_old_evidence(self):
         self.run_review()
         with (self.root/'voice.wav').open('ab') as stream:stream.write(b'changed')
