@@ -34,27 +34,22 @@ ChatGPT владеет только следующими файлами в эт�
 
 ## Дорожка B — Codex / core correctness
 
-Codex продолжает только функциональный review-fix пакет:
+Codex владеет функциональными Python-границами Multi-AI v2, связанными тестами и
+документацией, кроме файлов дорожки A.
 
-- `app/multi_ai_v2.py`;
-- `app/v2_contracts.py`;
-- `app/v2_storage.py`;
-- `scripts/check_multi_ai_v2.py`;
-- `scripts/probe_multi_ai_v2.py`;
-- `scripts/healthcheck_multi_ai_v2.py`;
-- `scripts/export_multi_ai_v2_schemas.py`;
-- связанные unit tests и документация, кроме файлов дорожки A.
+Review Fix Pack 2 отправлен в `feature/multi-ai-coordinator-v2`; ожидаемый HEAD:
+`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`.
 
-Текущий следующий пакет Codex:
+Он включает:
 
-1. Исправить четыре подтверждённые Windows portability regressions без skip и без ослабления assertions.
-2. Добавить trusted Result acceptance: `task_id` обязан принадлежать `run_id` в Registry.
-3. Сделать TrustedVideoProbe immutable/fresh и привязать его к реальному trusted probe receipt.
-4. Согласовать `scripts/dispatch_multi_ai_v2.py` с exit-code mapping v2.
-5. Обновить устаревший `docs/VIDEO_REVIEW_PROTOCOL.md` после финализации контракта.
+1. Исправление четырёх Windows portability regressions без ослабления assertions.
+2. Trusted Result acceptance с проверкой task/run/input/schema/provenance/artifact/CAS.
+3. Immutable, expiring и revocable TrustedVideoProbe с host-owned receipt.
+4. Единые exit codes для remote dispatcher.
+5. Обновлённый `docs/VIDEO_REVIEW_PROTOCOL.md`.
 
-Codex не редактирует файлы дорожки A. Если изменение там необходимо, оно
-описывается в отчёте как предложение, но не применяется.
+До результата merge-state CI Codex не начинает новый пакет и не изменяет файлы
+дорожки A.
 
 ## Правила синхронизации
 
@@ -71,9 +66,16 @@ Codex не редактирует файлы дорожки A. Если изме
 
 ## Текущий review gate
 
-Core Fix Pack дал 28 зелёных новых v2 tests. Независимый clean merge-state CI
-нашёл четыре старые Windows portability regression; поэтому PR остаётся draft,
-merge запрещён, а подключение providers/runner/production не начинается.
+Review Fix Pack 2 опубликован пятью последовательными коммитами поверх
+`89cbc7ef3b9c35de34b8c99c9ea1ba353630ee78`. Draft PR №1 должен проверить новый
+временный merge commit с базой `68c1d2a3953bdfabd509e71ec004d1cb50cafc30`.
+
+Пока этот merge-state CI не завершён успешно:
+
+- PR остаётся draft;
+- merge запрещён;
+- новый функциональный пакет Codex не начинается;
+- provider, runner и production остаются выключенными.
 
 ## Текущие запреты
 
