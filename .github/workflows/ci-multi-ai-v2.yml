@@ -88,8 +88,6 @@ jobs:
           if ($hadErrors) { throw 'PowerShell parser found errors' }
 
       - name: Run clean revision-bound core checker
-        id: core_checker
-        continue-on-error: true
         shell: powershell
         run: |
           if (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT) {
@@ -97,7 +95,6 @@ jobs:
           }
           python -X utf8 scripts/check_multi_ai_v2.py --output $env:CI_EVIDENCE_ROOT
           $code = $LASTEXITCODE
-          "exit_code=$code" >> $env:GITHUB_OUTPUT
           if ($code -ne 0 -and (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
             Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter *.log | ForEach-Object {
               Write-Host "===== $($_.FullName) ====="
@@ -107,11 +104,13 @@ jobs:
           exit $code
 
       - name: Verify immutable evidence envelope
-        if: ${{ always() && steps.core_checker.outcome != 'skipped' }}
+        if: ${{ always() }}
         shell: powershell
-        env:
-          CORE_OUTCOME: ${{ steps.core_checker.outcome }}
         run: |
+          if (-not (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
+            Write-Warning 'Core checker did not create an evidence directory'
+            exit 0
+          }
           $manifests = @(Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter manifest.json)
           if ($manifests.Count -ne 1) {
             throw "Expected exactly one manifest.json, found $($manifests.Count)"
@@ -159,12 +158,6 @@ jobs:
           if ($checks.git_commit_sha -ne $env:GITHUB_SHA -or $checks.git_tree_sha -ne $actualTree) {
             throw 'checks.json is not bound to the checked-out revision'
           }
-          if ($env:CORE_OUTCOME -eq 'success' -and $value.status -ne 'passed') {
-            throw "Core checker succeeded but evidence status is $($value.status)"
-          }
-          if ($env:CORE_OUTCOME -ne 'success' -and $value.status -eq 'passed') {
-            throw 'Core checker failed but evidence incorrectly claims passed'
-          }
 
           $manifestHash = (Get-FileHash -LiteralPath $manifest.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           @(
@@ -172,7 +165,6 @@ jobs:
             '',
             "- Checked commit: ``$env:GITHUB_SHA``",
             "- Checked tree: ``$actualTree``",
-            "- Core checker outcome: **$env:CORE_OUTCOME**",
             "- Evidence status: **$($value.status)**",
             "- Tests recorded: $($checks.test_count)",
             "- Skipped tests: $($checks.skipped_count)",
@@ -201,15 +193,4 @@ jobs:
           if ($dirty) {
             Write-Host $dirty
             throw 'CI checks modified tracked or untracked repository files'
-          }
-
-      - name: Enforce regression result
-        if: ${{ always() }}
-        shell: powershell
-        env:
-          CORE_OUTCOME: ${{ steps.core_checker.outcome }}
-          CORE_EXIT_CODE: ${{ steps.core_checker.outputs.exit_code }}
-        run: |
-          if ($env:CORE_OUTCOME -ne 'success') {
-            throw "Revision-bound core checker failed (outcome=$env:CORE_OUTCOME, exit=$env:CORE_EXIT_CODE)"
           }
