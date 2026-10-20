@@ -41,6 +41,8 @@ jobs:
   offline-regression:
     runs-on: windows-latest
     timeout-minutes: 30
+    env:
+      CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
     steps:
       - name: Checkout exact revision
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -86,39 +88,99 @@ jobs:
           if ($hadErrors) { throw 'PowerShell parser found errors' }
 
       - name: Run clean revision-bound core checker
+        id: core-checker
+        continue-on-error: true
         shell: powershell
-        env:
-          CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
         run: |
           if (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT) {
             throw 'Unexpected pre-existing CI evidence directory'
           }
           python -X utf8 scripts/check_multi_ai_v2.py --output $env:CI_EVIDENCE_ROOT
           $code = $LASTEXITCODE
+          "exit_code=$code" >> $env:GITHUB_OUTPUT
           if ($code -ne 0 -and (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
             Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter *.log | ForEach-Object {
               Write-Host "===== $($_.FullName) ====="
               Get-Content -LiteralPath $_.FullName
             }
           }
-          if ($code -ne 0) { exit $code }
+          exit $code
 
-          $manifest = Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter manifest.json |
-            Sort-Object FullName |
-            Select-Object -Last 1
-          if (-not $manifest) { throw 'Revision-bound checker produced no manifest.json' }
+      - name: Verify immutable evidence envelope
+        if: ${{ always() && steps.core-checker.outcome != 'skipped' }}
+        shell: powershell
+        env:
+          CORE_OUTCOME: ${{ steps.core-checker.outcome }}
+        run: |
+          $manifests = @(Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter manifest.json)
+          if ($manifests.Count -ne 1) {
+            throw "Expected exactly one manifest.json, found $($manifests.Count)"
+          }
+          $manifest = $manifests[0]
           $value = Get-Content -LiteralPath $manifest.FullName -Raw | ConvertFrom-Json
-          if ($value.status -ne 'passed') { throw "Evidence status is $($value.status)" }
+
           if ($value.dirty -ne $false) { throw 'Published CI evidence must have dirty=false' }
           if ($value.git_commit_sha -ne $env:GITHUB_SHA) {
             throw "Evidence commit $($value.git_commit_sha) does not match GITHUB_SHA $env:GITHUB_SHA"
           }
+          $actualTree = (git rev-parse "HEAD^{tree}").Trim()
+          if ($value.git_tree_sha -ne $actualTree) {
+            throw "Evidence tree $($value.git_tree_sha) does not match checked-out tree $actualTree"
+          }
           if ($value.model_requests -ne 0 -or $value.paid_api_requests -ne 0 -or $value.production_started -ne $false) {
             throw 'Offline CI evidence unexpectedly reports a model/API/production operation'
           }
-          Write-Host "Verified clean evidence: $($manifest.FullName)"
-          Write-Host "Source manifest: $($value.source_manifest_sha256)"
-          Write-Host "Schema manifest: $($value.schema_manifest_sha256)"
+
+          foreach ($property in $value.files.PSObject.Properties) {
+            $relative = $property.Name
+            $record = $property.Value
+            $file = Join-Path $manifest.DirectoryName $relative
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+              throw "Evidence file is missing: $relative"
+            }
+            $item = Get-Item -LiteralPath $file
+            if ($item.Length -ne [int64]$record.bytes) {
+              throw "Evidence size mismatch: $relative"
+            }
+            $hash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($hash -ne ([string]$record.sha256).ToLowerInvariant()) {
+              throw "Evidence SHA-256 mismatch: $relative"
+            }
+          }
+
+          $checksFiles = @(Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter checks.json)
+          if ($checksFiles.Count -ne 1) {
+            throw "Expected exactly one checks.json, found $($checksFiles.Count)"
+          }
+          $checks = Get-Content -LiteralPath $checksFiles[0].FullName -Raw | ConvertFrom-Json
+          if ($checks.source_unchanged_during_checks -ne $true) {
+            throw 'Source changed while regression checks were running'
+          }
+          if ($checks.git_commit_sha -ne $env:GITHUB_SHA -or $checks.git_tree_sha -ne $actualTree) {
+            throw 'checks.json is not bound to the checked-out revision'
+          }
+          if ($env:CORE_OUTCOME -eq 'success' -and $value.status -ne 'passed') {
+            throw "Core checker succeeded but evidence status is $($value.status)"
+          }
+          if ($env:CORE_OUTCOME -ne 'success' -and $value.status -eq 'passed') {
+            throw 'Core checker failed but evidence incorrectly claims passed'
+          }
+
+          $manifestHash = (Get-FileHash -LiteralPath $manifest.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          @(
+            '## Multi-AI V2 offline CI',
+            '',
+            "- Checked commit: ``$env:GITHUB_SHA``",
+            "- Checked tree: ``$actualTree``",
+            "- Core checker outcome: **$env:CORE_OUTCOME**",
+            "- Evidence status: **$($value.status)**",
+            "- Tests recorded: $($checks.test_count)",
+            "- Skipped tests: $($checks.skipped_count)",
+            "- Model requests: $($value.model_requests)",
+            "- Paid API requests: $($value.paid_api_requests)",
+            "- Production started: $($value.production_started)",
+            "- Manifest SHA-256: ``$manifestHash``"
+          ) | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
 
       - name: Upload immutable CI evidence
         if: ${{ always() }}
@@ -135,8 +197,19 @@ jobs:
         run: |
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $dirty = git status --porcelain
+          $dirty = git status --porcelain --untracked-files=all
           if ($dirty) {
             Write-Host $dirty
             throw 'CI checks modified tracked or untracked repository files'
+          }
+
+      - name: Enforce regression result
+        if: ${{ always() }}
+        shell: powershell
+        env:
+          CORE_OUTCOME: ${{ steps.core-checker.outcome }}
+          CORE_EXIT_CODE: ${{ steps.core-checker.outputs.exit_code }}
+        run: |
+          if ($env:CORE_OUTCOME -ne 'success') {
+            throw "Revision-bound core checker failed (outcome=$env:CORE_OUTCOME, exit=$env:CORE_EXIT_CODE)"
           }
