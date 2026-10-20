@@ -50,15 +50,24 @@ class Artifact(Contract):
     @model_validator(mode='after')
     def safe_path(self):
         relative_path(self.path)
+        if not self.path.startswith(f'runs/{self.run_id}/'):
+            raise ValueError('Artifact path must belong to its run')
         return self
 
 
 class Result(Contract):
     task_id: Identifier
+    run_id: Identifier
     input_version: int = Field(ge=1)
     input_hashes: dict[str, Sha256]
     artifacts: list[Artifact]
     simulated: bool
+
+    @model_validator(mode='after')
+    def same_run_and_provenance(self):
+        if any(a.run_id != self.run_id or a.simulated != self.simulated for a in self.artifacts):
+            raise ValueError('Result artifacts must share the same run and simulation provenance')
+        return self
 
 
 class Issue(Contract):

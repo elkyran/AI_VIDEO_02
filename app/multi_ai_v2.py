@@ -37,6 +37,11 @@ BLOCKERS = ['gemini_story: installed authenticated agy CLI and JSON smoke requir
             'drive: configured destination and cloud delivery verification required']
 TERMINAL = frozenset({'SUCCEEDED', 'SIMULATION_SUCCEEDED', 'FAILED_FINAL', 'STALE',
                       'BLOCKED_UNSUPPORTED', 'CANCELLED'})
+# JSON/CLI protocol: only completed success is exit 0. Pause/stop remain resumable.
+EXIT_CODES = {'SUCCEEDED': 0, 'SIMULATION_SUCCEEDED': 0, 'IN_PROGRESS': 2,
+              'WAITING_AUTH': 3, 'WAITING_QUOTA': 4, 'BLOCKED_UNSUPPORTED': 5,
+              'FAILED_RETRYABLE': 6, 'FAILED_FINAL': 7, 'STALE': 8, 'ERROR': 9,
+              'CANCELLED': 10}
 
 
 def digest(value):
@@ -45,10 +50,25 @@ def digest(value):
 
 def local_root(path):
     root = Path(path).resolve()
+    repo = Path(__file__).resolve().parents[1]
+    if root == repo or root.is_relative_to(repo) or root == root.parent:
+        raise ValueError('LOCAL_RUN_ROOT must be a separate local directory outside the repo/production workspace')
     forbidden = {'onedrive', 'googledrive', 'google drive', 'my drive', 'мой диск'}
     if any(any(name in part.casefold() for name in forbidden) for part in root.parts):
         raise ValueError('LOCAL_RUN_ROOT must be outside OneDrive/Google Drive sync folders')
+    for key in ('OneDrive', 'OneDriveConsumer', 'OneDriveCommercial', 'GOOGLE_DRIVE_ROOT'):
+        if os.getenv(key) and root.is_relative_to(Path(os.environ[key]).resolve()):
+            raise ValueError('LOCAL_RUN_ROOT must be outside configured sync folders')
     return root
+
+
+def legacy_queue_conflict(root):
+    db = Path(root).resolve() / 'registry.sqlite'
+    if not db.exists(): return False
+    with closing(sqlite3.connect(db.as_uri() + '?mode=ro', uri=True)) as conn:
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        return bool(('projects' in tables and conn.execute('SELECT 1 FROM projects LIMIT 1').fetchone()) or
+            ('ai_tasks' in tables and 'ai_v2_runs' not in tables and conn.execute('SELECT 1 FROM ai_tasks LIMIT 1').fetchone()))
 
 
 def task_status(task, tasks):
@@ -72,12 +92,8 @@ def task_status(task, tasks):
 class RunCoordinator:
     def __init__(self, root, *, adapters=None):
         self.root = local_root(root)
-        db = self.root / 'registry.sqlite'
-        if db.exists():
-            with closing(sqlite3.connect(db.as_uri() + '?mode=ro', uri=True)) as conn:
-                tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-                if 'ai_tasks' in tables and 'ai_v2_runs' not in tables and conn.execute('SELECT 1 FROM ai_tasks LIMIT 1').fetchone():
-                    raise ValueError('Existing legacy queue must not be repurposed as a v2 workspace')
+        if legacy_queue_conflict(self.root):
+            raise ValueError('Existing legacy/production queue must not be repurposed as a v2 workspace')
         self.queue = Coordinator(self.root, adapters=adapters)
         self.store = ArtifactStore(self.root)
         try:
@@ -182,7 +198,8 @@ class RunCoordinator:
         done = len(tasks) == len(STAGES) and all(t['status'] == 'SUCCEEDED' for t in normalized)
         failure = any(t['status'] in {'FAILED_FINAL', 'STALE'} for t in normalized)
         return {'run_id': run_id, 'mode': row['mode'], 'status': 'SIMULATION_SUCCEEDED' if done else
-                'BLOCKED_UNSUPPORTED' if row['mode'] == 'production' else 'FAILED_FINAL' if failure else
+                'BLOCKED_UNSUPPORTED' if row['mode'] == 'production' else
+                'STALE' if any(t['status']=='STALE' for t in normalized) else 'FAILED_FINAL' if failure else
                 'WAITING_QUOTA' if any(t['status']=='WAITING_QUOTA' for t in normalized) else
                 'WAITING_AUTH' if any(t['status']=='WAITING_AUTH' for t in normalized) else
                 'FAILED_RETRYABLE' if any(t['status']=='FAILED_RETRYABLE' for t in normalized) else 'IN_PROGRESS',
@@ -279,8 +296,8 @@ def main(argv=None):
         sub = subs.add_parser(command); sub.add_argument('--run-id', required=True)
         if command == 'advance': sub.add_argument('--ticks', type=int, default=30)
     args = parser.parse_args(argv)
-    if not args.root: parser.error('Set LOCAL_RUN_ROOT to a dedicated local folder outside sync')
     try:
+        if not args.root: raise ValueError('Set LOCAL_RUN_ROOT to a dedicated local folder outside sync')
         with RunCoordinator(args.root) as coordinator:
             if args.command == 'create':
                 result = coordinator.create(json.loads(Path(args.brief).read_text(encoding='utf-8-sig')), args.key)
@@ -289,12 +306,12 @@ def main(argv=None):
                 if args.command == 'advance': result = coordinator.advance(args.run_id, args.ticks)
                 elif args.command in {'pause', 'stop'}:
                     result = getattr(coordinator, args.command)(args.run_id)
-                elif args.command == 'manifest': result = coordinator.manifest(args.run_id)
+                elif args.command == 'manifest': result = {**result, 'artifact': coordinator.manifest(args.run_id)}
         print(json.dumps(sanitize(result), ensure_ascii=False, allow_nan=False))
-        return 2 if result.get('status') == 'BLOCKED_UNSUPPORTED' else 0
-    except (ValueError, OSError, StudioError) as exc:
-        print(json.dumps({'status': 'ERROR', 'error': sanitize(str(exc))}, ensure_ascii=False))
-        return 2
+        return EXIT_CODES.get(result.get('status'), EXIT_CODES['ERROR'])
+    except (ValueError, OSError, StudioError, sqlite3.Error) as exc:
+        print(json.dumps({'status': 'ERROR', 'error_code': getattr(exc, 'code', 'ERROR'), 'error': sanitize(str(exc))}, ensure_ascii=False))
+        return EXIT_CODES['ERROR']
 
 
 if __name__ == '__main__': raise SystemExit(main())

@@ -67,15 +67,18 @@ def main(argv=None):
             elapsed = round(time.monotonic()-start, 6)
             count = re.search(r'Ran (\d+) tests?', log.read_text(encoding='utf-8'))
             count = int(count.group(1)) if count else None
+            skipped = re.search(r'OK \(skipped=(\d+)\)', log.read_text(encoding='utf-8'))
+            skipped = int(skipped.group(1)) if skipped else 0
             check = {'group': group, 'status': 'passed' if code == 0 else 'failed', 'exit_code': code,
-                     'test_count': count, 'elapsed_seconds': elapsed, 'command': command, 'log_ref': log.name, 'truncated': False}
-            checks.append(check); run.record_command(command, code, elapsed_seconds=elapsed, test_count=count)
+                     'test_count': count, 'skipped_count': skipped, 'elapsed_seconds': elapsed, 'command': command, 'log_ref': log.name, 'truncated': False}
+            checks.append(check); run.record_command(command, code, elapsed_seconds=elapsed, test_count=count, skipped_count=skipped)
             print(json.dumps(check, ensure_ascii=False), flush=True)
         unchanged = source_binding(ROOT)['source_manifest_sha256'] == run.binding['source_manifest_sha256']
         result = {**run.binding, 'task_id': 'MULTI-AI-V2-CORE-FIX', 'checked_at': run.checked_at,
                   'status': 'passed' if unchanged and all(c['status']=='passed' for c in checks) else 'failed',
                   'source_unchanged_during_checks': unchanged, 'checks': checks,
                   'test_count': sum(c['test_count'] or 0 for c in checks),
+                  'skipped_count': sum(c['skipped_count'] for c in checks),
                   'model_requests': 0, 'paid_api_requests': 0, 'production_started': False, 'truncated': False}
         run.write_json('checks.json', result)
     finally:

@@ -57,7 +57,7 @@ def probe(args, run):
     import importlib.metadata
     write(folder, 'dependency_versions.json', {p: importlib.metadata.version(p) for p in ('pydantic', 'numpy')})
     command = None if args.offline else shutil.which('codex.exe') or shutil.which('codex')
-    codex = {'status': 'UNAVAILABLE', 'checked_at': now, 'provider': 'codex', 'profile': 'chatgpt_primary',
+    codex = {'status': 'UNVERIFIED' if args.offline else 'UNAVAILABLE', 'checked_at': now, 'provider': 'codex', 'profile': 'chatgpt_primary',
              'auth_route': 'official_codex_chatgpt', 'requested_model': None, 'returned_model': None,
              'model_requests': 0, 'quota_source': None, 'identity_verified': False}
     if command and Path(command).suffix.lower() == '.exe':
