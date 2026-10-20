@@ -19,7 +19,14 @@ CI проверяет:
 - Multi-AI v2 unit tests;
 - старые regression-группы;
 - Git/secret export scan;
-- чистоту checkout после тестов.
+- чистоту checkout после тестов;
+- immutable evidence на чистом merge commit;
+- `dirty=false` и совпадение evidence `git_commit_sha` с `GITHUB_SHA`;
+- отсутствие model/API/production operations.
+
+Evidence загружается отдельным GitHub Artifact даже при красном regression run.
+Artifact action закреплён полным commit SHA; срок хранения — 14 дней. Полные логи
+и manifest сохраняются вне Git-репозитория, поэтому проверка не делает checkout dirty.
 
 CI разрешён для Pull Request и рабочих веток, потому что выполняется на изолированной
 машине GitHub без пользовательских provider credentials.
@@ -87,13 +94,23 @@ Codex не редактирует эти файлы. ChatGPT не редакти
 9. Первый self-hosted запуск — только fake.
 10. Live providers и production включаются отдельными пакетами.
 
-## 6. Текущая известная CI-находка
+## 6. Текущие подтверждённые CI-находки
 
-Первый GitHub-hosted запуск обнаружил Windows portability defect в старом тесте
-`ProductionBridgeTests.test_prepared_synthesis_uses_existing_script_and_profile_without_enqueuing`:
-mock ожидает короткий путь `RUNNER~1`, а production code передаёт эквивалентный
-длинный путь `runneradmin`. Исправление принадлежит Codex: сравнивать канонические
-`Path.resolve()` значения, не пропускать и не ослаблять тест.
+Clean merge-state CI после Core Fix Pack подтвердил, что все 28 новых v2 tests
+проходят. Merge блокируют четыре существующих Windows-portability regression:
+
+1. `tests/test_production_bridge.py` сравнивает короткий `RUNNER~1` и длинный
+   `runneradmin` путь как разные значения mock-вызова.
+2. `tests/test_ai_accounts.py` сравнивает `GEMINI_CLI_HOME` строкой вместо
+   канонического пути.
+3. `tests/test_gemini_free_route.py` сравнивает API-home без `Path.resolve()`.
+4. Mock worker в `tests/test_speech_review.py` записывает исходный DLL path, тогда
+   как настоящий `transcribe_audio.validate_runtime_options()` сохраняет resolved path.
+
+Исправления принадлежат Codex. Для первых трёх сравнений нужно использовать
+канонические `Path.resolve()` значения, сохраняя assertions. Speech-review fixture
+должен имитировать настоящий worker и записывать нормализованный execution object;
+production cache validation ослаблять нельзя.
 
 ## 7. Реакция на ошибки
 
