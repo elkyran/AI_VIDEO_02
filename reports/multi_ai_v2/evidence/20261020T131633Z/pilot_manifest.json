@@ -1,0 +1,16 @@
+{
+  "status": "BLOCKED",
+  "duration_seconds": null,
+  "actual_video_created": false,
+  "model_requests": 1,
+  "accepted_seconds": null,
+  "blockers": [
+    "Gemini Story",
+    "Gemini Visual independence/media",
+    "runner",
+    "Drive",
+    "production import"
+  ],
+  "connector_manifest_url": "https://drive.google.com/file/d/1O9lwbDKuYC-ODrXWiCJc4yrCmGXaxBaj/view",
+  "drive_upload_scope": "373-byte connector smoke; unattended pipeline blocked"
+}

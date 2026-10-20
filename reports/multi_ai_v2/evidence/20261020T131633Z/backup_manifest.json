@@ -1,0 +1,12 @@
+{
+  "studio": {
+    "backup_api": "sqlite3.Connection.backup",
+    "backup_ref": "studio.backup.sqlite",
+    "source_sha256": "5b0624345f396a50d13f0cf9f11258cff503ca5d382c211c18fc22c42ea056bb"
+  },
+  "multi_ai_live": {
+    "backup_api": "sqlite3.Connection.backup",
+    "backup_ref": "multi_ai_live.backup.sqlite",
+    "source_sha256": "fec9b42d322ed6372c858d02c787d51af7a319993461bda98ba1157a28f906a5"
+  }
+}

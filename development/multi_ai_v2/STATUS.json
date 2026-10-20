@@ -1,0 +1,26 @@
+{
+  "package_id": "MULTI-AI-V2",
+  "operation_key": "MULTI-AI-V2-20261020-first-vertical",
+  "revision": "source-sha256:798a4c760990842ef52e966604e4d3f8d79b6649eb6af6706026725a37f24604",
+  "status": "partial",
+  "test_status": "passed",
+  "test_count": 338,
+  "phases": {
+    "0": "done",
+    "1": "done",
+    "2": "partial",
+    "3": "done_simulated",
+    "4": "partial_live_probe_verified",
+    "5": "blocked",
+    "6": "blocked",
+    "7": "partial_existing_bridge",
+    "8": "blocked_live_review",
+    "9": "partial_scaffolding",
+    "10": "blocked"
+  },
+  "checks_ref": "reports/multi_ai_v2/evidence/20261020T131633Z/checks.json",
+  "legacy_journals": "unchanged",
+  "next_action": "Install/authenticate official agy CLI; verify Story adapter. Visual identity, runner registration, Drive and production import remain separate blockers.",
+  "drive_connector_upload": "verified",
+  "drive_runner_access": "unverified"
+}

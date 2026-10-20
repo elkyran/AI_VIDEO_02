@@ -1,0 +1,15 @@
+{
+  "status": "UNAVAILABLE",
+  "provider": "gemini",
+  "profile": "google_primary",
+  "route": "antigravity",
+  "enabled": false,
+  "model": null,
+  "account_fingerprint": null,
+  "identity_verified": false,
+  "quota_source": null,
+  "model_requests": 0,
+  "agy_on_path": false,
+  "checked_at": "2026-10-20T13:16:40.660171+00:00",
+  "blocker": "Native agy CLI not verified; desktop app/internal language server is not an adapter"
+}

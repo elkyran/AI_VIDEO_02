@@ -1,0 +1,20 @@
+{
+  "status": "VERIFIED",
+  "scope": "Codex Google Drive connector upload and raw readback",
+  "uploaded": true,
+  "size": 373,
+  "sha256": "96d54c47c55f49f2328779fc249c0ce43e82ec689a011afceffc82ec1783288f",
+  "file_id": "1O9lwbDKuYC-ODrXWiCJc4yrCmGXaxBaj",
+  "folder_id": "1xhrpfTY7cC2W4TY8cM2FppXHwAz3r_Ur",
+  "result_url": "https://drive.google.com/file/d/1O9lwbDKuYC-ODrXWiCJc4yrCmGXaxBaj/view",
+  "byte_for_byte_readback_verified": true,
+  "capacity_bytes": null,
+  "unattended_runner_access": "UNVERIFIED",
+  "local_drive_root_configured": false,
+  "production_media_uploaded": false,
+  "credentials_uploaded": false,
+  "account_fingerprint": "669fb50ac15e01a29a58ad7bbbe3d08505245e1c5b3cd65a8c0695976c9bd60d",
+  "account_matches_owner_expected": true,
+  "identity_source": "official_google_drive_connector_profile",
+  "identity_verified": true
+}

@@ -1,0 +1,182 @@
+{
+  "status": "passed",
+  "result": {
+    "run_id": "run_ee8250fb76e094b34b471f13",
+    "mode": "fake",
+    "status": "SIMULATION_SUCCEEDED",
+    "simulated": true,
+    "ready_for_user": false,
+    "tasks": [
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_source_index",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_4af9a297ae2e4104bc2beb7b74d52c05/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_canon_build",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_cbddf67ea43c4a1894f03f54379720ae/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_story_outline",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_4aafccf5254f48fe9882e5de888b4529/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_story_review",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_848bd3946f90478c80e3b92cd7d8a7a4/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_scene_script",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_02c0046e0a3a4e35a16985e02ad66388/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_voice_synthesis",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_c6509fea28d54e829a03f5ab67973063/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_visual_coverage",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_20b4b3541cf5479d9b60f2621b25f9b3/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_edit_plan",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_dda52e82293645819d0da7cb054a7508/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_edit_validate",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_58e584ed48a1449b832b57533c306806/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_build",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_e63889292df24ed19208202c1f273f94/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_preview_render",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_eba13b137a3b4c52908d047ba11b8212/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_technical_qa",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_7e30bc05dbe04c0b9878bea14b9ce78f/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_editorial_qa",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_d7e888a76b6f42f39ed676006d7e7fbf/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_issue_routing",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_4d6344d27a43425fbda01052ac14a008/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_targeted_fix",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_9e2681f2ae8d4f8799cfae00001cfca3/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_final_render",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_1fd4787d9ef64082960146be7fed83c6/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_final_qa",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_b0d0f31b782a47a5a840a2340326a457/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_package",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_0025c32d2c9640ada0a6099b6c826b70/completed.json"
+      },
+      {
+        "task_id": "run_ee8250fb76e094b34b471f13_drive_upload",
+        "status": "SUCCEEDED",
+        "attempt": 1,
+        "error": null,
+        "simulated": true,
+        "result_ref": "ai/attempts/attempt_88891b12e97b41cfa93af67d76e2e179/completed.json"
+      }
+    ],
+    "blockers": [],
+    "model_requests": 0,
+    "tokens": null,
+    "video_qa": "NOT_RUN",
+    "editorial_qa": "NOT_RUN"
+  },
+  "manifest": {
+    "artifact_id": "artifact_a68fe8a3ae941e0fff5b68be",
+    "run_id": "run_ee8250fb76e094b34b471f13",
+    "version": 1,
+    "path": "runs/run_ee8250fb76e094b34b471f13/artifacts/a68fe8a3ae941e0fff5b68bedfccb08bfa6cead03579a92c62002a668f23e547.json",
+    "sha256": "a68fe8a3ae941e0fff5b68bedfccb08bfa6cead03579a92c62002a668f23e547",
+    "size": 5210,
+    "simulated": true
+  },
+  "attempts_before_restart": 19,
+  "attempts_after_restart": 19,
+  "live_model_requests": 0,
+  "scope": "Temporary FakeAdapter graph; no TTS/render/media QA/Drive cloud upload"
+}
