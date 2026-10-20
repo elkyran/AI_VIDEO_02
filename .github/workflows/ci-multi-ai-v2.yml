@@ -2,24 +2,31 @@ name: Multi-AI V2 CI
 
 on:
   pull_request:
+    branches:
+      - main
+      - feature/multi-ai-coordinator-v2
     paths:
       - 'app/**'
       - 'scripts/**'
       - 'tests/**'
       - 'config/multi_ai_v2_schemas/**'
       - '.github/workflows/**'
+      - 'development/multi_ai_v2/**'
+      - 'docs/GITHUB_CI_AND_RUNNER.md'
       - 'pyproject.toml'
       - '.env.example'
   push:
     branches:
       - 'feature/multi-ai-coordinator-v2'
-      - 'assistant/**'
+      - 'assistant/review-fix-ci-runner-safety'
     paths:
       - 'app/**'
       - 'scripts/**'
       - 'tests/**'
       - 'config/multi_ai_v2_schemas/**'
       - '.github/workflows/**'
+      - 'development/multi_ai_v2/**'
+      - 'docs/GITHUB_CI_AND_RUNNER.md'
       - 'pyproject.toml'
       - '.env.example'
 
@@ -33,14 +40,15 @@ concurrency:
 jobs:
   offline-regression:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout exact revision
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           clean: true
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ github.sha }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
@@ -58,10 +66,9 @@ jobs:
         shell: powershell
         run: python -X utf8 -m compileall -q app scripts tests
 
-      - name: Validate workflow YAML
+      - name: Validate workflow policy and checked-in schemas
         shell: powershell
-        run: |
-          python -X utf8 -c "from pathlib import Path; import yaml; files=list(Path('.github/workflows').glob('*.yml'))+list(Path('.github/workflows').glob('*.yaml')); assert files, 'no workflows found'; [yaml.safe_load(p.read_text(encoding='utf-8')) for p in files]; print(f'validated {len(files)} workflow files')"
+        run: python -X utf8 scripts/ci_validate_multi_ai_v2.py
 
       - name: Validate PowerShell syntax
         shell: powershell
@@ -82,12 +89,6 @@ jobs:
           }
           if ($hadErrors) { throw 'PowerShell parser found errors' }
 
-      - name: Verify checked-in schema files
-        shell: powershell
-        run: |
-          python -X utf8 scripts/export_multi_ai_v2_schemas.py
-          git diff --exit-code -- config/multi_ai_v2_schemas
-
       - name: Run Multi-AI V2 unit tests
         shell: powershell
         run: python -X utf8 -m unittest -v tests.test_multi_ai_v2
@@ -99,6 +100,12 @@ jobs:
           if (Test-Path -LiteralPath $out) { throw 'Unexpected pre-existing CI output directory' }
           python -X utf8 scripts/check_multi_ai.py --groups contracts queue adapters mai05 panel legacy --output $out --task-id CI-MULTI-AI-V2
           $code = $LASTEXITCODE
+          if ($code -ne 0 -and (Test-Path -LiteralPath $out)) {
+            Get-ChildItem -LiteralPath $out -Recurse -Filter *.log | ForEach-Object {
+              Write-Host "===== $($_.FullName) ====="
+              Get-Content -LiteralPath $_.FullName
+            }
+          }
           if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
           if ($code -ne 0) { exit $code }
 
@@ -106,12 +113,15 @@ jobs:
         shell: powershell
         run: |
           python -X utf8 scripts/check_git_export.py
+          $code = $LASTEXITCODE
           git restore --worktree --staged -- reports/development/2026-10-20_GITHUB/export_check.json
+          if ($code -ne 0) { exit $code }
 
       - name: Verify clean, whitespace-safe checkout
         shell: powershell
         run: |
           git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $dirty = git status --porcelain
           if ($dirty) {
             Write-Host $dirty
