@@ -120,7 +120,17 @@ jobs:
           Write-Host "Source manifest: $($value.source_manifest_sha256)"
           Write-Host "Schema manifest: $($value.schema_manifest_sha256)"
 
+      - name: Upload immutable CI evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: multi-ai-v2-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/multi-ai-v2-evidence
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Verify clean, whitespace-safe checkout
+        if: ${{ always() }}
         shell: powershell
         run: |
           git diff --check
