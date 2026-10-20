@@ -10,23 +10,26 @@ Google Drive, рабочим SQLite, моделям, WAV или исходным
 
 CI проверяет:
 
-- точный checkout commit SHA;
+- checkout точного event/temporary-merge commit SHA;
 - pinned GitHub Actions;
 - синтаксис и политику workflow;
 - синтаксис PowerShell;
 - отсутствие drift у JSON Schema;
-- Python compileall;
-- Multi-AI v2 unit tests;
-- старые regression-группы;
+- canonical `scripts/check_multi_ai_v2.py`;
+- Multi-AI v2 unit tests и старые regression-группы;
 - Git/secret export scan;
-- чистоту checkout после тестов;
-- immutable evidence на чистом merge commit;
-- `dirty=false` и совпадение evidence `git_commit_sha` с `GITHUB_SHA`;
-- отсутствие model/API/production operations.
+- `git diff --check` и отсутствие tracked/untracked изменений после тестов;
+- immutable evidence на чистом commit;
+- совпадение evidence `git_commit_sha` и `git_tree_sha` с checkout;
+- `dirty=false` и `source_unchanged_during_checks=true`;
+- SHA-256 и размер каждого файла из evidence manifest;
+- отсутствие model requests, paid API и production operations.
 
 Evidence загружается отдельным GitHub Artifact даже при красном regression run.
-Artifact action закреплён полным commit SHA; срок хранения — 14 дней. Полные логи
-и manifest сохраняются вне Git-репозитория, поэтому проверка не делает checkout dirty.
+`upload-artifact` закреплён полным commit SHA; срок хранения — 14 дней. Полные
+логи, `checks.json` и `manifest.json` сохраняются вне Git-репозитория, поэтому
+проверка не делает checkout dirty. Job Summary показывает проверенный commit/tree,
+статус evidence, число тестов и SHA-256 manifest.
 
 CI разрешён для Pull Request и рабочих веток, потому что выполняется на изолированной
 машине GitHub без пользовательских provider credentials.
@@ -48,10 +51,18 @@ runner на Windows-ноутбуке владельца. В будущем эт�
 4. Feature-ветки и Pull Request не исполняются на credentialed runner.
 5. Checkout использует точный `${{ github.sha }}`.
 6. Checkout выполняется с `clean: true` и `persist-credentials: false`.
-7. После checkout проверяются `HEAD` и `git status --porcelain`.
-8. Runner использует отдельный рабочий каталог, не рабочую папку студии.
-9. Не добавлять PR/fork/schedule trigger к credentialed workflow.
-10. Production option пока отсутствует: workflow выполняет только fake-run.
+7. После checkout проверяются `HEAD` и все tracked/untracked изменения.
+8. `STUDIO_PYTHON` должен указывать на существующий локальный Python.
+9. `LOCAL_RUN_ROOT` обязателен и должен быть отдельным локальным каталогом вне
+   репозитория, production workspace и sync-папок.
+10. Перед dispatch запускается именно
+    `healthcheck_multi_ai_v2.py --mode fake --root $env:LOCAL_RUN_ROOT`.
+11. Runner использует отдельный checkout, а состояние run хранится в
+    `LOCAL_RUN_ROOT`, не в рабочей папке студии.
+12. После fake-run повторно проверяется, что checkout остался чистым.
+13. Не добавлять PR/fork/schedule trigger к credentialed workflow.
+14. Production option пока отсутствует: workflow выполняет только fake-run.
+15. Workflow не читает GitHub Secrets и не загружает auth, SQLite, media или raw logs.
 
 Workflow должен находиться в default branch, прежде чем GitHub покажет кнопку
 ручного запуска. До независимого review и merge регистрировать runner нельзя.
@@ -83,13 +94,13 @@ Codex не редактирует эти файлы. ChatGPT не редакти
 
 ## 5. Порядок интеграции
 
-1. Codex завершает core fix pack в feature-ветке.
-2. GitHub-hosted CI проверяет Python-ветку.
-3. Draft PR ChatGPT проверяет merge-состояние двух дорожек.
-4. Красные проверки исправляются в ветке владельца соответствующего файла.
-5. После зелёного CI выполняется повторный независимый review.
-6. ChatGPT-дорожка сливается только в feature-ветку.
-7. Финальный PR из feature в `main` создаётся отдельно.
+1. Codex завершает Review Fix Pack 2 в feature-ветке.
+2. Draft PR ChatGPT проверяет temporary merge обеих дорожек.
+3. Красные проверки исправляются владельцем соответствующего файла.
+4. После зелёного CI выполняется повторный независимый review.
+5. ChatGPT-дорожка сливается только в feature-ветку.
+6. Финальный PR из feature в `main` создаётся отдельно.
+7. Финальный PR повторно проходит clean GitHub-hosted CI.
 8. Только после merge в `main` регистрируется self-hosted runner.
 9. Первый self-hosted запуск — только fake.
 10. Live providers и production включаются отдельными пакетами.
@@ -108,16 +119,18 @@ Clean merge-state CI после Core Fix Pack подтвердил, что вс�
    как настоящий `transcribe_audio.validate_runtime_options()` сохраняет resolved path.
 
 Исправления принадлежат Codex. Для первых трёх сравнений нужно использовать
-канонические `Path.resolve()` значения, сохраняя assertions. Speech-review fixture
-должен имитировать настоящий worker и записывать нормализованный execution object;
+канонические файловые пути, сохраняя assertions. Speech-review fixture должен
+имитировать настоящий worker и записывать нормализованный execution object;
 production cache validation ослаблять нельзя.
 
 ## 7. Реакция на ошибки
 
 - Красный GitHub-hosted CI блокирует merge.
+- Невалидный evidence envelope блокирует merge даже при зелёных unit tests.
 - Неизвестный или грязный checkout блокирует self-hosted run.
 - Запуск не из `main` блокируется до checkout.
 - Отсутствие `STUDIO_PYTHON` или `LOCAL_RUN_ROOT` блокирует run.
+- Ошибка fake healthcheck блокирует dispatch.
 - Production остаётся заблокированным до реальных Story, Visual, video-review,
   Drive и Scene-to-production probes.
 
