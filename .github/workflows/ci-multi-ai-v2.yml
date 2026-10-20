@@ -41,8 +41,6 @@ jobs:
   offline-regression:
     runs-on: windows-latest
     timeout-minutes: 30
-    env:
-      CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
     steps:
       - name: Checkout exact revision
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -89,6 +87,8 @@ jobs:
 
       - name: Run clean revision-bound core checker
         shell: powershell
+        env:
+          CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
         run: |
           if (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT) {
             throw 'Unexpected pre-existing CI evidence directory'
@@ -106,6 +106,8 @@ jobs:
       - name: Verify immutable evidence envelope
         if: ${{ always() }}
         shell: powershell
+        env:
+          CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
         run: |
           if (-not (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
             Write-Warning 'Core checker did not create an evidence directory'
