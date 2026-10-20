@@ -110,7 +110,7 @@ def validate_ci_workflow() -> None:
             "setup-python action must remain commit-pinned")
 
 
-def generated_schemas() -> dict[str, bytes]:
+def generated_schemas() -> dict[str, dict]:
     models = {
         "brief": Brief,
         "task": Task,
@@ -120,26 +120,29 @@ def generated_schemas() -> dict[str, bytes]:
         "edit_plan": EditPlan,
         "review": Review,
     }
-    return {
-        f"{name}.schema.json": (json.dumps(model.model_json_schema(), ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-        for name, model in models.items()
-    }
+    return {f"{name}.schema.json": model.model_json_schema() for name, model in models.items()}
 
 
 def validate_schema_drift() -> None:
     expected_dir = ROOT / "config/multi_ai_v2_schemas"
     generated = generated_schemas()
-    checked_in = {path.name: path.read_bytes() for path in expected_dir.glob("*.schema.json")}
+    checked_in = {
+        path.name: json.loads(path.read_text(encoding="utf-8"))
+        for path in expected_dir.glob("*.schema.json")
+    }
     require(set(checked_in) == set(generated),
             f"Schema file set drift: checked-in={sorted(checked_in)} generated={sorted(generated)}")
     mismatches = [name for name in sorted(generated) if generated[name] != checked_in[name]]
     require(not mismatches, "Schema drift detected: " + ", ".join(mismatches))
-    # Also prove generation is isolated from the repository.
+    # Prove generation is isolated from the repository. Canonical JSON avoids
+    # platform line-ending differences while preserving every schema value.
     with tempfile.TemporaryDirectory(prefix="multi_ai_v2_schema_ci_") as folder:
         destination = Path(folder)
-        for name, data in generated.items():
-            (destination / name).write_bytes(data)
-        require(all((destination / name).read_bytes() == data for name, data in generated.items()),
+        for name, value in generated.items():
+            payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+            (destination / name).write_text(payload, encoding="utf-8", newline="\n")
+        require(all(json.loads((destination / name).read_text(encoding="utf-8")) == value
+                    for name, value in generated.items()),
                 "Temporary schema generation failed")
 
 
@@ -164,7 +167,7 @@ def main() -> int:
         run([sys.executable, "-X", "utf8", "-m", "compileall", "-q", "app", "scripts", "tests"],
             "compileall")
         run_test_groups()
-    except (ValidationError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ValidationError, OSError, ValueError, json.JSONDecodeError, yaml.YAMLError) as exc:
         print(f"CI_VALIDATION_FAILED: {exc}", file=sys.stderr)
         return 1
     print("CI_VALIDATION_PASSED")
