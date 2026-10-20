@@ -142,13 +142,12 @@ def validate_ci_workflow() -> None:
             "CI evidence retention must stay bounded at 14 days")
 
     checker = named_step(steps, "Run clean revision-bound core checker")
-    require(checker.get("id") == "core-checker" and checker.get("continue-on-error") == "true",
-            "Core checker must expose its result while allowing evidence/cleanup steps to run")
     checker_text = str(checker.get("run", ""))
-    require("scripts/check_multi_ai_v2.py" in checker_text and "GITHUB_OUTPUT" in checker_text,
-            "CI must run the canonical revision-bound checker and preserve its exit code")
+    require("scripts/check_multi_ai_v2.py" in checker_text and "exit $code" in checker_text,
+            "Canonical revision-bound checker must remain the authoritative failing step")
 
     envelope = named_step(steps, "Verify immutable evidence envelope")
+    require(envelope.get("if") == "${{ always() }}", "Evidence envelope must be checked after pass or failure")
     envelope_text = str(envelope.get("run", ""))
     for required in ("git_tree_sha", "Get-FileHash", "source_unchanged_during_checks",
                      "model_requests", "paid_api_requests", "production_started"):
@@ -157,9 +156,6 @@ def validate_ci_workflow() -> None:
     clean = named_step(steps, "Verify clean, whitespace-safe checkout")
     require(clean.get("if") == "${{ always() }}" and "--untracked-files=all" in str(clean.get("run", "")),
             "Clean-tree verification must run always and include untracked files")
-    gate = named_step(steps, "Enforce regression result")
-    require(gate.get("if") == "${{ always() }}" and "core-checker.outcome" in json.dumps(gate),
-            "A final gate must fail the job when the canonical checker fails")
 
     text = path.read_text(encoding="utf-8")
     require("secrets." not in text, "GitHub-hosted offline CI must not request repository secrets")
