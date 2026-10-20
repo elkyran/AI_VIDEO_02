@@ -18,15 +18,18 @@ ChatGPT владеет только следующими файлами в эт�
 
 - `.github/workflows/ci-multi-ai-v2.yml`;
 - `.github/workflows/new-video.yml`;
+- `scripts/ci_validate_multi_ai_v2.py`;
+- `docs/GITHUB_CI_AND_RUNNER.md`;
 - `development/multi_ai_v2/COLLABORATION.md`.
 
 Задачи:
 
 1. Независимый GitHub-hosted offline CI.
-2. Проверка Python, PowerShell, YAML, JSON Schema и существующих regression-групп.
+2. Проверка Python, PowerShell, workflow policy, JSON Schema и regression-групп.
 3. Защита self-hosted workflow от запуска кода из feature-веток.
 4. Чистый точный checkout без сохранения GitHub credentials.
-5. Никаких изменений Coordinator, contracts, evidence, storage или production.
+5. Диагностические CI-логи для точной передачи дефектов Codex.
+6. Никаких изменений Coordinator, contracts, evidence, storage или production.
 
 ## Дорожка B — Codex / core correctness
 
@@ -38,6 +41,7 @@ Codex продолжает только функциональный review-fix 
 - `scripts/check_multi_ai_v2.py`;
 - `scripts/probe_multi_ai_v2.py`;
 - `scripts/healthcheck_multi_ai_v2.py`;
+- `scripts/export_multi_ai_v2_schemas.py`;
 - связанные unit tests и документация, кроме файлов дорожки A.
 
 Задачи Codex:
@@ -49,6 +53,7 @@ Codex продолжает только функциональный review-fix 
 5. Строгие CLI exit codes.
 6. Режимный healthcheck: fake/production.
 7. Переносимый безопасный Drive-copy fallback.
+8. Исправление Windows path portability в regression tests без skip/ослабления.
 
 Codex не редактирует файлы дорожки A. Если изменение там необходимо, оно
 описывается в отчёте как предложение, но не применяется.
@@ -61,9 +66,9 @@ Codex не редактирует файлы дорожки A. Если изме
 4. Не менять существующий Coordinator и Registry без адресного доказательства.
 5. После каждого пакета — отдельный commit и короткий отчёт.
 6. ChatGPT PR направляется в `feature/multi-ai-coordinator-v2`, не в `main`.
-7. Codex сначала подтягивает merged дорожку A, затем публикует свои исправления.
-8. Финальный merge в `main` возможен только после зелёного GitHub-hosted CI и
-   повторного независимого review.
+7. PR-CI проверяет временный merge обеих дорожек; красный статус блокирует merge.
+8. Владелец файла исправляет найденный дефект в своей ветке.
+9. Финальный merge в `main` возможен только после зелёного CI и повторного review.
 
 ## Текущие запреты
 
