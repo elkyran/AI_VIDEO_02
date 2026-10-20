@@ -62,6 +62,20 @@
       "title": "Run Id",
       "type": "string"
     },
+    "acceptance_key": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Acceptance Key",
+      "type": "string"
+    },
+    "expected_output_schema": {
+      "title": "Expected Output Schema",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
     "input_version": {
       "minimum": 1,
       "title": "Input Version",
@@ -90,6 +104,9 @@
   "required": [
     "task_id",
     "run_id",
+    "acceptance_key",
+    "expected_output_schema",
+    "payload",
     "input_version",
     "input_hashes",
     "artifacts",

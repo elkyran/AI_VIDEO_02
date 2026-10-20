@@ -58,6 +58,9 @@ class Artifact(Contract):
 class Result(Contract):
     task_id: Identifier
     run_id: Identifier
+    acceptance_key: Identifier
+    expected_output_schema: str
+    payload: dict
     input_version: int = Field(ge=1)
     input_hashes: dict[str, Sha256]
     artifacts: list[Artifact]
