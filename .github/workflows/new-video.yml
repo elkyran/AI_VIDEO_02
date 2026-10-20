@@ -51,6 +51,9 @@ jobs:
           if ('${{ github.ref }}' -ne 'refs/heads/main') {
             throw 'Self-hosted execution is allowed only from refs/heads/main'
           }
+          if ('${{ github.event.repository.private }}' -ne 'true') {
+            throw 'Self-hosted execution requires a private repository'
+          }
 
       - name: Checkout exact trusted revision
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -67,21 +70,41 @@ jobs:
           if ($head -ne '${{ github.sha }}') {
             throw "Unexpected checkout SHA: $head"
           }
-          $dirty = git status --porcelain
+          $dirty = git status --porcelain --untracked-files=all
           if ($dirty) {
             throw "Runner checkout is not clean:`n$dirty"
           }
 
-      - name: Validate local fake environment
+      - name: Validate dedicated fake environment
         shell: powershell
-        run: ./scripts/healthcheck.ps1
+        run: |
+          if (-not $env:STUDIO_PYTHON) { throw 'STUDIO_PYTHON is required on the runner' }
+          if (-not $env:LOCAL_RUN_ROOT) { throw 'LOCAL_RUN_ROOT is required on the runner' }
+          if (-not (Test-Path -LiteralPath $env:STUDIO_PYTHON -PathType Leaf)) {
+            throw 'STUDIO_PYTHON does not point to an existing executable'
+          }
+          & $env:STUDIO_PYTHON -X utf8 scripts/healthcheck_multi_ai_v2.py `
+            --mode fake `
+            --root $env:LOCAL_RUN_ROOT
+          if ($LASTEXITCODE -ne 0) { throw 'Multi-AI v2 fake healthcheck failed' }
 
       - name: Submit and advance bounded fake run
         shell: powershell
         run: |
-          if (-not $env:STUDIO_PYTHON) { throw 'STUDIO_PYTHON is required on the runner' }
           & $env:STUDIO_PYTHON -X utf8 scripts/dispatch_multi_ai_v2.py
           exit $LASTEXITCODE
+
+      - name: Verify repository stayed clean
+        if: ${{ always() }}
+        shell: powershell
+        run: |
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = git status --porcelain --untracked-files=all
+          if ($dirty) {
+            Write-Host $dirty
+            throw 'Fake run modified the checked-out repository'
+          }
 
       # No credential files, SQLite databases, media, arbitrary task folders,
       # or raw client logs are uploaded by this workflow.
