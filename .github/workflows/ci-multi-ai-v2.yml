@@ -1,0 +1,80 @@
+name: Multi-AI v2 CI
+
+on:
+  push:
+    branches:
+      - feature/multi-ai-coordinator-v2
+      - assistant/multi-ai-v2-ci-safety
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: multi-ai-v2-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned project and CI dependencies
+        shell: powershell
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -m pip install --disable-pip-version-check PyYAML==6.0.3
+
+      - name: Parse PowerShell scripts
+        shell: powershell
+        run: |
+          $errors = @()
+          Get-ChildItem -Path scripts -Filter *.ps1 -Recurse | ForEach-Object {
+            try {
+              [void][scriptblock]::Create((Get-Content -LiteralPath $_.FullName -Raw))
+            } catch {
+              $errors += "$($_.FullName): $($_.Exception.Message)"
+            }
+          }
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+
+      - name: Validate workflows, schemas and regression tests
+        shell: powershell
+        run: python -X utf8 scripts/ci_validate_multi_ai_v2.py
+
+      - name: Scan tracked and historical Git content
+        shell: powershell
+        run: |
+          python -X utf8 scripts/check_git_export.py
+          $scanExit = $LASTEXITCODE
+          git restore --source=HEAD --worktree -- reports/development/2026-10-20_GITHUB/export_check.json
+          if ($scanExit -ne 0) { exit $scanExit }
+
+      - name: Verify clean checkout after tests
+        shell: powershell
+        run: |
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = git status --porcelain
+          if ($dirty) {
+            Write-Error "CI changed the checkout:`n$dirty"
+            exit 1
+          }
