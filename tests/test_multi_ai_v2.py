@@ -19,6 +19,13 @@ from app.v2_contracts import Artifact, Brief, Review, Result, Task, issue_owner
 from app.v2_storage import ArtifactStore, EvidenceRun, source_binding
 
 
+def render_review(artifact):
+    return Review(project_id=artifact.run_id, review_id='review1', subject_type='render',
+        subject_id=artifact.artifact_id, subject_version=1, subject_hash=artifact.sha256,
+        evidence_mode='video_audio', render_id=artifact.artifact_id, render_hash=artifact.sha256,
+        edit_plan_version=1).model_dump()
+
+
 class V2Tests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='v2_')
@@ -41,7 +48,9 @@ class V2Tests(unittest.TestCase):
         self.assertEqual(done['model_requests'], 0)
         self.assertTrue(all(t['attempt'] == 1 for t in done['tasks']))
         pack = self.root / 'runs' / s['run_id'] / 'context' / done['tasks'][0]['task_id']
-        self.assertEqual(len(list(pack.iterdir())), 8)
+        self.assertEqual(len([p for p in pack.iterdir() if p.is_file()]), 8)
+        self.assertEqual(len(list(pack.iterdir())), 9)  # Includes the new per-attempt Context Pack.
+        self.assertEqual(len(list((pack/'attempts').glob('*/input_artifacts.json'))), 1)
         self.assertLess((pack / 'task.md').stat().st_size, 12000)
 
     def test_idempotent_run_and_no_duplicate_dispatch(self):
@@ -196,7 +205,8 @@ class V2Tests(unittest.TestCase):
 
     def test_trusted_review_rejects_self_attestation_and_missing_probe(self):
         q = self.coordinator()
-        value = {'review_mode': 'full_video', 'verdict': 'pass', 'materials_actually_reviewed': ['control.mp4'], 'issues': []}
+        artifact=q.store.put_json('video_run',{},simulated=False)
+        value = render_review(artifact)
         binding = dict(provider='gemini', client_version='1', model='explicit', control_video_hash='1'*64)
         with self.assertRaises(StudioError): q.accept_review(value, **binding)
         with self.assertRaises(ValidationError):
@@ -446,11 +456,11 @@ class ReviewFixTests(unittest.TestCase):
                    checked_at=self.now.isoformat(),expires_at=(self.now+timedelta(hours=1)).isoformat(),
                    status='VERIFIED',evidence_refs=['receipt.json'])
         # Opaque temporary delivery fixture; no decoding, model call or creative QA.
-        path=self.root/'runs/video_run/artifacts/video.mp4';path.parent.mkdir(parents=True)
+        path=self.root/'runs/video_run/artifacts/video.webm';path.parent.mkdir(parents=True)
         raw=b'opaque video delivery fixture';path.write_bytes(raw)
-        artifact=Artifact(artifact_id='video1',run_id='video_run',version=1,path='runs/video_run/artifacts/video.mp4',
+        artifact=Artifact(artifact_id='video1',run_id='video_run',version=1,path='runs/video_run/artifacts/video.webm',
                           sha256=hashlib.sha256(raw).hexdigest(),size=len(raw),simulated=False)
-        review=dict(review_mode='full_video',verdict='pass',materials_actually_reviewed=[artifact.path],issues=[])
+        review=render_review(artifact)
         kwargs=dict(evidence_id=probe['evidence_id'],video_artifact=artifact,**binding)
         return q,probe,review,kwargs
 
@@ -463,7 +473,7 @@ class ReviewFixTests(unittest.TestCase):
         self.assert_unverified(q,review,kwargs)
         self.assertEqual(q.record_video_probe(probe),'evidence1')
         self.assertEqual(q.record_video_probe(probe),'evidence1')
-        self.assertEqual(q.accept_review(review,**kwargs).review_mode,'full_video')
+        self.assertEqual(q.accept_review(review,**kwargs).evidence_mode,'video_audio')
         for changes in ({'status':'FAILED'},{'client_version':'2'},{'result_hash':'3'*64}):
             with self.assertRaises(StudioError) as caught:q.record_video_probe({**probe,**changes})
             self.assertEqual(caught.exception.code,'EVIDENCE_CONFLICT')
@@ -549,7 +559,7 @@ class ReviewFixTests(unittest.TestCase):
 
     def test_video_review_requires_real_material_and_never_self_attests(self):
         q,probe,review,kwargs=self.video_fixture();q.record_video_probe(probe)
-        self.assert_unverified(q,{**review,'materials_actually_reviewed':['receipt.json']},kwargs)
+        self.assert_unverified(q,{**review,'subject_hash':'f'*64,'render_hash':'f'*64},kwargs)
         self.assert_unverified(q,review,{**kwargs,'video_artifact':None})
         simulated=kwargs['video_artifact'].model_copy(update={'simulated':True})
         self.assert_unverified(q,review,{**kwargs,'video_artifact':simulated})
@@ -588,6 +598,365 @@ with patch('app.multi_ai_v2.RunCoordinator') as factory:
                              env=env,capture_output=True,text=True,encoding='utf-8',timeout=30)
             self.assertEqual((p.returncode,json.loads(p.stdout)['status']),(EXIT_CODES[status],status),p.stderr)
             self.assertNotIn('do not disclose',p.stdout)
+
+
+class UnifiedAcceptanceTests(unittest.TestCase):
+    setUp = V2Tests.setUp
+    coordinator = V2Tests.coordinator
+
+    def live_fixture(self):
+        from app.editorial import Coverage
+        from app.v2_acceptance import fingerprint
+        from app.v2_video import CONTROL_FEATURES
+        self.now=datetime(2026,10,20,12,tzinfo=timezone.utc)
+        self.host=Path(self.temp.name)/'host';self.host.mkdir(exist_ok=True)
+        q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+        run=q.create({'topic':'offline delivery fixture'},'delivery')['run_id']
+        q.advance(run,1)
+        task_id=run+'_source_index'
+        with Registry(self.root) as registry:
+            row=registry.db.execute('SELECT * FROM ai_tasks WHERE id=?',(task_id,)).fetchone()
+            attempt=dict(registry.db.execute('SELECT * FROM ai_attempts WHERE id=?',(row['current_attempt'],)).fetchone())
+            task=json.loads(row['payload'])
+            task['expected_output']='review';task['execution_mode']='live'
+            contract=task['context']['v2_contract']
+            contract.update(expected_output_schema='review',provider_profile_id=attempt['profile_id'],requested_model='requested')
+            task['context'].update(edit_plan_version=1,subject_version=1)
+            registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(task),task_id))
+            registry.db.execute("UPDATE ai_v2_runs SET mode='production' WHERE run_id=?",(run,))
+        request_path=self.root/Path(attempt['result_path']).with_name('request.json')
+        request=json.loads(request_path.read_text());request['context']=deepcopy(task['context'])
+        request['expected_output']='review';request['execution_mode']='live'
+        request_path.write_text(json.dumps(request),encoding='utf-8')
+        path=self.root/f'runs/{run}/artifacts/preview.webm';path.parent.mkdir(parents=True)
+        # Opaque bytes only: no MP4, media generation, decoding or real video review.
+        raw=b'opaque delivery integrity fixture';path.write_bytes(raw)
+        artifact=Artifact(artifact_id='render1',run_id=run,version=1,path=path.relative_to(self.root).as_posix(),
+            sha256=hashlib.sha256(raw).hexdigest(),size=len(raw),simulated=False)
+        coverage=Coverage(start_ms=0,end_ms=1000,tracks=['video','audio']).model_dump()
+        review=render_review(artifact)
+        review.update(verdict='ready_for_review',provided_coverage=[coverage],reviewed_coverage=[coverage])
+        binding=dict(provider=attempt['provider'],provider_profile_id=attempt['profile_id'],account_fingerprint='a'*64,
+            client='fixture',client_version='1',requested_model='requested',returned_model='returned',control_video_hash='1'*64)
+        cap={'evidence_id':'cap1','binding':binding,'expected_features':CONTROL_FEATURES,'observed_features':CONTROL_FEATURES}
+        cap_path=self.host/'cap.json';cap_path.write_text(json.dumps(cap),encoding='utf-8')
+        q.record_video_probe(dict(evidence_id='cap1',**binding,result_hash=hashlib.sha256(cap_path.read_bytes()).hexdigest(),
+            checked_at=self.now.isoformat(),expires_at=(self.now+timedelta(hours=1)).isoformat(),status='VERIFIED',evidence_refs=['cap.json']))
+        delivery=dict(delivery_id='delivery1',task_id=task_id,run_id=run,attempt_id=attempt['id'],evidence_id='cap1',**binding,
+            video_artifact_id=artifact.artifact_id,video_artifact_path=artifact.path,video_artifact_sha256=artifact.sha256,
+            video_artifact_size=artifact.size,input_version=contract['input_version'],input_hashes=contract['input_hashes'],
+            edit_plan_version=1,delivered_coverage=[coverage],review_payload_sha256=fingerprint(Review.model_validate(review).model_dump()),
+            requested_at=(self.now-timedelta(seconds=10)).isoformat(),completed_at=self.now.isoformat(),
+            expires_at=(self.now+timedelta(minutes=30)).isoformat(),receipt_ref='delivery.json',receipt_sha256='0'*64)
+        self.sign_delivery(delivery)
+        envelope=Result(task_id=task_id,run_id=run,acceptance_key=attempt['id'],expected_output_schema='review',
+            payload=review,input_version=contract['input_version'],input_hashes=contract['input_hashes'],
+            artifacts=[artifact],simulated=False,host_review_delivery=delivery).model_dump()
+        class LiveFixture:
+            is_live=True
+            is_simulated=False
+            def start(self,*args):raise AssertionError('No live worker may start')
+            def poll(self,handle):return [self.event]
+            def cancel(self,handle):return None
+        adapter=LiveFixture();adapter.event={'type':'completed','result':review,'host_metadata':envelope}
+        q.queue.adapters[attempt['provider']]=adapter
+        return q,envelope,adapter,attempt
+
+    def sign_delivery(self,delivery):
+        from app.v2_contracts import HostReviewDelivery
+        delivery.update(HostReviewDelivery.model_validate(delivery).model_dump())
+        body={k:v for k,v in delivery.items() if k not in {'receipt_ref','receipt_sha256'}}
+        path=self.host/delivery['receipt_ref'];path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps(body),encoding='utf-8')
+        delivery['receipt_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def assert_poll_rejected(self,q,attempt):
+        q.queue._poll()
+        with Registry(self.root) as registry:
+            task=registry.db.execute('SELECT * FROM ai_tasks WHERE id=?',(attempt['task_id'],)).fetchone()
+            self.assertEqual(task['status'],'failed',task['error'])
+            self.assertIsNone(task['result'])
+            self.assertEqual(registry.db.execute('SELECT status FROM ai_attempts WHERE id=?',(attempt['id'],)).fetchone()[0],'failed')
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+        self.assertFalse((self.root/attempt['result_path']).exists())
+
+    def test_automatic_live_completion_without_host_envelope_fails_before_publication(self):
+        q,value,adapter,attempt=self.live_fixture()
+        adapter.event.pop('host_metadata')
+        self.assert_poll_rejected(q,attempt)
+
+    def test_model_envelope_and_evidence_fields_are_never_host_metadata(self):
+        q,value,adapter,attempt=self.live_fixture()
+        adapter.event['result']={**value['payload'],'VideoEvidence':{'status':'VERIFIED'},'host_review_delivery':value['host_review_delivery']}
+        self.assert_poll_rejected(q,attempt)
+
+    def test_valid_creative_review_without_trusted_delivery_is_rejected(self):
+        q,value,adapter,attempt=self.live_fixture()
+        value['host_review_delivery']=None
+        self.assert_poll_rejected(q,attempt)
+
+    def test_automatic_review_rejects_other_task_run_and_attempt(self):
+        base=self.root
+        for field in ('task_id','run_id','acceptance_key'):
+            with self.subTest(field=field):
+                self.root=base/field
+                q,value,adapter,attempt=self.live_fixture()
+                value[field]='other'
+                self.assert_poll_rejected(q,attempt);q.close()
+
+    def test_delivery_rejects_other_video_hash_even_with_new_receipt_hash(self):
+        q,value,adapter,attempt=self.live_fixture()
+        delivery=value['host_review_delivery'];delivery['video_artifact_sha256']='f'*64;self.sign_delivery(delivery)
+        self.assert_poll_rejected(q,attempt)
+
+    def test_valid_capability_cannot_rescue_expired_delivery(self):
+        q,value,adapter,attempt=self.live_fixture()
+        delivery=value['host_review_delivery']
+        delivery.update(requested_at=(self.now-timedelta(minutes=3)).isoformat(),
+            completed_at=(self.now-timedelta(minutes=2)).isoformat(),expires_at=(self.now-timedelta(seconds=1)).isoformat())
+        self.sign_delivery(delivery)
+        self.assert_poll_rejected(q,attempt)
+
+    def test_valid_automatic_review_is_accepted_once_and_replays_after_restart(self):
+        q,value,adapter,attempt=self.live_fixture()
+        q.queue._poll()
+        with Registry(self.root) as registry:
+            row=registry.db.execute('SELECT * FROM ai_tasks WHERE id=?',(attempt['task_id'],)).fetchone()
+            self.assertEqual(row['status'],'completed')
+            accepted=json.loads(row['result'])
+            self.assertEqual(accepted['v2_artifacts'],value['artifacts'])
+            self.assertEqual(accepted['v2_host_delivery'],value['host_review_delivery'])
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],1)
+        q.queue._runs[attempt['id']]=(attempt['provider'],'duplicate_event');q.queue._poll()
+        q.close();q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+        self.assertEqual(q.accept_result(value),accepted['v2_acceptance'])
+        self.assertEqual(q.accepted_artifacts(value['task_id']),value['artifacts'])
+        changed=deepcopy(value);changed['artifacts'].append(q.store.put_json(value['run_id'],{'fixture':1},simulated=False).model_dump())
+        with self.assertRaises(StudioError) as caught:q.accept_result(changed)
+        self.assertEqual(caught.exception.code,'IDEMPOTENCY_CONFLICT')
+        changed=deepcopy(value);changed['payload']['review_id']='another_review'
+        with self.assertRaises(StudioError) as caught:q.accept_result(changed)
+        self.assertEqual(caught.exception.code,'IDEMPOTENCY_CONFLICT')
+        with Registry(self.root) as registry:
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],1)
+
+    def test_manual_review_uses_identical_delivery_and_editorial_gate(self):
+        q,value,adapter,attempt=self.live_fixture()
+        with patch.object(q.result_gate,'_review_context',wraps=q.result_gate._review_context) as gate:
+            q.accept_result(value)
+            self.assertEqual(gate.call_count,2)  # Before write and again at queue acceptance.
+        self.assertEqual(q.accepted_artifacts(value['task_id']),value['artifacts'])
+
+    def test_manual_review_with_no_delivery_cannot_publish(self):
+        q,value,adapter,attempt=self.live_fixture()
+        value['host_review_delivery']=None
+        with self.assertRaisesRegex(StudioError,'host delivery'):q.accept_result(value)
+        with Registry(self.root) as registry:
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+        self.assertFalse((self.root/attempt['result_path']).exists())
+
+    def test_readonly_accept_review_cannot_complete_task_or_register_artifact(self):
+        q,value,adapter,attempt=self.live_fixture()
+        delivery=value['host_review_delivery']
+        from app.v2_video import BINDING_FIELDS
+        artifact=Artifact.model_validate(value['artifacts'][0])
+        result=q.accept_review(value['payload'],evidence_id='cap1',video_artifact=artifact,
+            **{f:delivery[f] for f in BINDING_FIELDS})
+        self.assertEqual(result.evidence_mode,'video_audio')
+        with Registry(self.root) as registry:
+            self.assertEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'running')
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+        self.assertFalse((self.root/attempt['result_path']).exists())
+
+    def test_delivery_payload_coverage_and_current_plan_are_bound(self):
+        from app.v2_acceptance import fingerprint
+        base=self.root
+        for change in ('payload','coverage','plan','revoked','receipt','client'):
+            with self.subTest(change=change):
+                self.root=base/change;q,value,adapter,attempt=self.live_fixture()
+                delivery=value['host_review_delivery']
+                if change=='payload':
+                    value['payload']['verdict']='needs_review'
+                    adapter.event['result']=value['payload']
+                elif change=='coverage':
+                    value['payload']['reviewed_coverage'][0]['end_ms']=2000
+                    delivery['review_payload_sha256']=fingerprint(value['payload']);self.sign_delivery(delivery)
+                    adapter.event['result']=value['payload']
+                elif change=='plan':
+                    with Registry(self.root) as registry:
+                        row=registry.db.execute('SELECT payload FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+                        task=json.loads(row[0]);task['context']['edit_plan_version']=2
+                        registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(task),value['task_id']))
+                elif change=='revoked':q.revoke_video_delivery(delivery['delivery_id'],'fixture revocation')
+                elif change=='receipt':(self.host/delivery['receipt_ref']).write_text('{}')
+                elif change=='client':delivery['client_version']='different';self.sign_delivery(delivery)
+                self.assert_poll_rejected(q,attempt);q.close()
+
+    def test_replay_rechecks_missing_and_changed_accepted_files(self):
+        q,value,adapter,attempt=self.live_fixture();q.queue._poll();q.close()
+        q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+        path=self.root/value['artifacts'][0]['path'];raw=path.read_bytes();path.write_bytes(b'tampered')
+        with self.assertRaises(ValueError):q.accept_result(value)
+        path.write_bytes(raw);path.unlink()  # Only this temporary fixture.
+        with self.assertRaises(ValueError):q.accept_result(value)
+        with self.assertRaises(ValueError):q.accepted_artifacts(value['task_id'])
+
+    def test_recovery_cannot_bypass_gate_with_an_ungated_completion_file(self):
+        q,value,adapter,attempt=self.live_fixture()
+        from app.v2_acceptance import fingerprint
+        path=self.root/attempt['result_path']
+        path.write_text(json.dumps({'task_id':value['task_id'],'attempt_id':attempt['id'],
+            'payload':value['payload'],'payload_sha256':fingerprint(value['payload']),
+            'simulated':False,'input_versions':value['input_hashes']}),encoding='utf-8')
+        q.close();q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+        with Registry(self.root) as registry:
+            self.assertNotEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'completed')
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+
+    def test_fake_review_never_claims_full_video_or_creative_readiness(self):
+        q=self.coordinator();run=q.create({'topic':'simulation'},'fake')['run_id'];q.advance(run,30)
+        with Registry(self.root) as registry:
+            result=json.loads(registry.db.execute('SELECT result FROM ai_tasks WHERE id=?',(run+'_editorial_qa',)).fetchone()[0])
+            review=Review.model_validate(result['payload'])
+        self.assertTrue(review.simulated)
+        self.assertNotEqual(review.verdict,'ready_for_review')
+        self.assertNotEqual(review.evidence_mode,'video_audio')
+        self.assertIsNone(result['v2_host_delivery'])
+
+    def test_context_pack_uses_only_accepted_artifact_metadata_after_restart(self):
+        q,value=ReviewFixTests.result_fixture(self)
+        value['payload']['text']=json.dumps({'artifacts':[{'path':'untrusted-model-path'}]})
+        q.accept_result(value);q.close();q=self.coordinator();q.advance(value['run_id'],1)
+        with Registry(self.root) as registry:
+            parent=json.loads(registry.db.execute('SELECT result FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0])
+            attempt=registry.db.execute('SELECT result_path FROM ai_attempts WHERE task_id=?',
+                (value['run_id']+'_canon_build',)).fetchone()[0]
+        context=json.loads((self.root/Path(attempt).with_name('request.json')).read_text())['context']
+        self.assertEqual(context['input_artifacts'],parent['v2_artifacts'])
+        self.assertEqual(context['accepted_state'][value['task_id']],parent['v2_acceptance'])
+        self.assertEqual(json.loads((self.root/context['context_pack']/'input_artifacts.json').read_text()),parent['v2_artifacts'])
+        self.assertNotIn('untrusted-model-path',json.dumps(context['input_artifacts']))
+
+    def test_default_coordinator_retains_legacy_completion_behavior(self):
+        from app.multi_ai import Coordinator
+        root=Path(self.temp.name)/'legacy'
+        with Coordinator(root) as q:
+            self.assertIsNone(q.result_gate)
+            q.enqueue({'task_id':'legacy'});q.resume();q.tick();q.tick()
+            with Registry(root) as registry:
+                result=json.loads(registry.db.execute("SELECT result FROM ai_tasks WHERE id='legacy'").fetchone()[0])
+                self.assertNotIn('v2_acceptance',result)
+                self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],1)
+                self.assertIsNone(registry.db.execute("SELECT name FROM sqlite_master WHERE name='ai_v2_results'").fetchone())
+
+    def test_limited_review_modes_use_editorial_rules_without_video_capability(self):
+        base=self.root
+        for mode in ('metadata_only','contact_sheet','frame_sequence'):
+            with self.subTest(mode=mode):
+                self.root=base/mode;q,value,adapter,attempt=self.live_fixture()
+                coverage=[] if mode=='metadata_only' else [{'start_ms':0,'end_ms':1000,'tracks':['video']}]
+                review=Review.model_validate({**value['payload'],'verdict':'needs_review','evidence_mode':mode,
+                    'provided_coverage':coverage,'reviewed_coverage':coverage}).model_dump()
+                value['payload']=review;value['host_review_delivery']=None;adapter.event['result']=review
+                with Registry(self.root) as registry:
+                    raw=registry.db.execute('SELECT payload FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0]
+                    task=json.loads(raw);task['context'].update(provided_evidence_mode=mode,provided_coverage=coverage)
+                    registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(task),value['task_id']))
+                # Trusted fixture host records actual request delivery, not a model claim.
+                request_path=self.root/Path(attempt['result_path']).with_name('request.json')
+                request=json.loads(request_path.read_text());request['context'].update(provided_evidence_mode=mode,provided_coverage=coverage)
+                request_path.write_text(json.dumps(request))
+                q.revoke_video_probe('cap1','Limited review does not require a video capability')
+                with patch.object(q.video_evidence,'delivery',side_effect=AssertionError('Limited modes must not require full video')):
+                    q.queue._poll()
+                with Registry(self.root) as registry:
+                    row=registry.db.execute('SELECT status,result FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+                    self.assertEqual(row['status'],'completed',row['result'])
+                    self.assertNotEqual(json.loads(row['result'])['payload']['verdict'],'ready_for_review')
+                q.close()
+
+    def test_limited_frames_cannot_claim_audio_review(self):
+        q,value,adapter,attempt=self.live_fixture()
+        review={**value['payload'],'evidence_mode':'frame_sequence','verdict':'needs_review'}
+        value['payload']=review;value['host_review_delivery']=None;adapter.event['result']=review
+        with Registry(self.root) as registry:
+            raw=registry.db.execute('SELECT payload FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0]
+            task=json.loads(raw);task['context'].update(provided_evidence_mode='frame_sequence',provided_coverage=review['provided_coverage'])
+            registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(task),value['task_id']))
+        request_path=self.root/Path(attempt['result_path']).with_name('request.json')
+        request=json.loads(request_path.read_text());request['context'].update(provided_evidence_mode='frame_sequence',provided_coverage=review['provided_coverage'])
+        request_path.write_text(json.dumps(request))
+        self.assert_poll_rejected(q,attempt)
+
+    def test_task_context_cannot_expand_host_recorded_request_delivery(self):
+        q,value,adapter,attempt=self.live_fixture()
+        coverage=[{'start_ms':0,'end_ms':1000,'tracks':['video']}]
+        review=Review.model_validate({**value['payload'],'evidence_mode':'frame_sequence','verdict':'needs_review',
+            'provided_coverage':coverage,'reviewed_coverage':coverage}).model_dump()
+        value['payload']=review;value['host_review_delivery']=None;adapter.event['result']=review
+        with Registry(self.root) as registry:
+            raw=registry.db.execute('SELECT payload FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0]
+            task=json.loads(raw);task['context'].update(provided_evidence_mode='frame_sequence',provided_coverage=coverage)
+            registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(task),value['task_id']))
+        # Persisted host request remains metadata_only with no delivered intervals.
+        self.assert_poll_rejected(q,attempt)
+
+    def test_fake_full_video_review_fails_the_unified_gate(self):
+        q,value=ReviewFixTests.result_fixture(self)
+        artifact=Artifact.model_validate(value['artifacts'][0]);review=render_review(artifact)
+        review['simulated']=True
+        value.update(expected_output_schema='review',payload=review)
+        with Registry(self.root) as registry:
+            row=registry.db.execute('SELECT payload FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+            task=json.loads(row[0]);task['expected_output']='review';task['context']['v2_contract']['expected_output_schema']='review'
+            registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(task),value['task_id']))
+            attempt=registry.db.execute('SELECT result_path FROM ai_attempts WHERE id=?',(value['acceptance_key'],)).fetchone()[0]
+        path=self.root/Path(attempt).with_name('request.json');request=json.loads(path.read_text())
+        request['context']=task['context'];path.write_text(json.dumps(request))
+        with self.assertRaises(StudioError) as caught:q.accept_result(value)
+        self.assertEqual(caught.exception.code,'VIDEO_CAPABILITY_UNVERIFIED')
+
+    def test_unexpected_gate_exception_and_malformed_gate_output_fail_closed(self):
+        from app.multi_ai import Coordinator
+        for name,gate in [('exception',lambda *args: (_ for _ in ()).throw(RuntimeError('fixture'))),
+                          ('malformed',lambda *args:{'payload':{}})]:
+            root=Path(self.temp.name)/name
+            with Coordinator(root,result_gate=gate) as q:
+                q.enqueue({'task_id':'failure'});q.resume();q.tick();q.tick()
+                with Registry(root) as registry:
+                    row=registry.db.execute("SELECT status,result FROM ai_tasks WHERE id='failure'").fetchone()
+                    self.assertEqual(row['status'],'failed');self.assertIsNone(row['result'])
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+                self.assertEqual(list(root.rglob('completed.json')),[])
+
+    def test_context_handoff_detects_changed_accepted_metadata(self):
+        q,value=ReviewFixTests.result_fixture(self);q.accept_result(value)
+        with Registry(self.root) as registry:
+            raw=registry.db.execute('SELECT result FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0]
+            stored=json.loads(raw);stored['v2_artifacts']=[]
+            registry.db.execute('UPDATE ai_tasks SET result=? WHERE id=?',(json.dumps(stored),value['task_id']))
+        with self.assertRaises(StudioError):q.accepted_artifacts(value['task_id'])
+
+    def test_render_ready_cannot_bypass_delivery_by_changing_evidence_mode(self):
+        q,value,adapter,attempt=self.live_fixture()
+        value['payload']['evidence_mode']='human_review'
+        value['host_review_delivery']=None;adapter.event['result']=value['payload']
+        self.assert_poll_rejected(q,attempt)
+
+    def test_live_review_and_delivery_cannot_borrow_simulated_coverage(self):
+        from app.v2_acceptance import fingerprint
+        base=self.root
+        for location in ('review','delivery'):
+            with self.subTest(location=location):
+                self.root=base/location;q,value,adapter,attempt=self.live_fixture()
+                delivery=value['host_review_delivery']
+                if location=='review':
+                    value['payload']['reviewed_coverage'][0]['simulated']=True
+                    adapter.event['result']=value['payload']
+                    delivery['review_payload_sha256']=fingerprint(value['payload'])
+                else:delivery['delivered_coverage'][0]['simulated']=True
+                self.sign_delivery(delivery)
+                self.assert_poll_rejected(q,attempt);q.close()
 
 
 if __name__ == '__main__': unittest.main()

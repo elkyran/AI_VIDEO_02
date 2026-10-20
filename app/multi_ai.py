@@ -750,8 +750,17 @@ class Coordinator:
         os.replace(temporary, path)
 
     def _gate_result(self, registry, attempt, payload, host_metadata):
-        row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (attempt['task_id'],)).fetchone()
-        return self.result_gate(registry, row, self._task(row), attempt, payload, host_metadata)
+        try:
+            row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (attempt['task_id'],)).fetchone()
+            gated = self.result_gate(registry, row, self._task(row), attempt, payload, host_metadata)
+            if not isinstance(gated, dict) or any(not isinstance(gated.get(k), dict) for k in
+                    ('payload', 'context', 'host_metadata', 'result_metadata')):
+                raise StudioError('RESULT_GATE_REJECTED', 'Result gate returned invalid completion metadata')
+            return gated
+        except (ValueError, OSError, StudioError):
+            raise
+        except Exception as exc:
+            raise StudioError('RESULT_GATE_REJECTED', f'Result gate failed: {type(exc).__name__}') from exc
 
     def _complete(self, registry, attempt, payload, host_metadata=None):
         """One completion path; a configured host gate runs before any publication."""
@@ -793,6 +802,8 @@ class Coordinator:
         request = json.loads(path.with_name("request.json").read_text(encoding="utf-8"))
         # Revalidate on recovery too. A persisted completion is never a gate bypass.
         gated = self._gate_result(registry, attempt, envelope.get('payload'), envelope.get('host_metadata')) if self.result_gate else None
+        if gated and (gated['payload'] != envelope.get('payload') or gated['host_metadata'] != envelope.get('host_metadata')):
+            raise StudioError('ARTIFACT_INVALID', 'Completion differs from normalized host gate output')
         if envelope.get("attempt_id") != attempt_id or envelope.get("task_id") != task["task_id"] or envelope.get("payload_sha256") != _hash(envelope.get("payload")):
             raise StudioError("ARTIFACT_INVALID", "Completed result identity/hash mismatch")
         simulated = envelope.get("simulated")

@@ -331,6 +331,8 @@ class RunCoordinator:
             with Registry(self.root) as registry:
                 self.video_evidence.accept(registry, evidence_id, binding, video_artifact,
                                            [video_artifact.path] if hasattr(video_artifact, 'path') else [])
+            if review.render_hash != video_artifact.sha256 or review.render_id != video_artifact.artifact_id:
+                raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Review refers to another video artifact')
         return review
 
     def revoke_video_delivery(self, delivery_id, reason):

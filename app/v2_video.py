@@ -101,6 +101,8 @@ class VideoEvidence:
             if result.simulated or result.host_review_delivery is None:
                 raise ValueError('A real review needs a separate host delivery envelope')
             delivery = HostReviewDelivery.model_validate(result.host_review_delivery)
+            if any(c.simulated for c in delivery.delivered_coverage):
+                raise ValueError('Live delivery cannot attest simulated coverage')
             if registry.db.execute('SELECT 1 FROM ai_v2_delivery_revocations WHERE delivery_id=?',
                                    (delivery.delivery_id,)).fetchone():
                 raise ValueError('Delivery was revoked')

@@ -19,7 +19,15 @@ class V2ResultGate:
     def _context(self, task, attempt):
         path = workspace_path(self.root, Path(attempt['result_path']).with_name('request.json').as_posix())
         requested = json.loads(path.read_text(encoding='utf-8'))
-        return {**requested['context'], **task['context']}, requested
+        context = {**requested['context'], **task['context']}
+        # Current task bindings can become stale, but cannot expand media that
+        # the host actually delivered in this request. Full-video receipts are
+        # checked separately before authorizing any later delivery.
+        for key in ('provided_evidence_mode', 'provided_coverage', 'asset_delivery', 'human_review_authorized'):
+            context.pop(key, None)
+            if key in requested['context']:
+                context[key] = requested['context'][key]
+        return context, requested
 
     def __call__(self, registry, row, task, attempt, payload, host_metadata):
         if row is None:
@@ -63,10 +71,18 @@ class V2ResultGate:
             raise StudioError('RESULT_NOT_CURRENT', 'Attempt is not in an acceptable state')
         if json.loads(attempt['input_versions']) != result.input_hashes:
             raise StudioError('STALE_RESULT', 'Attempt input hashes are stale')
+        if previous:
+            from .ai_cli_runtime import SCHEMAS
+            canonical_payload = SCHEMAS[result.expected_output_schema].model_validate(result.payload).model_dump()
+            candidate = result.model_copy(update={'payload': canonical_payload})
+            if previous['result_sha256'] != fingerprint(candidate.model_dump()):
+                raise StudioError('IDEMPOTENCY_CONFLICT', 'Accepted result is immutable')
         for artifact in result.artifacts:
             self.store.verify(artifact)
         if result.expected_output_schema == 'review':
             review = Review.model_validate(result.payload)
+            if not result.simulated and any(c.simulated for c in review.provided_coverage + review.reviewed_coverage):
+                raise StudioError('ARTIFACT_INVALID', 'Live review cannot use simulated coverage')
             if review.subject_type == 'render' and (review.evidence_mode == 'video_audio' or review.verdict == 'ready_for_review'):
                 context = self._review_context(registry, result, contract, task, attempt, context)
         normalized = validate_result(result.expected_output_schema, result.payload, context)
@@ -84,6 +100,9 @@ class V2ResultGate:
                 raise StudioError('IDEMPOTENCY_CONFLICT', 'Accepted artifact/delivery metadata changed')
             if content_hash(workspace_path(self.root, stored['path'])) != stored['sha256']:
                 raise StudioError('ARTIFACT_INVALID', 'Accepted completion changed')
+            completion = json.loads(workspace_path(self.root, stored['path']).read_text(encoding='utf-8'))
+            if completion.get('host_metadata') != result.model_dump():
+                raise StudioError('IDEMPOTENCY_CONFLICT', 'Replay differs from immutable completion metadata')
         return {'payload': normalized, 'context': context, 'host_metadata': result.model_dump(),
                 'result_metadata': {'v2_acceptance': accepted,
                     'v2_artifacts': [a.model_dump() for a in result.artifacts],
@@ -95,6 +114,16 @@ class V2ResultGate:
         result = json.loads(row['result'])
         if not result.get('v2_acceptance') or 'v2_artifacts' not in result:
             raise StudioError('RESULT_NOT_ACCEPTED', 'Dependency has no trusted v2 artifact metadata')
+        path = workspace_path(self.root, result['path'])
+        if content_hash(path) != result['sha256']:
+            raise StudioError('ARTIFACT_INVALID', 'Accepted dependency completion changed')
+        completion = json.loads(path.read_text(encoding='utf-8'))
+        host = Result.model_validate(completion['host_metadata'])
+        if (host.task_id != row['id'] or host.run_id != row['project_id']
+                or fingerprint(host.model_dump()) != result['v2_acceptance']['result_sha256']
+                or result['v2_artifacts'] != [a.model_dump() for a in host.artifacts]
+                or result.get('v2_host_delivery') != (host.host_review_delivery.model_dump() if host.host_review_delivery else None)):
+            raise StudioError('ARTIFACT_INVALID', 'Accepted dependency metadata differs from immutable completion')
         artifacts = [Artifact.model_validate(a) for a in result['v2_artifacts']]
         for artifact in artifacts:
             if artifact.run_id != row['project_id'] or artifact.simulated is not result['simulated']:
