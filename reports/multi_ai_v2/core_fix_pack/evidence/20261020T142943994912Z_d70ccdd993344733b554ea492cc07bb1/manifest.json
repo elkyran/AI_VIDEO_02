@@ -1,0 +1,365 @@
+{
+  "git_commit_sha": "abb2552fa40b6d2c8794e4c581ddfe39bf7a503b",
+  "git_tree_sha": "3f910329e75a48df08f3b3fc1cfd3238d43ce510",
+  "branch": "feature/multi-ai-coordinator-v2",
+  "dirty": true,
+  "dirty_state": [
+    " M tests/test_multi_ai_v2.py"
+  ],
+  "revision": "source-sha256:59dd9ca806ec20cf0d94024b5971d2df8e270d3a616593bcc425cefb8e72dbdc",
+  "source_manifest_sha256": "59dd9ca806ec20cf0d94024b5971d2df8e270d3a616593bcc425cefb8e72dbdc",
+  "schema_manifest_sha256": "42a6be7129325f52638f9cc87fd7e4fc1f73befd498d7d71a63857e528a7983b",
+  "source_hashes": {
+    ".env.example": "9a1d2ab59249e7d6fec39a8424286d6ca127879c73d197723e4265c315012bca",
+    "app/__init__.py": "280fe5a121432eb0d9cca54cf7211252e4ef235154cb2a9d3f1d5c1d2fc62463",
+    "app/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "app/ai_accounts.py": "1c092ef961c073c6f489b2777c8e39ef69c3160e801a85622e816eb08d341677",
+    "app/ai_adapters.py": "81228743d26ff6a8807e3bbb2ef750d5ffbde2913d8d634f70f61353d08a715b",
+    "app/ai_cli_runtime.py": "7f1f36c8edc211c8488518ec896d448377d31488381344f7265af051989e9480",
+    "app/ai_client_discovery.py": "60906c4d4fdcfc684492e446465495f4bd23044593b124821b399c39b128eac0",
+    "app/ai_codex_diagnostics.py": "5f3b9e371f69e4e37d1a88177c891c56b527656d93655553695dc535ec468063",
+    "app/cli.py": "a6d53131881859d04038f653254c925c6da6ae0dab7a058cebc8950219c7c222",
+    "app/code_map.py": "937e2c732563aa958476e1d42c7ff43a255876871afdd14c18123ddcaa1e94ce",
+    "app/contracts.py": "17b36f82cbcd5bce06e4c79f7ccbaaa953603c054fbaae88c6ef1c90c541d79e",
+    "app/development.py": "46eb09da1fa04aacf96a2e13e216d91406df5f84d63a8cf9006364382d9d0494",
+    "app/editorial.py": "065f6ea325fb2e06521d377710eeaa56330afd70908a96ac7c2b8d50798ac91d",
+    "app/exchange.py": "0227c61916f486e8c801ee4d088e1f1315ea3ee925bbec019f698c1b340a415b",
+    "app/gemini_free_route.py": "7a6a0f2de09d47b1eb5717c8e85a36e34bb80e4eb58699e7921380a9964d373f",
+    "app/jobs.py": "2ab25a51d4e6d1e43fe7a2d11b0214a0daf6330ecc2031de308ba834c7ee7c20",
+    "app/library.py": "6fa5ada14a79a0507b1a112ef62d4fbe0a82c63d8a7b4da844696e824dd956f5",
+    "app/mcp_server.py": "186fa32bbe18e4f17c97bc547fb590bb8485cc9a8edb6d9e7557050470f9ed1c",
+    "app/media.py": "0489d84138028bedcfb143b448bcc1e9dcf316454dcd1fec3223c706e8b341d3",
+    "app/multi_ai.py": "c9337f545fe8a81fd744050413477ff7890ac111682cbb1c43e297ef62648285",
+    "app/multi_ai_preview.py": "4d0bccebe22849327afe288e7d0fb2b3a477bbba028c122d6bf650d67524f1f6",
+    "app/multi_ai_ui.py": "3e4405da0d8fa711b33e995dfe8be9dbd99f034703ee2c1b0111c6d37a1bf508",
+    "app/multi_ai_v2.py": "a3956ad455214a5992437dac296daa09f1fbfe0837fd61a7cae6c5fc07cb9ef4",
+    "app/operations.py": "a8ded710b61f42625f8db6d696b3d02486a449fc07137ff9e0f414e09d39e15e",
+    "app/production_bridge.py": "40e5748df366c9183d906d409c1dc453e376cd4d35fade24e8d09fffe20c9800",
+    "app/production_profile.py": "895bbebcacbd3d026a91b45f00df47cc91f103930ef4fe6b160d649ab1a5dd47",
+    "app/project_memory.py": "142bb6512e721f5089ac0ed88fc4fc2cd5e34224cc01f42bf6c63796d6c7f678",
+    "app/registry.py": "7094f2e1fb406f2f70a74ab435cba3997c68fd7e58255168c549cbd74cb821a1",
+    "app/review.py": "a624607aebf25b0baace99bdee06ebcb5818d3b5902ed07eef91e73804ff32f9",
+    "app/speech_review.py": "5954dba80d7e252c04eca82cc3f634dd08f5e3b8a902880010b004abaa2b275a",
+    "app/timeline.py": "6b7f8f550b07505460b57cfe7cb5b77972e00cadb536447473ced3a2981bbd55",
+    "app/tts.py": "68e5d6b7eae430c834de9ae76a134d7744f61303821a39903e8197b9525c8422",
+    "app/v2_contracts.py": "4a483bfbe0be9962b253918c864dce7da06c4e22ed13632336c7e03c40ba7209",
+    "app/v2_storage.py": "0c9539b650ad5d94cff5c29a507c5d7f8fdbfe974d5f9684d3d0306339ca75a6",
+    "app/worker.py": "8e27f13c95d2da5d8edcd11063a7dce97b119aaa53d20d8f14bbeee87a6d8169",
+    "config/multi_ai_v2_schemas/artifact.schema.json": "ec65898ba3a9194c52734c9f9f3f32f98308f5281118e4873c4c035c1ba5f391",
+    "config/multi_ai_v2_schemas/brief.schema.json": "38840994e231627307d6e60ec72b5f662861ecd11531a93c3756100202485e08",
+    "config/multi_ai_v2_schemas/edit_plan.schema.json": "5ac6c57d5fa8a4fbb45e148f28ba2066463763af7a9109245a031c14ada6a75f",
+    "config/multi_ai_v2_schemas/result.schema.json": "efe387bbec010c6924144cfb107b7ae0814948a6f7f15bba58bb5f8d8ce116e9",
+    "config/multi_ai_v2_schemas/review.schema.json": "7ff587ff4e57be2196da143c7ebe4dd383048e98f83f2dd831f0baa96a5e5e21",
+    "config/multi_ai_v2_schemas/scene.schema.json": "a29d84323e3ea164a501fe9cb468485c1ccca55c97731cad3b03ef79577bdcbf",
+    "config/multi_ai_v2_schemas/task.schema.json": "808b2b6706c33d7ec2d824fc4eec3015c47b19e88a2276c127aaf9d879bc5a90",
+    "config/production_profile.json": "b7383a73219f5921b7f1420d62bde63fef4df45c59263463d10ab67b9ab31c7f",
+    "pyproject.toml": "01089b5d1f9132b9feb01d6eb1cabb7ebafadb4f3908e3091eb4b52818f8855f",
+    "scripts/__init__.py": "2844e1349fd80e40cda0e678335cc349d4f78ba0cc54f5a2965b81cc4a756320",
+    "scripts/bootstrap.ps1": "a4d0a39c3397849a11f625484e4cb87f5722cdb80515779a99cb0d4f165dba20",
+    "scripts/check_git_export.py": "5141355c7c6951de885366995e3b2ee387a5c85ac1b2520df51e2fc6e7cf20c6",
+    "scripts/check_multi_ai.py": "9ef8ac4bbdef73210f3a947cb544662d36746be4274f8698e52314a50015d8a3",
+    "scripts/check_multi_ai_render.py": "9566f0b0740622194b636f70375fb1392b3486ca41a3fcc53a44c675d0511ab2",
+    "scripts/check_multi_ai_v2.py": "4b68b4ffe4a67228313f5f7e92b9e37c375ea49fc4fc3b111328091ee5109966",
+    "scripts/check_narration.py": "55c7adc5c7d8b16856112e7128d3bfddcd471419bc3f8ff1a55c550b3f165199",
+    "scripts/dispatch_multi_ai_v2.py": "b5f88d7ae5d7a6ff34877440817dd9061c05ad5b1cf383a0033015cee85a0f13",
+    "scripts/export_multi_ai_v2_schemas.py": "1bea1770faf0fc22c14daf85c517e97fd2c316c8ecf8d8989665f97b92610f5f",
+    "scripts/fit_narration.py": "304f8be3145f8931d3d9b676e4f7945926d2a00426b6e17f64d9b09ebca39f3f",
+    "scripts/healthcheck.ps1": "50643b4eb191912ead104c05773d11b3ef23af870a565202f535d38253246009",
+    "scripts/healthcheck_multi_ai_v2.py": "1bdf17a9f996718457b28b08f019e43d9a79ec5e64aaab08cec3bd31e976f282",
+    "scripts/install-runner-task.ps1": "7d3c8e95358dde95551e586c445a7cfaf6a5fceb0f63f39a8bde46bb7f7ea88d",
+    "scripts/preflight_speech.py": "0d6ba0d3e2db7577d44758980d851d0efe7dbb59270fa7d951ee1ba2412a7c79",
+    "scripts/prepare_pilot.py": "9ab19a1d82a025e83c9a144239f41daea04176ef6a3893acdce4ea759685f6b1",
+    "scripts/probe_multi_ai_v2.py": "4948b6108952edf127e113d6e5cb0986b0759e1f3c6057440c2ce458861a0c86",
+    "scripts/render_project.py": "39f30371662835aa19cea0b65814f362f554cd1c1b7f3048bd7735d2658272ff",
+    "scripts/replace_narration.py": "8af843601eeac11a42339a1b54ad7c3368e207997bd7eef84653c417ddfd73d6",
+    "scripts/seed_demo.py": "31b3f66d60d45d06e825ab9852a415fa80b915c35d0b3ff64fc1786d7a3d05e1",
+    "scripts/setup.ps1": "dbcb3932967149b7ae0b1119e6bd0693357b31483d274a20b6d69570d421f213",
+    "scripts/speech_model_identity.py": "39ebe841d907cddb9309824350327cefc8c7bbb1d673656843d1b755c8497bcd",
+    "scripts/start-coordinator.ps1": "afe7c530954b2873504969f65a43c7264692741c1ba60242d3ff7214dc21bf5a",
+    "scripts/synthesize_pilot.py": "8807100f08df6ceecd8c7e0c460e5472da046870687d9bbc6dbd9e75ffbf548b",
+    "scripts/synthesize_script.py": "8d1ec75f12d2a023846ceb63f18752b1aaa55631cb9b5fb2c92e45fc91930d98",
+    "scripts/transcribe_audio.py": "d83fdf64989d05a66fbb83f0038e40589df01acf25216608b27e1673a79bc388",
+    "scripts/uninstall-runner.ps1": "bf87812847afc3433e50062d8980e3005d48a4069ff92a7891001753497491de",
+    "tests/test_ai_accounts.py": "ecd819fae07e8d2e9179c153caa1e08f0220c9152f3390e981bee6211f6a9aba",
+    "tests/test_ai_adapters.py": "204e7b37200354adbe80836dcffcad10e758d010f0117781b66b70d9fbd3eac5",
+    "tests/test_ai_cli_runtime.py": "94f4335c0600db078566119c79298af246509e3e4922ec75d1fcd11905b22b4a",
+    "tests/test_ai_codex_diagnostics.py": "bbe073d675c5b76cbd19e56c519d21b1531eaa495aaa9066d8f12219c0af8201",
+    "tests/test_asr.py": "9c2db353ae1afd987a68fbf663ed741a233a1ad62096d0e8a5063188392cf4d9",
+    "tests/test_asr_runtime.py": "080b3e773ef72d66ed306ab3cd5fd576542e6c20955860b5d1cb6e8cee28d95a",
+    "tests/test_cli.py": "78adff4cfea24424200ed8ddcb5ba4c146f4ce2fb263323f482bbcc41dfe3412",
+    "tests/test_code_map.py": "d530c81ba661eefaeaea431dd93a20e0310f52aeeb940ce5607f1c71da0c7c9a",
+    "tests/test_core.py": "645f251a206bfb423523eab9871ab70d6ae7dd392541707adb9386805a6bfeae",
+    "tests/test_development.py": "68d82e2f6e1333c38d329285a12ffd84b3d40369f52e3ff90f04c99f90721ab9",
+    "tests/test_editorial.py": "c39abfd93f5dee5a39c1e207ead3559a6d2e9ec38285ae417e25a353c2a98abd",
+    "tests/test_exchange.py": "397449efea71b8b534e4dcb7764e149d730faf72dea0b7636778c764a6c952c5",
+    "tests/test_fit_narration.py": "36503e02607e90da3edc8d85a8ddb3d0c09b4e08226eb63afe49a27b51fce06c",
+    "tests/test_gemini_free_route.py": "23b57eb4b2e3f822e0a64934656c58090cc048c5427cc6ae7d902fbf964b2fe0",
+    "tests/test_jobs.py": "d7d5e879ec779cc64190ff797ddcbf6db24de996b7b8b6cfe3a50a735d6cbd9d",
+    "tests/test_library.py": "a03574cb650d684854f521b891df3608e1898aa48627d9fe44cf5ad90417f972",
+    "tests/test_mcp.py": "8e4975b96f8e68bad60659c64f4cdff8b51b4e416a9ae997e01423f62b71c62a",
+    "tests/test_media.py": "2779a8c5b4c22cab701678b209b6388dd19f70dad9459afcb4e81e1a496c9227",
+    "tests/test_multi_ai.py": "100258c79cb12d9995bdcb467bcdc3880260e128512ea96e1836ab338e2127fd",
+    "tests/test_multi_ai_accounts_ui.py": "d3049f0e06a6d90820fb11a42f4f0a4e19b0c9702743da179fc0ebf3bc06e8a4",
+    "tests/test_multi_ai_configuration.py": "fee71e56cb769cdf7be1709947628fc300dab9389337e1851286d3d37857e1e1",
+    "tests/test_multi_ai_preview.py": "74990d75fd5e3f2aa5dc8ca43337a61ca437f37b4fa436752f8cf6a1ab8f382d",
+    "tests/test_multi_ai_ui.py": "a0585c15e5ae0b5c6690a12cdd00eab7ceb2f2a9cd503ea93759e3496cc67ee0",
+    "tests/test_multi_ai_ui_review.py": "8e2622bcf3d82bc0e31c5f5e11735be6649e1a72612b2e0e51aebdc29e046784",
+    "tests/test_multi_ai_v2.py": "7d54094719e17bd5ef9f73478eaa7c2e6f991316ed07b338159a3f432abc296a",
+    "tests/test_multishot.py": "1b2d8c5c06b6f7f7292ce6302de5d00e734b19222f28e51fff27a33d9191a336",
+    "tests/test_overlays.py": "8f44fbb84ee584a76a1073c3cd7534a309abdd1166e809ac2425dba11a4c2ec8",
+    "tests/test_production_bridge.py": "8ebd389bc827b4dc81afea29b2cbe24f244f2c2a7130ed2a6a05aaeeded6ce67",
+    "tests/test_production_profile.py": "de6d930b19a12c51ea9a02030935eba4b8a5d3af69e894c71eb8ac457f399e38",
+    "tests/test_project_memory.py": "0619e6c68e99f85a821aa1dd3d398d406106c7d5484522f143eb22936d9b5a53",
+    "tests/test_quality.py": "cb159121ab5aaae4e3f200ebed7f24cbb2c540691b7b1ac6b2046b8d8d0c51ac",
+    "tests/test_replace_narration.py": "a6166f1850e9e9be8bff0bb06a8cf34755c452b8db461da7b9162944e9305512",
+    "tests/test_speech_review.py": "a62fe6ffd009ccaf9ec485319004243ffe81be3346309a3f07d460bfccce9066",
+    "tests/test_timeline.py": "5cd68a8297daa5ff89477b4f828d25362cfe03980f72a2419ad6c9efeb1d52bc",
+    "tests/test_tts.py": "6e868d9b84a2baeec1a5ac883d108a6539f5e3e904ca5e2a4d05e0ac150623b5"
+  },
+  "schema_hashes": {
+    "config/multi_ai_v2_schemas/artifact.schema.json": "ec65898ba3a9194c52734c9f9f3f32f98308f5281118e4873c4c035c1ba5f391",
+    "config/multi_ai_v2_schemas/brief.schema.json": "38840994e231627307d6e60ec72b5f662861ecd11531a93c3756100202485e08",
+    "config/multi_ai_v2_schemas/edit_plan.schema.json": "5ac6c57d5fa8a4fbb45e148f28ba2066463763af7a9109245a031c14ada6a75f",
+    "config/multi_ai_v2_schemas/result.schema.json": "efe387bbec010c6924144cfb107b7ae0814948a6f7f15bba58bb5f8d8ce116e9",
+    "config/multi_ai_v2_schemas/review.schema.json": "7ff587ff4e57be2196da143c7ebe4dd383048e98f83f2dd831f0baa96a5e5e21",
+    "config/multi_ai_v2_schemas/scene.schema.json": "a29d84323e3ea164a501fe9cb468485c1ccca55c97731cad3b03ef79577bdcbf",
+    "config/multi_ai_v2_schemas/task.schema.json": "808b2b6706c33d7ec2d824fc4eec3015c47b19e88a2276c127aaf9d879bc5a90"
+  },
+  "checked_at": "2026-10-20T14:29:43.994912+00:00",
+  "status": "passed",
+  "invocation": [
+    "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+    "scripts/check_multi_ai_v2.py",
+    "--output",
+    "reports/multi_ai_v2/core_fix_pack/evidence"
+  ],
+  "commands": [
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai_v2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 42.438,
+      "test_count": 27,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_editorial",
+        "tests.test_production_bridge"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.063,
+      "test_count": 14,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai",
+        "tests.test_multi_ai_configuration"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.656,
+      "test_count": 50,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_ai_adapters"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.453,
+      "test_count": 16,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_ai_accounts",
+        "tests.test_ai_cli_runtime",
+        "tests.test_multi_ai_accounts_ui",
+        "tests.test_ai_codex_diagnostics",
+        "tests.test_gemini_free_route"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.656,
+      "test_count": 107,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai_ui",
+        "tests.test_multi_ai_ui_review",
+        "tests.test_multi_ai_preview"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.453,
+      "test_count": 12,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_core",
+        "tests.test_cli",
+        "tests.test_library",
+        "tests.test_exchange",
+        "tests.test_production_profile",
+        "tests.test_quality",
+        "tests.test_asr",
+        "tests.test_asr_runtime",
+        "tests.test_speech_review",
+        "tests.test_fit_narration",
+        "tests.test_multishot.MultiShotContractTests",
+        "tests.test_multishot.ReviewRightsTests",
+        "tests.test_tts.TTSInputTests",
+        "tests.test_tts.SileroContinuityTests",
+        "tests.test_replace_narration.NarrationValidationTests",
+        "tests.test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.406,
+      "test_count": 126,
+      "model_requests": 0,
+      "skipped_count": 1
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-m",
+        "compileall",
+        "-q",
+        "app",
+        "scripts",
+        "tests"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.344,
+      "test_count": null,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-c",
+        "from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.234,
+      "test_count": null,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.078,
+      "test_count": null,
+      "model_requests": 0,
+      "skipped_count": 0
+    }
+  ],
+  "test_count": 352,
+  "skipped_count": 1,
+  "model_requests": 0,
+  "paid_api_requests": 0,
+  "production_started": false,
+  "files": {
+    "adapters.log": {
+      "sha256": "10669c95edb274db8a6f0772b3271226af2b57b89c71b1408655a49e1c47ddca",
+      "bytes": 2712
+    },
+    "check_git_export.log": {
+      "sha256": "0ffa269daf154185920d0cbe46cd6ee1d7f36d642724296cd39bb78357b91039",
+      "bytes": 119
+    },
+    "checks.json": {
+      "sha256": "77d49b8bfed42922f2a9f0934e4ddecc4b57362cf6ddfda0e3c533be0211081b",
+      "bytes": 17838
+    },
+    "compileall.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "contracts.log": {
+      "sha256": "04b1a6a73b80aff3d5062bde83b3b4d54a25bacfd114c4f26fe2b8e7eb2f9301",
+      "bytes": 2674
+    },
+    "diff_check.log": {
+      "sha256": "86e49651991d919edbdb1ac92a0c90a6b2292efaa0e0bd8d15c64a7d9d72870c",
+      "bytes": 118
+    },
+    "legacy.log": {
+      "sha256": "3e1deeb9dce8cc964f4e7e54fbcb21fc080adabf839e0abe7150fc1bef0c7a4b",
+      "bytes": 19537
+    },
+    "mai05.log": {
+      "sha256": "9ac7ea52e332e8494ec0f2499eba0a7f566c2576d19b27f3b668ca75c49bc989",
+      "bytes": 18378
+    },
+    "panel.log": {
+      "sha256": "152f971ef4265068b55b86ee9ca79c68d4e867c87e48ca7090948274f9c745ac",
+      "bytes": 1910
+    },
+    "queue.log": {
+      "sha256": "777e8d4f5b736b69a1959b64d13259c7aa330d4740b3ab6798482f6540d0ee00",
+      "bytes": 8775
+    },
+    "v2.log": {
+      "sha256": "0c53d8466e3064c4c4c020902d716cd1b76d00c1127eff90fb951b40c356a32b",
+      "bytes": 3346
+    }
+  },
+  "manifest_self_hash": "Excluded to avoid self-reference; SHA-256 reported by caller"
+}

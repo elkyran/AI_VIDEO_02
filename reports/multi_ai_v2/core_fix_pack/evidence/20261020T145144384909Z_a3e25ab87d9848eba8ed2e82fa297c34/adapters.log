@@ -1,0 +1,21 @@
+test_budget_rejects_paid_modes_and_explicit_overrides (tests.test_ai_adapters.AdapterTests.test_budget_rejects_paid_modes_and_explicit_overrides) ... ok
+test_cancel_requires_terminal_observation_and_late_result_can_be_tested (tests.test_ai_adapters.AdapterTests.test_cancel_requires_terminal_observation_and_late_result_can_be_tested) ... ok
+test_checkpoint_is_copied_without_shared_chat_or_mutating_input (tests.test_ai_adapters.AdapterTests.test_checkpoint_is_copied_without_shared_chat_or_mutating_input) ... ok
+test_child_environment_does_not_mutate_global_or_source (tests.test_ai_adapters.AdapterTests.test_child_environment_does_not_mutate_global_or_source) ... ok
+test_fake_time_delay_requires_no_sleep_or_subprocess (tests.test_ai_adapters.AdapterTests.test_fake_time_delay_requires_no_sleep_or_subprocess) ... ok
+test_free_route_budget_requires_current_explicit_account_gates (tests.test_ai_adapters.AdapterTests.test_free_route_budget_requires_current_explicit_account_gates) ... ok
+test_full_event_log_retains_sequence_and_redacts_secrets (tests.test_ai_adapters.AdapterTests.test_full_event_log_retains_sequence_and_redacts_secrets) ... ok
+test_nine_positions_do_not_claim_auth_identity_model_or_quota (tests.test_ai_adapters.AdapterTests.test_nine_positions_do_not_claim_auth_identity_model_or_quota) ... ok
+test_optional_version_probe_uses_argument_array_and_clean_env (tests.test_ai_adapters.AdapterTests.test_optional_version_probe_uses_argument_array_and_clean_env) ... ok
+test_probe_only_discovers_paths_by_default (tests.test_ai_adapters.AdapterTests.test_probe_only_discovers_paths_by_default) ... ok
+test_raw_exit_codes_words_and_429_do_not_mean_quota (tests.test_ai_adapters.AdapterTests.test_raw_exit_codes_words_and_429_do_not_mean_quota) ... ok
+test_real_adapters_fail_closed_even_with_forged_ready_profile (tests.test_ai_adapters.AdapterTests.test_real_adapters_fail_closed_even_with_forged_ready_profile) ... ok
+test_sanitizer_handles_nested_tokens_without_dropping_useful_text (tests.test_ai_adapters.AdapterTests.test_sanitizer_handles_nested_tokens_without_dropping_useful_text) ... ok
+test_scripted_attempts_and_context_result_are_repeatable (tests.test_ai_adapters.AdapterTests.test_scripted_attempts_and_context_result_are_repeatable) ... ok
+test_structured_simulated_failure_types_remain_distinct (tests.test_ai_adapters.AdapterTests.test_structured_simulated_failure_types_remain_distinct) ... ok
+test_version_probe_does_not_execute_windows_script_shims (tests.test_ai_adapters.AdapterTests.test_version_probe_does_not_execute_windows_script_shims) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.048s
+
+OK

@@ -1,0 +1,17 @@
+test_host_origin_and_csrf_reject_foreign_requests (tests.test_multi_ai_ui.PanelTests.test_host_origin_and_csrf_reject_foreign_requests) ... ok
+test_loopback_only (tests.test_multi_ai_ui.PanelTests.test_loopback_only) ... ok
+test_only_registered_artifacts_are_downloaded (tests.test_multi_ai_ui.PanelTests.test_only_registered_artifacts_are_downloaded) ... ok
+test_panel_and_actions_survive_browser_reconnect (tests.test_multi_ai_ui.PanelTests.test_panel_and_actions_survive_browser_reconnect) ... ok
+test_sse_replays_only_events_after_cursor (tests.test_multi_ai_ui.PanelTests.test_sse_replays_only_events_after_cursor) ... ok
+test_changed_result_is_not_served_under_its_accepted_identity (tests.test_multi_ai_ui_review.PanelArtifactIntegrityTests.test_changed_result_is_not_served_under_its_accepted_identity) ... ok
+test_missing_metadata_field_is_not_an_artifact_identifier (tests.test_multi_ai_ui_review.PanelArtifactIntegrityTests.test_missing_metadata_field_is_not_an_artifact_identifier) ... ok
+test_completed_child_recovers_result_without_relaunch (tests.test_multi_ai_preview.PreviewProcessTests.test_completed_child_recovers_result_without_relaunch) ... ok
+test_preview_reserves_actual_accepted_director_plan (tests.test_multi_ai_preview.PreviewProcessTests.test_preview_reserves_actual_accepted_director_plan) ... ok
+test_start_is_processless_until_durable_dispatch_poll (tests.test_multi_ai_preview.PreviewProcessTests.test_start_is_processless_until_durable_dispatch_poll) ... ok
+test_stop_terminates_only_owned_python_process_tree (tests.test_multi_ai_preview.PreviewProcessTests.test_stop_terminates_only_owned_python_process_tree) ... ok
+test_unknown_launch_gap_keeps_reservation (tests.test_multi_ai_preview.PreviewProcessTests.test_unknown_launch_gap_keeps_reservation) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 2.628s
+
+OK
