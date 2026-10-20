@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.multi_ai_v2 import RunCoordinator
+from app.multi_ai_v2 import RunCoordinator, EXIT_CODES
 from app.v2_contracts import Brief
 
 
@@ -16,7 +16,7 @@ def request(value):
     return Brief.model_validate(data).model_dump()
 
 
-def main():
+def dispatch():
     root = os.environ.get('LOCAL_RUN_ROOT')
     run_key = 'github_' + os.environ['GITHUB_RUN_ID']
     if not root: raise ValueError('LOCAL_RUN_ROOT is required; no implicit workspace fallback')
@@ -33,7 +33,16 @@ def main():
         with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as stream:
             stream.write('## AI_VIDEO_02\n```json\n' + text + '\n```\n')
     print(text)
-    return 0 if state['status'] == 'SIMULATION_SUCCEEDED' else 2
+    return EXIT_CODES[state['status']]
+
+
+def main():
+    try:
+        return dispatch()
+    except Exception as exc:
+        # Exclude raw exception messages, local paths and workflow inputs.
+        print(json.dumps({'status': 'ERROR', 'error_code': getattr(exc, 'code', type(exc).__name__)}))
+        return EXIT_CODES['ERROR']
 
 
 if __name__ == '__main__': raise SystemExit(main())
