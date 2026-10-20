@@ -28,8 +28,9 @@ ChatGPT владеет только следующими файлами в эт�
 2. Проверка Python, PowerShell, workflow policy, JSON Schema и regression-групп.
 3. Защита self-hosted workflow от запуска кода из feature-веток.
 4. Чистый точный checkout без сохранения GitHub credentials.
-5. Диагностические CI-логи для точной передачи дефектов Codex.
-6. Никаких изменений Coordinator, contracts, evidence, storage или production.
+5. Диагностические CI-логи и immutable evidence artifact для точной передачи дефектов Codex.
+6. Проверка clean evidence: `dirty=false`, exact `GITHUB_SHA`, zero model/API/production operations.
+7. Никаких изменений Coordinator, contracts, evidence implementation, storage или production.
 
 ## Дорожка B — Codex / core correctness
 
@@ -44,16 +45,13 @@ Codex продолжает только функциональный review-fix 
 - `scripts/export_multi_ai_v2_schemas.py`;
 - связанные unit tests и документация, кроме файлов дорожки A.
 
-Задачи Codex:
+Текущий следующий пакет Codex:
 
-1. Неизменяемые evidence runs с commit/tree/dirty binding.
-2. Один активный run на `LOCAL_RUN_ROOT` либо run-scoped управление.
-3. Trusted boundary для full-video review.
-4. Связь artifact path с `run_id`.
-5. Строгие CLI exit codes.
-6. Режимный healthcheck: fake/production.
-7. Переносимый безопасный Drive-copy fallback.
-8. Исправление Windows path portability в regression tests без skip/ослабления.
+1. Исправить четыре подтверждённые Windows portability regressions без skip и без ослабления assertions.
+2. Добавить trusted Result acceptance: `task_id` обязан принадлежать `run_id` в Registry.
+3. Сделать TrustedVideoProbe immutable/fresh и привязать его к реальному trusted probe receipt.
+4. Согласовать `scripts/dispatch_multi_ai_v2.py` с exit-code mapping v2.
+5. Обновить устаревший `docs/VIDEO_REVIEW_PROTOCOL.md` после финализации контракта.
 
 Codex не редактирует файлы дорожки A. Если изменение там необходимо, оно
 описывается в отчёте как предложение, но не применяется.
@@ -68,7 +66,14 @@ Codex не редактирует файлы дорожки A. Если изме
 6. ChatGPT PR направляется в `feature/multi-ai-coordinator-v2`, не в `main`.
 7. PR-CI проверяет временный merge обеих дорожек; красный статус блокирует merge.
 8. Владелец файла исправляет найденный дефект в своей ветке.
-9. Финальный merge в `main` возможен только после зелёного CI и повторного review.
+9. CI evidence хранится GitHub Artifact, а не коммитится как самоссылочный release-proof.
+10. Финальный merge в `main` возможен только после зелёного CI и повторного review.
+
+## Текущий review gate
+
+Core Fix Pack дал 28 зелёных новых v2 tests. Независимый clean merge-state CI
+нашёл четыре старые Windows portability regression; поэтому PR остаётся draft,
+merge запрещён, а подключение providers/runner/production не начинается.
 
 ## Текущие запреты
 
