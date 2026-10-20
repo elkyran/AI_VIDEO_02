@@ -692,6 +692,8 @@ class Coordinator:
         try:
             if simulated:
                 task["context"].setdefault("fixture_result", demo_result(task["expected_output"], task["context"]))
+            if self.result_gate and hasattr(self.result_gate, 'prepare_context'):
+                task['context'].update(self.result_gate.prepare_context(registry, task, attempt_id))
             # The exact bounded context is durable and independent of clients' chats.
             self._atomic_json(attempt_dir / "request.json", task)
             handle = adapter.start(task, profile, attempt_dir)

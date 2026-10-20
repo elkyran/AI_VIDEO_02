@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 
 from .editorial import Review, validate_result
-from .registry import StudioError, canonical_json, content_hash, workspace_path
-from .v2_contracts import Result, Task
+from .registry import StudioError, canonical_json, content_hash, workspace_path, write_generated_json
+from .v2_contracts import Artifact, Result, Task
 
 
 def fingerprint(value):
@@ -79,10 +79,42 @@ class V2ResultGate:
             if previous != accepted:
                 raise StudioError('IDEMPOTENCY_CONFLICT', 'Accepted result is immutable')
             stored = task['result']
+            if stored.get('v2_artifacts') != [a.model_dump() for a in result.artifacts] or stored.get('v2_host_delivery') != (
+                    result.host_review_delivery.model_dump() if result.host_review_delivery else None):
+                raise StudioError('IDEMPOTENCY_CONFLICT', 'Accepted artifact/delivery metadata changed')
             if content_hash(workspace_path(self.root, stored['path'])) != stored['sha256']:
                 raise StudioError('ARTIFACT_INVALID', 'Accepted completion changed')
         return {'payload': normalized, 'context': context, 'host_metadata': result.model_dump(),
-                'result_metadata': {'v2_acceptance': accepted}}
+                'result_metadata': {'v2_acceptance': accepted,
+                    'v2_artifacts': [a.model_dump() for a in result.artifacts],
+                    'v2_host_delivery': result.host_review_delivery.model_dump() if result.host_review_delivery else None}}
+
+    def accepted_artifacts(self, row):
+        if not row or row['status'] != 'completed' or not row['result']:
+            raise StudioError('RESULT_NOT_ACCEPTED', 'Dependency has no accepted result')
+        result = json.loads(row['result'])
+        if not result.get('v2_acceptance') or 'v2_artifacts' not in result:
+            raise StudioError('RESULT_NOT_ACCEPTED', 'Dependency has no trusted v2 artifact metadata')
+        artifacts = [Artifact.model_validate(a) for a in result['v2_artifacts']]
+        for artifact in artifacts:
+            if artifact.run_id != row['project_id'] or artifact.simulated is not result['simulated']:
+                raise StudioError('ARTIFACT_INVALID', 'Accepted dependency provenance changed')
+            self.store.verify(artifact)
+        return [a.model_dump() for a in artifacts]
+
+    def prepare_context(self, registry, task, attempt_id):
+        """Per-attempt Context Pack reads only accepted immutable file metadata."""
+        artifacts, accepted_state = [], {}
+        for dependency in task['depends_on']:
+            row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (dependency,)).fetchone()
+            if row is None or row['project_id'] != task['project_id']:
+                raise StudioError('RESULT_RUN_MISMATCH', 'Context dependency belongs to another run')
+            artifacts.extend(self.accepted_artifacts(row))
+            accepted_state[dependency] = json.loads(row['result'])['v2_acceptance']
+        base = f"runs/{task['project_id']}/context/{task['task_id']}/attempts/{attempt_id}"
+        for name, value in [('input_artifacts.json', artifacts), ('accepted_state.json', accepted_state)]:
+            write_generated_json(self.root, base+'/'+name, value)
+        return {'input_artifacts': artifacts, 'accepted_state': accepted_state, 'context_pack': base}
 
     def _review_context(self, registry, result, contract, task, attempt, context):
         review = Review.model_validate(result.payload)
