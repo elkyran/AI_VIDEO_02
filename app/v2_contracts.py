@@ -112,16 +112,29 @@ class Review(Contract):
 
 class TrustedVideoProbe(Contract):
     """Host-authored capability evidence, never accepted as part of a model Review."""
+    evidence_id: Identifier
     provider: Identifier
+    provider_profile_id: Identifier
+    account_fingerprint: Sha256 | None = None
+    client: Identifier
     client_version: str = Field(min_length=1, max_length=160)
-    model: str = Field(min_length=1, max_length=160)
+    requested_model: str = Field(min_length=1, max_length=160)
+    returned_model: str = Field(min_length=1, max_length=160)
     control_video_hash: Sha256
     result_hash: Sha256
     checked_at: str
-    status: Literal['VERIFIED', 'UNVERIFIED', 'BLOCKED']
+    expires_at: str
+    status: Literal['VERIFIED', 'UNVERIFIED', 'FAILED', 'EXPIRED']
+    evidence_refs: list[str] = Field(min_length=1)
 
     @model_validator(mode='after')
     def timestamp(self):
-        if datetime.fromisoformat(self.checked_at.replace('Z', '+00:00')).tzinfo is None:
-            raise ValueError('Probe checked_at requires a timezone')
+        checked = datetime.fromisoformat(self.checked_at.replace('Z', '+00:00'))
+        expires = datetime.fromisoformat(self.expires_at.replace('Z', '+00:00'))
+        if checked.tzinfo is None or expires.tzinfo is None:
+            raise ValueError('Probe timestamps require a timezone')
+        if not 0 < (expires - checked).total_seconds() <= 86400:
+            raise ValueError('Probe lifetime must be positive and at most 24 hours')
+        for ref in self.evidence_refs:
+            relative_path(ref)
         return self

@@ -20,6 +20,7 @@ from .multi_ai import Coordinator
 from .registry import Registry, StudioError, canonical_json, content_hash, workspace_path, write_generated_json
 from .v2_contracts import Brief, Task, Result, Review, TrustedVideoProbe
 from .v2_storage import ArtifactStore
+from .v2_video import VideoEvidence
 
 STAGES = (
     ('SOURCE_INDEX', 'gemini_story'), ('CANON_BUILD', 'gemini_story'),
@@ -100,12 +101,18 @@ def task_status(task, tasks):
 
 
 class RunCoordinator:
-    def __init__(self, root, *, adapters=None):
+    def __init__(self, root, *, adapters=None, video_evidence_root=None, clock=None):
         self.root = local_root(root)
         if legacy_queue_conflict(self.root):
             raise ValueError('Existing legacy/production queue must not be repurposed as a v2 workspace')
         self.queue = Coordinator(self.root, adapters=adapters)
         self.store = ArtifactStore(self.root)
+        if video_evidence_root is not None:
+            video_evidence_root = local_root(video_evidence_root)
+            if video_evidence_root == self.root or video_evidence_root.is_relative_to(self.root):
+                self.queue.close()
+                raise ValueError('Host video evidence must be separate from model-writable run storage')
+        self.video_evidence = VideoEvidence(video_evidence_root, self.store, clock)
         try:
             with Registry(self.root) as registry:
                 registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_runs (
@@ -116,6 +123,8 @@ class RunCoordinator:
                 registry.db.execute('INSERT OR IGNORE INTO ai_v2_control VALUES(1,NULL)')
                 registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_capabilities (
                     capability_key TEXT PRIMARY KEY, evidence TEXT NOT NULL)''')
+                registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_capability_revocations (
+                    evidence_id TEXT PRIMARY KEY, reason TEXT NOT NULL)''')
                 with registry.transaction():
                     self._refresh_active(registry)
             self.queue.set_rotation(False)
@@ -329,21 +338,23 @@ class RunCoordinator:
 
     def record_video_probe(self, evidence):
         """Trusted host API only; no model-output path calls this method."""
-        probe = TrustedVideoProbe.model_validate(evidence)
-        key = digest([probe.provider, probe.client_version, probe.model, probe.control_video_hash])
         with Registry(self.root) as registry, registry.transaction():
-            registry.db.execute('INSERT OR REPLACE INTO ai_v2_capabilities VALUES(?,?)',
-                                (key, canonical_json(probe.model_dump())))
-        return key
+            return self.video_evidence.record(registry, evidence)
 
-    def accept_review(self, value, *, provider, client_version, model, control_video_hash):
+    def revoke_video_probe(self, evidence_id, reason):
+        """Append-only host revocation; the original evidence stays immutable."""
+        if not reason:
+            raise ValueError('Revocation reason is required')
+        with Registry(self.root) as registry, registry.transaction():
+            registry.db.execute('INSERT OR IGNORE INTO ai_v2_capability_revocations VALUES(?,?)',
+                                (evidence_id, reason))
+
+    def accept_review(self, value, *, evidence_id=None, video_artifact=None, **binding):
         review = Review.model_validate(value)
         if review.review_mode == 'full_video':
-            key = digest([provider, client_version, model, control_video_hash])
             with Registry(self.root) as registry:
-                row = registry.db.execute('SELECT evidence FROM ai_v2_capabilities WHERE capability_key=?', (key,)).fetchone()
-            if not row or TrustedVideoProbe.model_validate_json(row[0]).status != 'VERIFIED':
-                raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Full video requires matching trusted control-video evidence')
+                self.video_evidence.accept(registry, evidence_id, binding, video_artifact,
+                                           review.materials_actually_reviewed)
         return review
 
     @run_locked
