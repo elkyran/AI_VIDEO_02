@@ -60,11 +60,7 @@ jobs:
         shell: powershell
         run: |
           python -m pip install --disable-pip-version-check -e .
-          python -m pip install --disable-pip-version-check PyYAML==6.0.3
-
-      - name: Compile Python sources
-        shell: powershell
-        run: python -X utf8 -m compileall -q app scripts tests
+          python -m pip install --disable-pip-version-check PyYAML==6.0.3 jsonschema==4.26.0
 
       - name: Validate workflow policy and checked-in schemas
         shell: powershell
@@ -89,33 +85,40 @@ jobs:
           }
           if ($hadErrors) { throw 'PowerShell parser found errors' }
 
-      - name: Run Multi-AI V2 unit tests
+      - name: Run clean revision-bound core checker
         shell: powershell
-        run: python -X utf8 -m unittest -v tests.test_multi_ai_v2
-
-      - name: Run existing regression groups
-        shell: powershell
+        env:
+          CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
         run: |
-          $out = Join-Path (Get-Location) '.ci-regression-output'
-          if (Test-Path -LiteralPath $out) { throw 'Unexpected pre-existing CI output directory' }
-          python -X utf8 scripts/check_multi_ai.py --groups contracts queue adapters mai05 panel legacy --output $out --task-id CI-MULTI-AI-V2
+          if (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT) {
+            throw 'Unexpected pre-existing CI evidence directory'
+          }
+          python -X utf8 scripts/check_multi_ai_v2.py --output $env:CI_EVIDENCE_ROOT
           $code = $LASTEXITCODE
-          if ($code -ne 0 -and (Test-Path -LiteralPath $out)) {
-            Get-ChildItem -LiteralPath $out -Recurse -Filter *.log | ForEach-Object {
+          if ($code -ne 0 -and (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
+            Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter *.log | ForEach-Object {
               Write-Host "===== $($_.FullName) ====="
               Get-Content -LiteralPath $_.FullName
             }
           }
-          if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
           if ($code -ne 0) { exit $code }
 
-      - name: Scan Git export for obvious secrets and oversized files
-        shell: powershell
-        run: |
-          python -X utf8 scripts/check_git_export.py
-          $code = $LASTEXITCODE
-          git restore --worktree --staged -- reports/development/2026-10-20_GITHUB/export_check.json
-          if ($code -ne 0) { exit $code }
+          $manifest = Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter manifest.json |
+            Sort-Object FullName |
+            Select-Object -Last 1
+          if (-not $manifest) { throw 'Revision-bound checker produced no manifest.json' }
+          $value = Get-Content -LiteralPath $manifest.FullName -Raw | ConvertFrom-Json
+          if ($value.status -ne 'passed') { throw "Evidence status is $($value.status)" }
+          if ($value.dirty -ne $false) { throw 'Published CI evidence must have dirty=false' }
+          if ($value.git_commit_sha -ne $env:GITHUB_SHA) {
+            throw "Evidence commit $($value.git_commit_sha) does not match GITHUB_SHA $env:GITHUB_SHA"
+          }
+          if ($value.model_requests -ne 0 -or $value.paid_api_requests -ne 0 -or $value.production_started -ne $false) {
+            throw 'Offline CI evidence unexpectedly reports a model/API/production operation'
+          }
+          Write-Host "Verified clean evidence: $($manifest.FullName)"
+          Write-Host "Source manifest: $($value.source_manifest_sha256)"
+          Write-Host "Schema manifest: $($value.schema_manifest_sha256)"
 
       - name: Verify clean, whitespace-safe checkout
         shell: powershell
