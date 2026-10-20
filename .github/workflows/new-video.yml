@@ -1,0 +1,58 @@
+name: AI_VIDEO_02 request
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: Video topic
+        required: true
+        type: string
+      language:
+        default: ru
+        type: string
+      target_minutes:
+        default: '1'
+        type: string
+      style:
+        default: serious
+        type: string
+      source_profile:
+        default: owner_supplied
+        type: string
+      production_mode:
+        type: choice
+        options: [fake, production]
+        default: fake
+      auto_fix_cycles:
+        default: '1'
+        type: string
+      output_profile:
+        default: ruslan-local-narration
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: ai-video-02-local-production
+  cancel-in-progress: false
+  queue: max
+jobs:
+  request:
+    if: github.event.repository.private == true
+    runs-on: [self-hosted, Windows, ai-video-02]
+    timeout-minutes: 30
+    env:
+      VIDEO_REQUEST_JSON: ${{ toJSON(inputs) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate local environment
+        shell: powershell
+        run: ./scripts/healthcheck.ps1
+      - name: Submit and advance bounded run
+        shell: powershell
+        run: |
+          if (-not $env:STUDIO_PYTHON) { throw 'STUDIO_PYTHON is required on the runner' }
+          & $env:STUDIO_PYTHON -X utf8 scripts/dispatch_multi_ai_v2.py
+          exit $LASTEXITCODE
+      # No credential files, SQLite, media, arbitrary task folders or raw client logs uploaded.

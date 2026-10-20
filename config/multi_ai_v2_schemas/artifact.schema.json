@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "run_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "path": {
+      "title": "Path",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Sha256",
+      "type": "string"
+    },
+    "size": {
+      "minimum": 0,
+      "title": "Size",
+      "type": "integer"
+    },
+    "simulated": {
+      "title": "Simulated",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "artifact_id",
+    "run_id",
+    "version",
+    "path",
+    "sha256",
+    "size",
+    "simulated"
+  ],
+  "title": "Artifact",
+  "type": "object"
+}

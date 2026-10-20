@@ -1,0 +1,450 @@
+{
+  "$defs": {
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "start_ms": {
+          "minimum": 0,
+          "title": "Start Ms",
+          "type": "integer"
+        },
+        "end_ms": {
+          "exclusiveMinimum": 0,
+          "title": "End Ms",
+          "type": "integer"
+        },
+        "tracks": {
+          "items": {
+            "enum": [
+              "video",
+              "audio"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Tracks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "start_ms",
+        "end_ms",
+        "tracks"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "Placement": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "placement_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Placement Id",
+          "type": "string"
+        },
+        "asset_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "timeline_start_ms": {
+          "minimum": 0,
+          "title": "Timeline Start Ms",
+          "type": "integer"
+        },
+        "timeline_end_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Timeline End Ms",
+          "type": "integer"
+        },
+        "source_in_ms": {
+          "minimum": 0,
+          "title": "Source In Ms",
+          "type": "integer"
+        },
+        "source_out_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Source Out Ms",
+          "type": "integer"
+        },
+        "track": {
+          "enum": [
+            "video",
+            "voice",
+            "music",
+            "sfx"
+          ],
+          "title": "Track",
+          "type": "string"
+        },
+        "gain_db": {
+          "default": 0.0,
+          "maximum": 12,
+          "minimum": -96,
+          "title": "Gain Db",
+          "type": "number"
+        },
+        "fade_in_ms": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Fade In Ms",
+          "type": "integer"
+        },
+        "fade_out_ms": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Fade Out Ms",
+          "type": "integer"
+        },
+        "transforms": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Transforms",
+          "type": "array"
+        },
+        "shot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Shot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "placement_id",
+        "asset_id",
+        "timeline_start_ms",
+        "timeline_end_ms",
+        "source_in_ms",
+        "source_out_ms",
+        "track"
+      ],
+      "title": "Placement",
+      "type": "object"
+    },
+    "Shot": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "shot_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Shot Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "beat_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Beat Id",
+          "type": "string"
+        },
+        "visual_function": {
+          "minLength": 1,
+          "title": "Visual Function",
+          "type": "string"
+        },
+        "asset_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "source_in_ms": {
+          "minimum": 0,
+          "title": "Source In Ms",
+          "type": "integer"
+        },
+        "source_out_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Source Out Ms",
+          "type": "integer"
+        },
+        "observed_content": {
+          "minLength": 1,
+          "title": "Observed Content",
+          "type": "string"
+        },
+        "evidence_mode": {
+          "default": "metadata_only",
+          "enum": [
+            "metadata_only",
+            "contact_sheet",
+            "frame_sequence",
+            "video_audio",
+            "human_review"
+          ],
+          "title": "Evidence Mode",
+          "type": "string"
+        },
+        "coverage": {
+          "items": {
+            "$ref": "#/$defs/Coverage"
+          },
+          "title": "Coverage",
+          "type": "array"
+        },
+        "continuity_notes": {
+          "default": "",
+          "title": "Continuity Notes",
+          "type": "string"
+        },
+        "reuse_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reuse Reason"
+        }
+      },
+      "required": [
+        "shot_id",
+        "scene_id",
+        "beat_id",
+        "visual_function",
+        "asset_id",
+        "source_in_ms",
+        "source_out_ms",
+        "observed_content"
+      ],
+      "title": "Shot",
+      "type": "object"
+    },
+    "SubtitleEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "start_ms": {
+          "minimum": 0,
+          "title": "Start Ms",
+          "type": "integer"
+        },
+        "end_ms": {
+          "exclusiveMinimum": 0,
+          "title": "End Ms",
+          "type": "integer"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_ms",
+        "end_ms",
+        "text"
+      ],
+      "title": "SubtitleEvent",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "simulated": {
+      "default": false,
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "plan_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "scene_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Scene Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "scene_version": {
+      "minimum": 1,
+      "title": "Scene Version",
+      "type": "integer"
+    },
+    "voice_version": {
+      "minLength": 1,
+      "title": "Voice Version",
+      "type": "string"
+    },
+    "timebase": {
+      "const": "milliseconds",
+      "default": "milliseconds",
+      "title": "Timebase",
+      "type": "string"
+    },
+    "fps": {
+      "default": 30,
+      "maximum": 120,
+      "minimum": 1,
+      "title": "Fps",
+      "type": "integer"
+    },
+    "width": {
+      "default": 1920,
+      "maximum": 7680,
+      "minimum": 16,
+      "title": "Width",
+      "type": "integer"
+    },
+    "height": {
+      "default": 1080,
+      "maximum": 4320,
+      "minimum": 16,
+      "title": "Height",
+      "type": "integer"
+    },
+    "duration_ms": {
+      "exclusiveMinimum": 0,
+      "maximum": 3600000,
+      "title": "Duration Ms",
+      "type": "integer"
+    },
+    "shot_placements": {
+      "items": {
+        "$ref": "#/$defs/Placement"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Shot Placements",
+      "type": "array"
+    },
+    "voice_placements": {
+      "items": {
+        "$ref": "#/$defs/Placement"
+      },
+      "maxItems": 500,
+      "title": "Voice Placements",
+      "type": "array"
+    },
+    "audio_events": {
+      "items": {
+        "$ref": "#/$defs/Placement"
+      },
+      "maxItems": 500,
+      "title": "Audio Events",
+      "type": "array"
+    },
+    "subtitle_events": {
+      "items": {
+        "$ref": "#/$defs/SubtitleEvent"
+      },
+      "maxItems": 2000,
+      "title": "Subtitle Events",
+      "type": "array"
+    },
+    "transitions": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Transitions",
+      "type": "array"
+    },
+    "transforms": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Transforms",
+      "type": "array"
+    },
+    "important_decisions": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Important Decisions",
+      "type": "array"
+    },
+    "required_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Capabilities",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "plan_id",
+    "scene_id",
+    "version",
+    "scene_version",
+    "voice_version",
+    "duration_ms",
+    "shot_placements",
+    "important_decisions"
+  ],
+  "title": "EditPlan",
+  "type": "object"
+}

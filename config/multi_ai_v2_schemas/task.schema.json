@@ -1,0 +1,110 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Task Id",
+      "type": "string"
+    },
+    "run_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "scene_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scene Id"
+    },
+    "role": {
+      "enum": [
+        "gemini_story",
+        "gemini_visual",
+        "codex",
+        "python"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "capability": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Capability",
+      "type": "string"
+    },
+    "input_version": {
+      "minimum": 1,
+      "title": "Input Version",
+      "type": "integer"
+    },
+    "input_hashes": {
+      "additionalProperties": {
+        "pattern": "^[a-f0-9]{64}$",
+        "type": "string"
+      },
+      "title": "Input Hashes",
+      "type": "object"
+    },
+    "depends_on": {
+      "items": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+        "type": "string"
+      },
+      "title": "Depends On",
+      "type": "array"
+    },
+    "assigned_worker": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Assigned Worker",
+      "type": "string"
+    },
+    "provider_profile_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Provider Profile Id",
+      "type": "string"
+    },
+    "requested_model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requested Model"
+    },
+    "expected_output_schema": {
+      "title": "Expected Output Schema",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Idempotency Key",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "run_id",
+    "role",
+    "capability",
+    "input_version",
+    "input_hashes",
+    "depends_on",
+    "assigned_worker",
+    "provider_profile_id",
+    "expected_output_schema",
+    "idempotency_key"
+  ],
+  "title": "Task",
+  "type": "object"
+}

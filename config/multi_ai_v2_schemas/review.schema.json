@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "Issue": {
+      "additionalProperties": false,
+      "properties": {
+        "issue_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Issue Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "number"
+        },
+        "end": {
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "number"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "major",
+            "minor"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "canon",
+            "causality",
+            "text",
+            "visual",
+            "pacing",
+            "mlt",
+            "file",
+            "hash"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "problem": {
+          "minLength": 1,
+          "title": "Problem",
+          "type": "string"
+        },
+        "recommended_fix": {
+          "minLength": 1,
+          "title": "Recommended Fix",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "issue_id",
+        "scene_id",
+        "start",
+        "end",
+        "severity",
+        "category",
+        "problem",
+        "recommended_fix",
+        "evidence_refs"
+      ],
+      "title": "Issue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "review_mode": {
+      "enum": [
+        "full_video",
+        "frames_and_timeline",
+        "partial"
+      ],
+      "title": "Review Mode",
+      "type": "string"
+    },
+    "verdict": {
+      "enum": [
+        "pass",
+        "fix_required",
+        "blocked"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "materials_actually_reviewed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Materials Actually Reviewed",
+      "type": "array"
+    },
+    "full_video_probe_verified": {
+      "default": false,
+      "title": "Full Video Probe Verified",
+      "type": "boolean"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/Issue"
+      },
+      "title": "Issues",
+      "type": "array"
+    }
+  },
+  "required": [
+    "review_mode",
+    "verdict",
+    "materials_actually_reviewed",
+    "issues"
+  ],
+  "title": "Review",
+  "type": "object"
+}
