@@ -48,7 +48,7 @@ class Coordinator:
     keeps its reservations; live access comes from a separate account manager.
     """
 
-    def __init__(self, workspace, adapters=None, profile_source=None, result_observer=None):
+    def __init__(self, workspace, adapters=None, profile_source=None, result_observer=None, result_gate=None):
         self.workspace = Path(workspace).resolve()
         production = Path(__file__).resolve().parents[1] / "workspace" / "studio"
         if self.workspace == production.resolve():
@@ -59,6 +59,7 @@ class Coordinator:
         self.adapters = dict(adapters)
         self.profile_source = profile_source
         self.result_observer = result_observer
+        self.result_gate = result_gate
         from .development import locked
         self._workspace_lock = locked(self.workspace / "ai" / "coordinator.lock")
         try:
@@ -723,8 +724,7 @@ class Coordinator:
                     if kind == "completed":
                         result = event.get("result", payload.get("result"))
                         try:
-                            self._write_completion(registry, attempt, result)
-                            self._accept(registry, attempt_id)
+                            self._complete(registry, attempt, result, event.get('host_metadata'))
                         except (ValueError, TypeError, OSError, StudioError) as exc:
                             self._failure(registry, attempt_id, {"kind": "invalid_input", "message": str(exc), "retryable": False})
                         self._runs.pop(attempt_id, None)
@@ -747,13 +747,25 @@ class Coordinator:
             os.fsync(stream.fileno())
         os.replace(temporary, path)
 
-    def _write_completion(self, registry, attempt, result):
+    def _gate_result(self, registry, attempt, payload, host_metadata):
+        row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (attempt['task_id'],)).fetchone()
+        return self.result_gate(registry, row, self._task(row), attempt, payload, host_metadata)
+
+    def _complete(self, registry, attempt, payload, host_metadata=None):
+        """One completion path; a configured host gate runs before any publication."""
+        gated = self._gate_result(registry, attempt, payload, host_metadata) if self.result_gate else None
+        self._write_completion(registry, attempt, gated['payload'] if gated else payload, gated=gated)
+        return self._accept(registry, attempt['id'])
+
+    def _write_completion(self, registry, attempt, result, *, gated=None):
         from .editorial import validate_result
         from .ai_adapters import sanitize
         task_row = registry.db.execute("SELECT * FROM ai_tasks WHERE id=?", (attempt["task_id"],)).fetchone()
         task = self._task(task_row)
         request_path = workspace_path(self.workspace, Path(attempt["result_path"]).with_name("request.json").as_posix())
         request = json.loads(request_path.read_text(encoding="utf-8"))
+        if self.result_gate and gated is None:
+            raise StudioError('RESULT_GATE_REQUIRED', 'Completion requires the configured host gate')
         if not isinstance(result, dict):
             raise StudioError("SCHEMA_INVALID", "Adapter result must be an object")
         result = sanitize(dict(result))
@@ -761,10 +773,12 @@ class Coordinator:
             result["simulated"] = True
         elif getattr(self.adapters.get(attempt["provider"]), "is_live", False) and result.get("simulated") is not False:
             raise StudioError("SCHEMA_INVALID", "Live results must explicitly declare simulated=false")
-        result = validate_result(task["expected_output"], result, request["context"])
+        result = validate_result(task["expected_output"], result, gated['context'] if gated else request["context"])
         envelope = {"task_id": attempt["task_id"], "attempt_id": attempt["id"],
                     "input_versions": json.loads(attempt["input_versions"]), "payload": result,
                     "payload_sha256": _hash(result), "simulated": bool(result.get("simulated"))}
+        if gated:
+            envelope['host_metadata'] = gated['host_metadata']
         self._atomic_json(workspace_path(self.workspace, attempt["result_path"], for_write=True), envelope)
 
     def _accept(self, registry, attempt_id):
@@ -775,6 +789,8 @@ class Coordinator:
         path = workspace_path(self.workspace, attempt["result_path"])
         envelope = json.loads(path.read_text(encoding="utf-8"))
         request = json.loads(path.with_name("request.json").read_text(encoding="utf-8"))
+        # Revalidate on recovery too. A persisted completion is never a gate bypass.
+        gated = self._gate_result(registry, attempt, envelope.get('payload'), envelope.get('host_metadata')) if self.result_gate else None
         if envelope.get("attempt_id") != attempt_id or envelope.get("task_id") != task["task_id"] or envelope.get("payload_sha256") != _hash(envelope.get("payload")):
             raise StudioError("ARTIFACT_INVALID", "Completed result identity/hash mismatch")
         simulated = envelope.get("simulated")
@@ -783,7 +799,7 @@ class Coordinator:
             raise StudioError("ARTIFACT_INVALID", "Completed result has inconsistent simulation provenance")
         if task.get("execution_mode") == "live" and simulated:
             raise StudioError("ARTIFACT_INVALID", "A live attempt cannot accept a simulated artifact")
-        validate_result(task["expected_output"], envelope["payload"], request["context"])
+        validate_result(task["expected_output"], envelope["payload"], gated['context'] if gated else request["context"])
         if task_row["current_attempt"] != attempt_id or task_row["status"] != "running" or envelope["input_versions"] != task["input_versions"]:
             registry.db.execute("UPDATE ai_attempts SET status='discarded',ended=? WHERE id=?", (self.clock(), attempt_id))
             self._event(registry, "late_result_rejected", {"path": attempt["result_path"]}, task["task_id"], attempt_id)
@@ -795,6 +811,11 @@ class Coordinator:
             if prior and prior["sha256"] != _hash(scene):
                 raise StudioError("REVISION_CONFLICT", "This scene version already has different content")
         result = {"path": attempt["result_path"], "sha256": content_hash(path), "payload": envelope["payload"], "simulated": envelope["simulated"]}
+        if gated:
+            metadata = gated['result_metadata']
+            if set(metadata) & set(result):
+                raise StudioError('ARTIFACT_INVALID', 'Gate metadata cannot replace queue identity')
+            result.update(metadata)
         changed = registry.db.execute("UPDATE ai_tasks SET status='completed',result=?,updated=? WHERE id=? AND current_attempt=? AND status='running'",
                                       (canonical_json(result), self.clock(), task["task_id"], attempt_id)).rowcount
         if not changed:
@@ -890,8 +911,7 @@ class Coordinator:
                         continue
                     if recovered.get("status") == "completed":
                         try:
-                            self._write_completion(registry, attempt, recovered["result"])
-                            self._accept(registry, attempt["id"])
+                            self._complete(registry, attempt, recovered["result"], recovered.get('host_metadata'))
                         except (ValueError, OSError, StudioError) as exc:
                             self._failure(registry, attempt["id"], {"kind": "invalid_input", "message": str(exc), "retryable": False})
                         continue
