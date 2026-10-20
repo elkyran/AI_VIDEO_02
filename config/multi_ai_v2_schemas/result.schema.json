@@ -48,6 +48,231 @@
       ],
       "title": "Artifact",
       "type": "object"
+    },
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "start_ms": {
+          "minimum": 0,
+          "title": "Start Ms",
+          "type": "integer"
+        },
+        "end_ms": {
+          "exclusiveMinimum": 0,
+          "title": "End Ms",
+          "type": "integer"
+        },
+        "tracks": {
+          "items": {
+            "enum": [
+              "video",
+              "audio"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Tracks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "start_ms",
+        "end_ms",
+        "tracks"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "HostReviewDelivery": {
+      "additionalProperties": false,
+      "description": "Trusted adapter metadata, never part of a model's creative payload.",
+      "properties": {
+        "delivery_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Delivery Id",
+          "type": "string"
+        },
+        "task_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "run_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "attempt_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "evidence_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "provider": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Provider",
+          "type": "string"
+        },
+        "provider_profile_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Provider Profile Id",
+          "type": "string"
+        },
+        "account_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Account Fingerprint"
+        },
+        "client": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Client",
+          "type": "string"
+        },
+        "client_version": {
+          "minLength": 1,
+          "title": "Client Version",
+          "type": "string"
+        },
+        "requested_model": {
+          "minLength": 1,
+          "title": "Requested Model",
+          "type": "string"
+        },
+        "returned_model": {
+          "minLength": 1,
+          "title": "Returned Model",
+          "type": "string"
+        },
+        "control_video_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Control Video Hash",
+          "type": "string"
+        },
+        "video_artifact_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Video Artifact Id",
+          "type": "string"
+        },
+        "video_artifact_path": {
+          "title": "Video Artifact Path",
+          "type": "string"
+        },
+        "video_artifact_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Video Artifact Sha256",
+          "type": "string"
+        },
+        "video_artifact_size": {
+          "minimum": 0,
+          "title": "Video Artifact Size",
+          "type": "integer"
+        },
+        "input_version": {
+          "minimum": 1,
+          "title": "Input Version",
+          "type": "integer"
+        },
+        "input_hashes": {
+          "additionalProperties": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "title": "Input Hashes",
+          "type": "object"
+        },
+        "edit_plan_version": {
+          "minimum": 1,
+          "title": "Edit Plan Version",
+          "type": "integer"
+        },
+        "delivered_coverage": {
+          "items": {
+            "$ref": "#/$defs/Coverage"
+          },
+          "minItems": 1,
+          "title": "Delivered Coverage",
+          "type": "array"
+        },
+        "review_payload_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Review Payload Sha256",
+          "type": "string"
+        },
+        "requested_at": {
+          "title": "Requested At",
+          "type": "string"
+        },
+        "completed_at": {
+          "title": "Completed At",
+          "type": "string"
+        },
+        "expires_at": {
+          "title": "Expires At",
+          "type": "string"
+        },
+        "receipt_ref": {
+          "title": "Receipt Ref",
+          "type": "string"
+        },
+        "receipt_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Receipt Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "delivery_id",
+        "task_id",
+        "run_id",
+        "attempt_id",
+        "evidence_id",
+        "provider",
+        "provider_profile_id",
+        "client",
+        "client_version",
+        "requested_model",
+        "returned_model",
+        "control_video_hash",
+        "video_artifact_id",
+        "video_artifact_path",
+        "video_artifact_sha256",
+        "video_artifact_size",
+        "input_version",
+        "input_hashes",
+        "edit_plan_version",
+        "delivered_coverage",
+        "review_payload_sha256",
+        "requested_at",
+        "completed_at",
+        "expires_at",
+        "receipt_ref",
+        "receipt_sha256"
+      ],
+      "title": "HostReviewDelivery",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -99,6 +324,17 @@
     "simulated": {
       "title": "Simulated",
       "type": "boolean"
+    },
+    "host_review_delivery": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HostReviewDelivery"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

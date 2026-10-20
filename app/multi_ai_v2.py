@@ -127,6 +127,8 @@ class RunCoordinator:
                     capability_key TEXT PRIMARY KEY, evidence TEXT NOT NULL)''')
                 registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_capability_revocations (
                     evidence_id TEXT PRIMARY KEY, reason TEXT NOT NULL)''')
+                registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_delivery_revocations (
+                    delivery_id TEXT PRIMARY KEY, reason TEXT NOT NULL)''')
                 with registry.transaction():
                     self._refresh_active(registry)
             self.queue.set_rotation(False)
@@ -324,6 +326,12 @@ class RunCoordinator:
                 self.video_evidence.accept(registry, evidence_id, binding, video_artifact,
                                            [video_artifact.path] if hasattr(video_artifact, 'path') else [])
         return review
+
+    def revoke_video_delivery(self, delivery_id, reason):
+        if not reason:
+            raise ValueError('Revocation reason is required')
+        with Registry(self.root) as registry, registry.transaction():
+            registry.db.execute('INSERT OR IGNORE INTO ai_v2_delivery_revocations VALUES(?,?)', (delivery_id, reason))
 
     @run_locked
     def manifest(self, run_id):

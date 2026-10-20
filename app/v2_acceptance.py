@@ -85,4 +85,14 @@ class V2ResultGate:
                 'result_metadata': {'v2_acceptance': accepted}}
 
     def _review_context(self, registry, result, contract, task, attempt, context):
-        raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Full render review requires a trusted delivery receipt')
+        review = Review.model_validate(result.payload)
+        delivery, artifact = self.video.delivery(registry, result, contract, task, attempt, review)
+        # Plan dependency identity was checked against Registry above. A render is
+        # the review subject; editorial's plan-review dependency inference does
+        # not replace that subject. All media coverage is host receipt coverage.
+        return {**context, 'dependency_results': {}, 'project_id': result.run_id,
+                'subject_type': 'render', 'subject_id': artifact.artifact_id,
+                'subject_hash': artifact.sha256, 'subject_version': context.get('subject_version', result.input_version),
+                'render_id': artifact.artifact_id, 'render_hash': artifact.sha256,
+                'edit_plan_version': delivery.edit_plan_version, 'provided_evidence_mode': 'video_audio',
+                'provided_coverage': [c.model_dump() for c in delivery.delivered_coverage]}

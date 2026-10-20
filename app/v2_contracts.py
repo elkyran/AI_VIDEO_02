@@ -5,7 +5,7 @@ from typing import Literal
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .contracts import Identifier, Sha256, relative_path
-from .editorial import Review  # Compatibility alias: the exact CLI model/schema.
+from .editorial import Review, Coverage  # Exact CLI model/schema, no parallel Review.
 
 
 class Contract(BaseModel):
@@ -56,6 +56,51 @@ class Artifact(Contract):
         return self
 
 
+class HostReviewDelivery(Contract):
+    """Trusted adapter metadata, never part of a model's creative payload."""
+    delivery_id: Identifier
+    task_id: Identifier
+    run_id: Identifier
+    attempt_id: Identifier
+    evidence_id: Identifier
+    provider: Identifier
+    provider_profile_id: Identifier
+    account_fingerprint: Sha256 | None = None
+    client: Identifier
+    client_version: str = Field(min_length=1)
+    requested_model: str = Field(min_length=1)
+    returned_model: str = Field(min_length=1)
+    control_video_hash: Sha256
+    video_artifact_id: Identifier
+    video_artifact_path: str
+    video_artifact_sha256: Sha256
+    video_artifact_size: int = Field(ge=0)
+    input_version: int = Field(ge=1)
+    input_hashes: dict[str, Sha256]
+    edit_plan_version: int = Field(ge=1)
+    delivered_coverage: list[Coverage] = Field(min_length=1)
+    review_payload_sha256: Sha256
+    requested_at: str
+    completed_at: str
+    expires_at: str
+    receipt_ref: str
+    receipt_sha256: Sha256
+
+    @model_validator(mode='after')
+    def safe_receipt(self):
+        relative_path(self.receipt_ref)
+        relative_path(self.video_artifact_path)
+        times = [datetime.fromisoformat(t.replace('Z', '+00:00')) for t in
+                 (self.requested_at, self.completed_at, self.expires_at)]
+        if any(t.tzinfo is None for t in times):
+            raise ValueError('Delivery timestamps require timezones')
+        requested, completed, expires = times
+        if not (0 <= (completed-requested).total_seconds() <= 3600
+                and 0 < (expires-completed).total_seconds() <= 3600):
+            raise ValueError('Delivery request and post-completion lifetimes are each bounded to one hour')
+        return self
+
+
 class Result(Contract):
     task_id: Identifier
     run_id: Identifier
@@ -66,6 +111,7 @@ class Result(Contract):
     input_hashes: dict[str, Sha256]
     artifacts: list[Artifact]
     simulated: bool
+    host_review_delivery: HostReviewDelivery | None = None
 
     @model_validator(mode='after')
     def same_run_and_provenance(self):
