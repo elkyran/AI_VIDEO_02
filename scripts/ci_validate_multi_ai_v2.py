@@ -79,6 +79,8 @@ def validate_self_hosted_workflow() -> None:
     condition = str(job.get("if", ""))
     require("github.event.repository.private == true" in condition and "github.ref == 'refs/heads/main'" in condition,
             "Self-hosted workflow must require a private repository and refs/heads/main")
+    require(job.get("env", {}).get("VIDEO_REQUEST_JSON") == "${{ toJSON(inputs) }}",
+            "Workflow inputs must enter Python as JSON data, not interpolated shell text")
     steps = steps_for(workflow, "request")
     checkout = action_step(steps, "actions/checkout@")
     action_ref = checkout["uses"].split("@", 1)[1]
@@ -88,9 +90,17 @@ def validate_self_hosted_workflow() -> None:
     require(options.get("clean") == "true", "Self-hosted checkout must use clean: true")
     require(options.get("persist-credentials") == "false", "Self-hosted checkout must not persist credentials")
     require(options.get("ref") == "${{ github.sha }}", "Self-hosted checkout must pin the exact event SHA")
+
     text = path.read_text(encoding="utf-8")
     require("pull_request:" not in text and "schedule:" not in text,
             "Credentialed self-hosted workflow must not run from PRs or schedules")
+    require("secrets." not in text, "Fake self-hosted workflow must not request GitHub secrets")
+    require("healthcheck_multi_ai_v2.py" in text and "--mode fake" in text,
+            "Self-hosted workflow must run the explicit v2 fake healthcheck")
+    require("dispatch_multi_ai_v2.py" in text,
+            "Self-hosted workflow must use the bounded v2 dispatch entrypoint")
+    require("git status --porcelain" in text and "if: ${{ always() }}" in text,
+            "Self-hosted workflow must verify checkout cleanliness after execution")
 
 
 def validate_ci_workflow() -> None:
@@ -106,24 +116,55 @@ def validate_ci_workflow() -> None:
     require(job.get("runs-on") == "windows-latest", "Independent CI must use GitHub-hosted windows-latest")
     require("self-hosted" not in json.dumps(workflow), "Independent CI must never target a self-hosted runner")
     steps = steps_for(workflow, job_name)
+
     checkout = action_step(steps, "actions/checkout@")
     checkout_ref = checkout["uses"].split("@", 1)[1]
     require(checkout_ref == CHECKOUT_SHA and HEX40.fullmatch(checkout_ref) is not None,
             "CI checkout action must remain commit-pinned")
+    checkout_options = checkout.get("with", {})
+    require(checkout_options.get("clean") == "true" and checkout_options.get("persist-credentials") == "false",
+            "CI checkout must remain clean and credential-free")
+    require(checkout_options.get("ref") == "${{ github.sha }}",
+            "CI must check out the exact event/merge SHA")
+
     setup = action_step(steps, "actions/setup-python@")
     setup_ref = setup["uses"].split("@", 1)[1]
     require(setup_ref == SETUP_PYTHON_SHA and HEX40.fullmatch(setup_ref) is not None,
             "setup-python action must remain commit-pinned")
+
     upload = action_step(steps, "actions/upload-artifact@")
     upload_ref = upload["uses"].split("@", 1)[1]
     require(upload_ref == UPLOAD_ARTIFACT_SHA and HEX40.fullmatch(upload_ref) is not None,
             "upload-artifact action must remain commit-pinned")
-    require(upload.get("if") == "${{ always() }}", "CI evidence must be retained even when regression tests fail")
+    require(upload.get("if") == "${{ always() }}", "CI evidence must upload even when regression fails")
+    upload_options = upload.get("with", {})
+    require(upload_options.get("retention-days") == "14",
+            "CI evidence retention must stay bounded at 14 days")
+
+    checker = named_step(steps, "Run clean revision-bound core checker")
+    require(checker.get("id") == "core-checker" and checker.get("continue-on-error") == "true",
+            "Core checker must expose its result while allowing evidence/cleanup steps to run")
+    checker_text = str(checker.get("run", ""))
+    require("scripts/check_multi_ai_v2.py" in checker_text and "GITHUB_OUTPUT" in checker_text,
+            "CI must run the canonical revision-bound checker and preserve its exit code")
+
+    envelope = named_step(steps, "Verify immutable evidence envelope")
+    envelope_text = str(envelope.get("run", ""))
+    for required in ("git_tree_sha", "Get-FileHash", "source_unchanged_during_checks",
+                     "model_requests", "paid_api_requests", "production_started"):
+        require(required in envelope_text, f"Evidence envelope check is missing {required}")
+
     clean = named_step(steps, "Verify clean, whitespace-safe checkout")
-    require(clean.get("if") == "${{ always() }}", "Checkout cleanliness must be checked even after failures")
-    install = named_step(steps, "Install bounded test dependencies")
-    require("jsonschema==4.26.0" in str(install.get("run", "")),
-            "CI must install the pinned jsonschema dependency used by regression tests")
+    require(clean.get("if") == "${{ always() }}" and "--untracked-files=all" in str(clean.get("run", "")),
+            "Clean-tree verification must run always and include untracked files")
+    gate = named_step(steps, "Enforce regression result")
+    require(gate.get("if") == "${{ always() }}" and "core-checker.outcome" in json.dumps(gate),
+            "A final gate must fail the job when the canonical checker fails")
+
+    text = path.read_text(encoding="utf-8")
+    require("secrets." not in text, "GitHub-hosted offline CI must not request repository secrets")
+    require("jsonschema==4.26.0" in text and "PyYAML==6.0.3" in text,
+            "Bounded CI-only dependencies must remain explicitly pinned")
 
 
 def generated_schemas() -> dict[str, dict]:
@@ -150,6 +191,7 @@ def validate_schema_drift() -> None:
             f"Schema file set drift: checked-in={sorted(checked_in)} generated={sorted(generated)}")
     mismatches = [name for name in sorted(generated) if generated[name] != checked_in[name]]
     require(not mismatches, "Schema drift detected: " + ", ".join(mismatches))
+    # Canonical temporary generation proves the check does not rewrite repository files.
     with tempfile.TemporaryDirectory(prefix="multi_ai_v2_schema_ci_") as folder:
         destination = Path(folder)
         for name, value in generated.items():
