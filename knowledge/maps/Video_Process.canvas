@@ -1,0 +1,23 @@
+{
+	"nodes":[
+		{"id":"stage-0","type":"file","file":"maps/Video_Process.md","x":0,"y":0,"width":440,"height":300,"subpath":"#1 Материалы"},
+		{"id":"stage-1","type":"file","file":"maps/Video_Process.md","x":520,"y":0,"width":440,"height":300,"subpath":"#2 Сценарий"},
+		{"id":"stage-2","type":"file","file":"maps/Video_Process.md","x":1040,"y":0,"width":440,"height":300,"subpath":"#3 Озвучка"},
+		{"id":"stage-3","type":"file","file":"maps/Video_Process.md","x":1560,"y":0,"width":440,"height":300,"subpath":"#4 Визуалы"},
+		{"id":"stage-4","type":"file","file":"maps/Video_Process.md","x":0,"y":420,"width":440,"height":300,"subpath":"#5 Сборка"},
+		{"id":"stage-5","type":"file","file":"maps/Video_Process.md","x":520,"y":420,"width":440,"height":300,"subpath":"#6 Проверки"},
+		{"id":"stage-6","type":"file","file":"maps/Video_Process.md","x":1040,"y":420,"width":440,"height":300,"subpath":"#7 Просмотр владельцем"},
+		{"id":"stage-7","type":"file","file":"maps/Video_Process.md","x":1560,"y":420,"width":440,"height":300,"subpath":"#8 Передача"},
+		{"id":"future","type":"file","file":"maps/Video_Process.md","x":0,"y":840,"width":440,"height":300,"subpath":"#Развитие"},
+		{"id":"home","type":"file","file":"START.md","x":520,"y":840,"width":440,"height":300,"subpath":"#Кратко"}
+	],
+	"edges":[
+		{"id":"edge:stage-0:stage-1","fromNode":"stage-0","fromSide":"bottom","toNode":"stage-1","toSide":"top","label":"связано"},
+		{"id":"edge:stage-1:stage-2","fromNode":"stage-1","fromSide":"bottom","toNode":"stage-2","toSide":"top","label":"связано"},
+		{"id":"edge:stage-2:stage-3","fromNode":"stage-2","fromSide":"bottom","toNode":"stage-3","toSide":"top","label":"связано"},
+		{"id":"edge:stage-3:stage-4","fromNode":"stage-3","fromSide":"bottom","toNode":"stage-4","toSide":"top","label":"связано"},
+		{"id":"edge:stage-4:stage-5","fromNode":"stage-4","fromSide":"bottom","toNode":"stage-5","toSide":"top","label":"связано"},
+		{"id":"edge:stage-5:stage-6","fromNode":"stage-5","fromSide":"bottom","toNode":"stage-6","toSide":"top","label":"связано"},
+		{"id":"edge:stage-6:stage-7","fromNode":"stage-6","fromSide":"bottom","toNode":"stage-7","toSide":"top","label":"связано"}
+	]
+}

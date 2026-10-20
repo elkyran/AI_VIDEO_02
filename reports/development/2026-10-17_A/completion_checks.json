@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "done": [
+    "T00",
+    "T01",
+    "T02",
+    "T03"
+  ],
+  "pending": [
+    "T04",
+    "T05",
+    "T06",
+    "T07",
+    "T08",
+    "T09",
+    "T10",
+    "T11",
+    "T12"
+  ],
+  "source_hashes_match": true,
+  "all_result_refs_exist": true,
+  "no_active_production_jobs": true,
+  "protected_hash_size_mtime_unchanged": true,
+  "handoff_lines": 25,
+  "scope": "Package A only"
+}

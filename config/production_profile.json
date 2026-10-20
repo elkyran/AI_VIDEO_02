@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "profile_id": "ruslan-local-narration",
+  "version": 1,
+  "provenance": {
+    "base_manifest_ref": "workspace/studio/jobs/job_154a062f4b324170b915/audio_manifest.json",
+    "base_manifest_sha256": "f77019c46379dcdee1ca2d9aa000b445141b1db1aa3558c63febff4e3875d305",
+    "final_manifest_ref": "workspace/studio/voice_replacements/ruslan_final/audio_manifest.json",
+    "final_manifest_sha256": "ec0ab555dcc50dba20c67864f7b9a0c8055d417edde504c4518d866ee6a94a00",
+    "timeline_ref": "workspace/studio/jobs/job_7c4eb17065b34e79a300/project_attempt_1/timeline.json",
+    "timeline_sha256": "b6bcd5b575f15c5f343c1dce579e8e131f6928dcf55fd74e664961177ccfa330",
+    "runtime_source_ref": "workspace/studio/runtime.json",
+    "style_refs": [
+      "WORKFLOW.md",
+      "docs/without_rudeus_ruslan_verification.json",
+      "audit/2026-10-17_video_codex_719e46b2/CODEX_VIDEO_AUDIT.md"
+    ],
+    "approval_basis": "historical_evidence: owner audit of 2026-10-17 prefers Ruslan and two completed stories; no new listening acceptance is claimed",
+    "fitting_note": "Default length_scale=base synthesis setting. The final replacement contains individual fitted takes; preserve its per-block settings by reference, not as a new default."
+  },
+  "voice": {
+    "engine": "piper",
+    "voice_id": "ru_RU-ruslan-medium",
+    "model_ref": "models/piper/ru_RU-ruslan-medium.onnx",
+    "model_sha256": "72a5f88e0b20928064eb45d88e1daa21f8af62d18613580d32cbb4aed48dcf7f",
+    "model_config_sha256": "706a4fb17bc304abd07809b552deae615e64dcbffbfbd09854ba37ca59e88117",
+    "engine_version": "1.8.0",
+    "settings": {
+      "length_scale": 1.08,
+      "noise_scale": 0.667,
+      "noise_w_scale": 0.8,
+      "volume": 0.85,
+      "normalize_audio": true,
+      "speaker_id": null,
+      "sentence_silence": 0.08,
+      "leading_silence": 0.1,
+      "trailing_silence": 0.18
+    },
+    "sample_rate_hz": 22050,
+    "normalization_scope": "block",
+    "punctuation_transform": "none",
+    "use_cuda": false
+  },
+  "pronunciation_lexicon": {
+    "Грейрат": "Гре́йрат",
+    "Рудеус": "Ру́деус"
+  },
+  "pronunciation_terms": [
+    "Рокси",
+    "Рудеус",
+    "Рудеуса",
+    "Рудеусу",
+    "Рудеусом",
+    "Сильфи",
+    "Пол",
+    "Пола",
+    "Зенит",
+    "Элинализ",
+    "Руйджерд",
+    "Руйджерда",
+    "Талхандом",
+    "Фиттоа",
+    "Норн",
+    "Орстед",
+    "Орстеда",
+    "Хитогами",
+    "Нанахоси",
+    "Акито",
+    "Ариэль",
+    "Асуры",
+    "Саурос",
+    "Филипп",
+    "Деррик",
+    "Перугиус",
+    "Пакс",
+    "Пакса",
+    "Широне",
+    "Заноба",
+    "Лаплас",
+    "Лапласа",
+    "Руйджерду",
+    "Люка",
+    "Эрис",
+    "Фитца"
+  ],
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "encoder": "h264_nvenc",
+    "render_threads": 4
+  },
+  "original_policy": "immutable; new artifacts only; preserve manual edits",
+  "required_checks": [
+    "registered sources and rights review",
+    "audio block integrity and durations",
+    "ASR text/negation and subtitle timing review; warnings retained",
+    "full audio/video decode and technical format",
+    "sound levels and no narration truncation",
+    "human listening/visual review explicitly recorded; ready_for_review is not accepted",
+    "package bound to the reviewed final artifact (integration pending T05/T06)"
+  ],
+  "modes": {
+    "production": "Use this profile and existing registered operations. Code/features/profile changes require a separate development task. Technical preferences do not constrain subjects or storytelling.",
+    "development": "Use an explicit T-ID or separately authorized defect ID; narrow code changes and isolated tests; no implicit full release."
+  }
+}

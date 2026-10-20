@@ -1,0 +1,14 @@
+{
+  "id": "dossier01",
+  "project_id": "pilot",
+  "work_id": "work01",
+  "character_name": "Герой",
+  "goals": "Цель",
+  "first_meeting": "Встреча",
+  "relationships": "Связь",
+  "decisions": "Выбор",
+  "plot_role": "Роль",
+  "claim_ids": [
+    "claim01"
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "work_title": {
+      "minLength": 1,
+      "title": "Work Title",
+      "type": "string"
+    },
+    "character": {
+      "minLength": 1,
+      "title": "Character",
+      "type": "string"
+    },
+    "language": {
+      "default": "ru",
+      "enum": [
+        "ru",
+        "en"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "milestone": {
+      "default": "pilot",
+      "enum": [
+        "pilot",
+        "editorial_review",
+        "full_episode"
+      ],
+      "title": "Milestone",
+      "type": "string"
+    },
+    "target_duration_seconds": {
+      "default": 75,
+      "minimum": 45,
+      "title": "Target Duration Seconds",
+      "type": "integer"
+    },
+    "width": {
+      "default": 1920,
+      "exclusiveMinimum": 0,
+      "title": "Width",
+      "type": "integer"
+    },
+    "height": {
+      "default": 1080,
+      "exclusiveMinimum": 0,
+      "title": "Height",
+      "type": "integer"
+    },
+    "fps": {
+      "default": 30,
+      "maximum": 120,
+      "minimum": 1,
+      "title": "Fps",
+      "type": "integer"
+    },
+    "source_status": {
+      "default": "unavailable",
+      "enum": [
+        "unavailable",
+        "partial",
+        "complete_import",
+        "analyzed"
+      ],
+      "title": "Source Status",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "title",
+    "work_title",
+    "character"
+  ],
+  "title": "ProjectBrief",
+  "type": "object"
+}

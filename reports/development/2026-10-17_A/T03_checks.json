@@ -1,0 +1,21 @@
+{
+  "task_id": "T03",
+  "status": "passed",
+  "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+  "test_count": 20,
+  "combined_regression_count": 93,
+  "exit_code": 0,
+  "test_result_ref": "reports/development/2026-10-17_A/final_tests.json",
+  "log_ref": "reports/development/2026-10-17_A/final_tests.log",
+  "source_manifest_ref": "reports/development/2026-10-17_A/implementation_manifest.json",
+  "checks": [
+    "mocked 5-stage chain and replay executes only 5 workers",
+    "bounded timeout and wait cancellation preserve pending job",
+    "stored errors persist; replay does not retry",
+    "QA/ASR warnings retained",
+    "short JSON <=4000 chars with counts/truncated",
+    "old CLI regression passed",
+    "production guard tested with imitations; actual runtime validation in T01"
+  ],
+  "smoke_ref": "reports/development/2026-10-17_A/exchange_smoke.json"
+}

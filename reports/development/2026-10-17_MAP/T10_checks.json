@@ -1,0 +1,50 @@
+{
+  "task_id": "T10",
+  "revision": "corpus-sha256:8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+  "status": "passed",
+  "created_at": "2026-10-17T14:11:25.023930+00:00",
+  "adapter_tests": {
+    "run": 18,
+    "passed": 17,
+    "skipped": 1,
+    "skip_reason": "Windows denies temporary symlink creation",
+    "log_ref": "reports/development/2026-10-17_MAP/adapter-tests.log"
+  },
+  "previous_fast_tests": {
+    "run": 94,
+    "passed": 94,
+    "log_ref": "reports/development/2026-10-17_MAP/previous-fast-tests.log"
+  },
+  "context_metrics": {
+    "asr": {
+      "characters": 3887,
+      "graph_results": 8,
+      "truncated": true
+    },
+    "pronunciation": {
+      "characters": 4166,
+      "graph_results": 8,
+      "truncated": true
+    },
+    "production": {
+      "characters": 3310,
+      "graph_results": 0,
+      "truncated": false
+    }
+  },
+  "unknown_id_exit": 2,
+  "tokens": null,
+  "checks": [
+    "bounded relevant development context",
+    "production operations and real read-only job IDs first",
+    "missing/stale graph fallback",
+    "unknown ID error",
+    "renamed title containing --- and alias retains ID",
+    "mandatory constraints preserved even beyond budget",
+    "temporary new area/capability and submap",
+    "manual data and conflict preservation",
+    "no task added by an idea"
+  ],
+  "preservation_ref": "reports/development/2026-10-17_MAP/preservation_after.json",
+  "gui": "not_checked"
+}

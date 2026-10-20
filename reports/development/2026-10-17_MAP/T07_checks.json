@@ -1,0 +1,21 @@
+{
+  "task_id": "T07",
+  "revision": "vault-sha256:5cc2172c4a97b1fa78629ded43304ff855842f1c51f76a51a6f30efe46c1b93b",
+  "status": "passed",
+  "created_at": "2026-10-17T14:11:22.845863+00:00",
+  "validation": {
+    "status": "passed",
+    "notes": 43,
+    "canvases": 9,
+    "errors": [],
+    "truncated": false
+  },
+  "expected": {
+    "areas": 7,
+    "capabilities": 33,
+    "ideas": 2,
+    "decisions": 1
+  },
+  "artifact_manifest_ref": "reports/development/2026-10-17_MAP/artifact_manifest.json",
+  "verification_scope": "Current Markdown schema, stable IDs, project refs, existing vault links, parent/requires cycles; capability implementation claims remain separately qualified."
+}

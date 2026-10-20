@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "AREA-SCR",
+      "type": "file",
+      "file": "areas/AREA-SCR.md",
+      "x": 0,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b593d3"
+    },
+    {
+      "id": "home",
+      "type": "file",
+      "file": "START.md",
+      "x": 520,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко"
+    },
+    {
+      "id": "SCR-BLOCKS",
+      "type": "file",
+      "file": "capabilities/SCR-BLOCKS.md",
+      "x": 0,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b593d3"
+    },
+    {
+      "id": "SCR-BRIEF",
+      "type": "file",
+      "file": "capabilities/SCR-BRIEF.md",
+      "x": 520,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b593d3"
+    },
+    {
+      "id": "SCR-REVIEW",
+      "type": "file",
+      "file": "capabilities/SCR-REVIEW.md",
+      "x": 1040,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b593d3"
+    },
+    {
+      "id": "SCR-STRUCTURE",
+      "type": "file",
+      "file": "capabilities/SCR-STRUCTURE.md",
+      "x": 1560,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b593d3"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:AREA-SCR:home",
+      "fromNode": "AREA-SCR",
+      "fromSide": "bottom",
+      "toNode": "home",
+      "toSide": "top",
+      "label": "связано"
+    },
+    {
+      "id": "edge:AREA-SCR:SCR-BLOCKS",
+      "fromNode": "AREA-SCR",
+      "fromSide": "bottom",
+      "toNode": "SCR-BLOCKS",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-SCR:SCR-BRIEF",
+      "fromNode": "AREA-SCR",
+      "fromSide": "bottom",
+      "toNode": "SCR-BRIEF",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-SCR:SCR-REVIEW",
+      "fromNode": "AREA-SCR",
+      "fromSide": "bottom",
+      "toNode": "SCR-REVIEW",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-SCR:SCR-STRUCTURE",
+      "fromNode": "AREA-SCR",
+      "fromSide": "bottom",
+      "toNode": "SCR-STRUCTURE",
+      "toSide": "top",
+      "label": "содержит"
+    }
+  ]
+}

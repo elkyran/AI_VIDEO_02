@@ -1,0 +1,9 @@
+{
+  "id": "block01",
+  "project_id": "pilot",
+  "revision": 1,
+  "purpose": "Вопрос",
+  "text": "Что меняет второй шанс?",
+  "interpretation": true,
+  "schema_version": "unsupported"
+}

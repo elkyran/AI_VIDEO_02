@@ -1,0 +1,1 @@
+{"mode": "dry-run", "files": 54, "corpus_sha256": "8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b", "backend": "none", "command": "graphify extract . --code-only --max-workers 1 --out <temporary-directory>", "plan_ref": "development/graph-sync-plan.json"}

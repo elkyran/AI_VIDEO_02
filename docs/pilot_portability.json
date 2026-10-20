@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-10-16",
+  "project_id": "mushoku_pilot",
+  "package_job_id": "job_a3990556fdc74d1daea9",
+  "source_package": "workspace/studio/jobs/job_a3990556fdc74d1daea9/package_attempt_1",
+  "source_archive": "workspace/studio/jobs/job_a3990556fdc74d1daea9/mushoku_pilot_package.zip",
+  "source_archive_sha256": "be73d200a9a488a43eeba8761a0caac75619c1783d91de6620df516afd9e6498",
+  "relocated_package": "research/перенос готового пилота v2",
+  "manifest_check": {
+    "status": "passed",
+    "verified_file_count": 38,
+    "all_listed_files_match_sha256": true
+  },
+  "mlt_check": {
+    "status": "passed",
+    "file_resource_count": 15,
+    "all_file_resources_relative": true,
+    "missing_files": [],
+    "project_sha256": "a3d03fb34a5645a949d6e4a82efaa203a06ed7617f9082422fa294962f6ef461"
+  },
+  "rerender": {
+    "status": "passed",
+    "engine": "Shotcut 26.9.27 / MLT 7.41.0",
+    "renderer": "tools/Shotcut/melt.exe",
+    "runner": "scripts/render_project.py",
+    "elapsed_seconds": 114.922,
+    "exit_code": 0,
+    "project_sha256": "a3d03fb34a5645a949d6e4a82efaa203a06ed7617f9082422fa294962f6ef461",
+    "output": "research/перенос готового пилота v2/rerender.mp4",
+    "log": "research/перенос готового пилота v2/rerender.render.log",
+    "missing_resource_error_lines": []
+  },
+  "manual_ui_editing": "not_checked",
+  "comparison": {
+    "status": "passed",
+    "encoded_mp4_bytes_identical": true,
+    "complete_decoded_audio_video_framemd5_identical": true,
+    "stream_parameters_and_duration_identical": true,
+    "original": {
+      "path": "research/перенос готового пилота v2/final.mp4",
+      "sha256": "87d6fe904d0e50c7d682790e7237d549e4038a667b1a47a6a77c783264534c29",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "16:9",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "duration": "73.000000",
+            "nb_frames": "2190"
+          },
+          {
+            "index": 1,
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "sample_rate": "48000",
+            "channels": 2,
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "duration": "73.002667",
+            "nb_frames": "3423"
+          }
+        ],
+        "format": {
+          "duration": "73.002667",
+          "size": "29780493"
+        }
+      },
+      "decoded_av_framemd5_sha256": "74db69edb5f597e8a79753f50e9bbe33752cda5bcaac9d839c00fc766b6ee987",
+      "decoded_frame_rows": 5612,
+      "framemd5_file": "research/перенос готового пилота v2/final.framemd5",
+      "decode_errors": []
+    },
+    "rerender": {
+      "path": "research/перенос готового пилота v2/rerender.mp4",
+      "sha256": "87d6fe904d0e50c7d682790e7237d549e4038a667b1a47a6a77c783264534c29",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "16:9",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "duration": "73.000000",
+            "nb_frames": "2190"
+          },
+          {
+            "index": 1,
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "sample_rate": "48000",
+            "channels": 2,
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "duration": "73.002667",
+            "nb_frames": "3423"
+          }
+        ],
+        "format": {
+          "duration": "73.002667",
+          "size": "29780493"
+        }
+      },
+      "decoded_av_framemd5_sha256": "74db69edb5f597e8a79753f50e9bbe33752cda5bcaac9d839c00fc766b6ee987",
+      "decoded_frame_rows": 5612,
+      "framemd5_file": "research/перенос готового пилота v2/rerender.framemd5",
+      "decode_errors": []
+    }
+  },
+  "shotcut_application_load": {
+    "status": "passed_offscreen_with_warning",
+    "executable": "tools/Shotcut/shotcut.exe",
+    "mode": "offscreen isolated profile; no manual GUI inspection or edit",
+    "project": "research/перенос готового пилота v2/project.mlt",
+    "log": "research/shotcut_pilot_v2_appdata/shotcut-log.txt",
+    "xml_checker_completed_without_error": true,
+    "audio_device_opened": true,
+    "waveforms_completed": 8,
+    "project_sha256_unchanged": true,
+    "process_closed_after_check": true,
+    "warnings": [
+      "Shotcut emitted a warning about parsing its bundled MLT profiles directory. Project XML loaded, video decoding and eight audio waveform generations completed; native rerender passed."
+    ],
+    "cross_computer_test": "not_tested"
+  },
+  "status": "passed"
+}

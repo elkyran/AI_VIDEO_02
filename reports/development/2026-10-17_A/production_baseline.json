@@ -1,0 +1,113 @@
+{
+  "source": "workspace/studio/registry.sqlite",
+  "projects": [
+    {
+      "id": "roxy_rudeus_story",
+      "revision": 77,
+      "latest_registered_jobs": [
+        {
+          "id": "job_1a8be0553bc24d8284c4",
+          "operation": "synthesize",
+          "state": "done",
+          "result": {
+            "cache_hits": 43,
+            "manifest": "jobs/job_1a8be0553bc24d8284c4/audio_manifest.json",
+            "script_asset_id": "roxy_video_script_v3"
+          }
+        },
+        {
+          "id": "job_0025176d576f44a7a7c5",
+          "operation": "build",
+          "state": "done",
+          "result": {
+            "project_mlt": "jobs/job_0025176d576f44a7a7c5/project_attempt_1/project.mlt",
+            "script_asset_id": "roxy_video_script_v3",
+            "timeline_json": "jobs/job_0025176d576f44a7a7c5/project_attempt_1/timeline.json"
+          }
+        },
+        {
+          "id": "job_b60bc8fc80a145a291f7",
+          "operation": "render",
+          "state": "done",
+          "result": {
+            "video": "jobs/job_b60bc8fc80a145a291f7/final_attempt_1.mp4"
+          }
+        },
+        {
+          "id": "job_7b08c0affe464929a8c9",
+          "operation": "qa",
+          "state": "done",
+          "result": {
+            "report": "jobs/job_7b08c0affe464929a8c9/qa_report.json",
+            "status": "ready_for_review"
+          }
+        },
+        {
+          "id": "job_522ac556c7d541898c88",
+          "operation": "package",
+          "state": "done",
+          "result": {
+            "archive": "jobs/job_522ac556c7d541898c88/roxy_rudeus_story_package.zip",
+            "status": "ready_for_review",
+            "video": "jobs/job_522ac556c7d541898c88/package_attempt_1/final.mp4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "world_without_rudeus",
+      "revision": 88,
+      "latest_registered_jobs": [
+        {
+          "id": "job_154a062f4b324170b915",
+          "operation": "synthesize",
+          "state": "done",
+          "result": {
+            "cache_hits": 0,
+            "manifest": "jobs/job_154a062f4b324170b915/audio_manifest.json",
+            "script_asset_id": "without_rudeus_video_v4"
+          }
+        },
+        {
+          "id": "job_7c4eb17065b34e79a300",
+          "operation": "build",
+          "state": "done",
+          "result": {
+            "project_mlt": "jobs/job_7c4eb17065b34e79a300/project_attempt_1/project.mlt",
+            "script_asset_id": "without_rudeus_video_v4",
+            "timeline_json": "jobs/job_7c4eb17065b34e79a300/project_attempt_1/timeline.json"
+          }
+        },
+        {
+          "id": "job_b986656e7e184c7ca1e8",
+          "operation": "render",
+          "state": "done",
+          "result": {
+            "video": "jobs/job_b986656e7e184c7ca1e8/final_attempt_1.mp4"
+          }
+        },
+        {
+          "id": "job_09e3ce3a7725480a8117",
+          "operation": "qa",
+          "state": "done",
+          "result": {
+            "report": "jobs/job_09e3ce3a7725480a8117/qa_report.json",
+            "status": "ready_for_review"
+          }
+        },
+        {
+          "id": "job_5667a0290f0c4fd9bf3f",
+          "operation": "package",
+          "state": "done",
+          "result": {
+            "archive": "jobs/job_5667a0290f0c4fd9bf3f/world_without_rudeus_package.zip",
+            "status": "ready_for_review",
+            "video": "jobs/job_5667a0290f0c4fd9bf3f/package_attempt_1/final.mp4"
+          }
+        }
+      ]
+    }
+  ],
+  "ruslan_replacement_ref": "docs/without_rudeus_ruslan_verification.json",
+  "note": "Registered QA/package of world_without_rudeus precede external Ruslan replacement; no finalization claim."
+}

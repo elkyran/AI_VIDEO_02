@@ -1,0 +1,19 @@
+{
+  "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+  "git_commit": null,
+  "reason": "Existing Git has no commits; immutable baseline zip and per-file SHA-256 identify revisions",
+  "files": {
+    ".gitignore": "79ba59c05b9ef4657bf45dddba79514ed2851e913ac9f4195e191cd0599792bf",
+    "AGENTS.md": "3a966abf6890e868ca32a7c4e9b05f42c1aa9b96fc16e95074d0d1208c2f3890",
+    "app/production_profile.py": "895bbebcacbd3d026a91b45f00df47cc91f103930ef4fe6b160d649ab1a5dd47",
+    "app/development.py": "7dea594b2ee9bd88fb655a316ab9522eff0641aaeaa882f3f6b1c40be7d47275",
+    "app/exchange.py": "0227c61916f486e8c801ee4d088e1f1315ea3ee925bbec019f698c1b340a415b",
+    "config/production_profile.json": "b7383a73219f5921b7f1420d62bde63fef4df45c59263463d10ab67b9ab31c7f",
+    "tests/test_production_profile.py": "de6d930b19a12c51ea9a02030935eba4b8a5d3af69e894c71eb8ac457f399e38",
+    "tests/test_development.py": "8d378d463694dc3900d871739cb58abbd1eed2e0582daaac84c622000b0d0eb8",
+    "tests/test_exchange.py": "397449efea71b8b534e4dcb7764e149d730faf72dea0b7636778c764a6c952c5",
+    "development/INTERFACES.md": "6fa917da62331dae5ffb9e2ffe5bef636295df7647a4ffa15fb86523b087e017",
+    "reports/development/2026-10-17_A/run_checks.py": "721034464dccd6e01041635ec43f32112b6cb6ae88a7b45c306275b615a5e7f3"
+  },
+  "exchange_code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a"
+}

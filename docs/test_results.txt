@@ -1,0 +1,54 @@
+test_accents_do_not_destroy_russian_letters (test_asr.ASRMetricTests.test_accents_do_not_destroy_russian_letters) ... ok
+test_cues_keep_measured_timing (test_asr.ASRMetricTests.test_cues_keep_measured_timing) ... ok
+test_missing_negation_is_deletion (test_asr.ASRMetricTests.test_missing_negation_is_deletion) ... ok
+test_invalid_schema_produces_json_error_and_nonzero_exit (test_cli.CliTests.test_invalid_schema_produces_json_error_and_nonzero_exit) ... ok
+test_windows_console_encoding_does_not_change_json_exchange (test_cli.CliTests.test_windows_console_encoding_does_not_change_json_exchange) ... ok
+test_each_contract_accepts_example_and_rejects_extra_and_version (test_core.ContractTests.test_each_contract_accepts_example_and_rejects_extra_and_version) ... ok
+test_full_episode_cannot_use_short_pilot_target (test_core.ContractTests.test_full_episode_cannot_use_short_pilot_target) ... ok
+test_invalid_id_negative_duration_and_coerced_integer_rejected (test_core.ContractTests.test_invalid_id_negative_duration_and_coerced_integer_rejected) ... ok
+test_qa_cannot_claim_checked_without_evidence_or_human_acceptance (test_core.ContractTests.test_qa_cannot_claim_checked_without_evidence_or_human_acceptance) ... ok
+test_timeline_rejects_nonfinite_negative_duplicate_and_traversal (test_core.ContractTests.test_timeline_rejects_nonfinite_negative_duplicate_and_traversal) ... ok
+test_dependency_blocks_submission_and_then_allows_it (test_core.RegistryTests.test_dependency_blocks_submission_and_then_allows_it) ... ok
+test_duplicate_content_does_not_create_asset_or_revision (test_core.RegistryTests.test_duplicate_content_does_not_create_asset_or_revision) ... ok
+test_export_import_roundtrip_and_replay (test_core.RegistryTests.test_export_import_roundtrip_and_replay) ... ok
+test_generated_export_never_overwrites_existing_manual_changes (test_core.RegistryTests.test_generated_export_never_overwrites_existing_manual_changes) ... ok
+test_idempotency_replays_original_response_before_revision_check (test_core.RegistryTests.test_idempotency_replays_original_response_before_revision_check) ... ok
+test_import_checks_unknown_asset_rights_ranges_and_changed_files (test_core.RegistryTests.test_import_checks_unknown_asset_rights_ranges_and_changed_files) ... ok
+test_path_traversal_absolute_drive_ads_and_manual_protection (test_core.RegistryTests.test_path_traversal_absolute_drive_ads_and_manual_protection) ... ok
+test_persistent_status_and_content_hash (test_core.RegistryTests.test_persistent_status_and_content_hash) ... ok
+test_stale_file_response_is_rejected (test_core.RegistryTests.test_stale_file_response_is_rejected) ... ok
+test_stale_revision_is_rejected_without_modification (test_core.RegistryTests.test_stale_revision_is_rejected_without_modification) ... ok
+test_unknown_asset_cannot_be_candidate (test_core.RegistryTests.test_unknown_asset_cannot_be_candidate) ... ok
+test_unknown_rights_cannot_be_selected (test_core.RegistryTests.test_unknown_rights_cannot_be_selected) ... ok
+test_changed_mlt_is_blocked_before_renderer (test_jobs.JobTests.test_changed_mlt_is_blocked_before_renderer) ... ok
+test_detached_native_render_survives_calling_client_exit (test_jobs.JobTests.test_detached_native_render_survives_calling_client_exit) ... ok
+test_idempotency_revision_and_operation_validation (test_jobs.JobTests.test_idempotency_revision_and_operation_validation) ... ok
+test_missing_capability_is_saved_and_resume_rechecks (test_jobs.JobTests.test_missing_capability_is_saved_and_resume_rechecks) ... C:\Users\diffe\AppData\Local\Programs\Python\Python311\Lib\subprocess.py:1127: ResourceWarning: subprocess 24496 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_patch_stales_dependency_chain_preserves_original_cache_and_manual (test_jobs.JobTests.test_patch_stales_dependency_chain_preserves_original_cache_and_manual) ... ok
+test_pending_cancel_retry_limit_and_active_process (test_jobs.JobTests.test_pending_cancel_retry_limit_and_active_process) ... ok
+test_brief_cannot_claim_analyzed_without_registered_coverage (test_library.LibraryTests.test_brief_cannot_claim_analyzed_without_registered_coverage) ... ok
+test_chapters_have_sequential_tasks_and_real_submissions_advance_coverage (test_library.LibraryTests.test_chapters_have_sequential_tasks_and_real_submissions_advance_coverage) ... ok
+test_complete_gate_requires_declaration_all_tasks_verified_dossier_and_unchanged_original (test_library.LibraryTests.test_complete_gate_requires_declaration_all_tasks_verified_dossier_and_unchanged_original) ... ok
+test_duplicate_import_and_idempotency (test_library.LibraryTests.test_duplicate_import_and_idempotency) ... ok
+test_empty_bad_encoding_and_unknown_extension_rejected (test_library.LibraryTests.test_empty_bad_encoding_and_unknown_extension_rejected) ... ok
+test_epub_preserves_spine_order_and_ignores_scripts (test_library.LibraryTests.test_epub_preserves_spine_order_and_ignores_scripts) ... ok
+test_epub_rejects_archive_escape_and_network_reference (test_library.LibraryTests.test_epub_rejects_archive_escape_and_network_reference) ... ok
+test_fabricated_source_hash_and_wrong_chapter_are_rejected (test_library.LibraryTests.test_fabricated_source_hash_and_wrong_chapter_are_rejected) ... ok
+test_import_preserves_original_order_and_never_claims_analysis (test_library.LibraryTests.test_import_preserves_original_order_and_never_claims_analysis) ... ok
+test_search_returns_registered_ids_and_bounded_reads (test_library.LibraryTests.test_search_returns_registered_ids_and_bounded_reads) ... ok
+test_protocol_core_parity_idempotency_and_restricted_tools (test_mcp.MCPIntegrationTests.test_protocol_core_parity_idempotency_and_restricted_tools) ... Executing <Task pending name='Task-2' coro=<MCPIntegrationTests.test_protocol_core_parity_idempotency_and_restricted_tools() running at C:\Users\diffe\OneDrive\���������\ChatGPT\AI_VIDEO_02\tests\test_mcp.py:38> cb=[_run_until_complete_cb() at C:\Users\diffe\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py:181] created at C:\Users\diffe\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py:100> took 1.078 seconds
+ok
+test_actual_native_render_portable_reexport_and_tracks (test_timeline.TimelineTests.test_actual_native_render_portable_reexport_and_tracks) ... ok
+test_traversal_and_preserving_existing_builds (test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds) ... ok
+test_rejects_empty_text (test_tts.TTSInputTests.test_rejects_empty_text) ... ok
+test_rejects_escape_and_non_audio (test_tts.TTSInputTests.test_rejects_escape_and_non_audio) ... ok
+test_rejects_unknown_setting (test_tts.TTSInputTests.test_rejects_unknown_setting) ... ok
+test_cache_text_settings_and_audio_corruption (test_tts.TTSRealIntegrationTests.test_cache_text_settings_and_audio_corruption) ... skipped 'Local Piper/model not installed; no download during tests'
+
+----------------------------------------------------------------------
+Ran 45 tests in 29.465s
+
+OK (skipped=1)

@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "AREA-SRC",
+      "type": "file",
+      "file": "areas/AREA-SRC.md",
+      "x": 0,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#d49a57"
+    },
+    {
+      "id": "home",
+      "type": "file",
+      "file": "START.md",
+      "x": 520,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко"
+    },
+    {
+      "id": "SRC-CLAIMS",
+      "type": "file",
+      "file": "capabilities/SRC-CLAIMS.md",
+      "x": 0,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#d49a57"
+    },
+    {
+      "id": "SRC-DOSSIER",
+      "type": "file",
+      "file": "capabilities/SRC-DOSSIER.md",
+      "x": 520,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#d49a57"
+    },
+    {
+      "id": "SRC-IMPORT",
+      "type": "file",
+      "file": "capabilities/SRC-IMPORT.md",
+      "x": 1040,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#d49a57"
+    },
+    {
+      "id": "SRC-SEARCH",
+      "type": "file",
+      "file": "capabilities/SRC-SEARCH.md",
+      "x": 1560,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#d49a57"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:AREA-SRC:home",
+      "fromNode": "AREA-SRC",
+      "fromSide": "bottom",
+      "toNode": "home",
+      "toSide": "top",
+      "label": "связано"
+    },
+    {
+      "id": "edge:AREA-SRC:SRC-CLAIMS",
+      "fromNode": "AREA-SRC",
+      "fromSide": "bottom",
+      "toNode": "SRC-CLAIMS",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-SRC:SRC-DOSSIER",
+      "fromNode": "AREA-SRC",
+      "fromSide": "bottom",
+      "toNode": "SRC-DOSSIER",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-SRC:SRC-IMPORT",
+      "fromNode": "AREA-SRC",
+      "fromSide": "bottom",
+      "toNode": "SRC-IMPORT",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-SRC:SRC-SEARCH",
+      "fromNode": "AREA-SRC",
+      "fromSide": "bottom",
+      "toNode": "SRC-SEARCH",
+      "toSide": "top",
+      "label": "содержит"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "checked_at": "2026-10-17T14:04:25.197325+00:00",
+  "expected_modified_existing_app_files": [
+    "app/development.py"
+  ],
+  "other_initial_hashes_unchanged": 25,
+  "protected_files": [
+    {
+      "ref": "output/roxy_rudeus_video.mp4",
+      "sha256": "40c546b5fe33bea435c66683c52f8fc02da376e4adc5e675f6f71c325ace8ef4",
+      "same_as_package_A": true
+    },
+    {
+      "ref": "output/world_without_rudeus_ruslan.mp4",
+      "sha256": "d15408e30ab75dc865a0fddbe45d9cfbcb43942111be6bf4fad505bea3c13434",
+      "same_as_package_A": true
+    },
+    {
+      "ref": "workspace/studio/jobs/job_0025176d576f44a7a7c5/project_attempt_1/project.mlt",
+      "sha256": "53675d2593889c54a33f891fccac4f472eb0dd315793634ca8cee2b405152f3f",
+      "same_as_package_A": true
+    },
+    {
+      "ref": "workspace/studio/voice_replacements/ruslan_final/project/project.mlt",
+      "sha256": "84d180ae5d9723bdbf5f0b3e8d53c828fde1f7bd10b1170cf7fadd66431f2014",
+      "same_as_package_A": true
+    },
+    {
+      "ref": "workspace/studio/runtime.json",
+      "sha256": "f642a6653fed504ce915610ba88157d23673200e5759803c2c906747d12d15cc",
+      "same_as_package_A": true
+    },
+    {
+      "ref": "workspace/studio/registry.sqlite",
+      "sha256": "34602b07d259d50fc2f64debb9fd6fea6b51bf20e4a0179706448de6022c32b7",
+      "same_as_package_A": true
+    }
+  ],
+  "read_only_registry_checks": [
+    {
+      "id": "roxy_rudeus_story",
+      "revision": 77,
+      "baseline_job_fields_unchanged": [
+        "job_1a8be0553bc24d8284c4",
+        "job_0025176d576f44a7a7c5",
+        "job_b60bc8fc80a145a291f7",
+        "job_7b08c0affe464929a8c9",
+        "job_522ac556c7d541898c88"
+      ]
+    },
+    {
+      "id": "world_without_rudeus",
+      "revision": 88,
+      "baseline_job_fields_unchanged": [
+        "job_154a062f4b324170b915",
+        "job_7c4eb17065b34e79a300",
+        "job_b986656e7e184c7ca1e8",
+        "job_09e3ce3a7725480a8117",
+        "job_5667a0290f0c4fd9bf3f"
+      ]
+    }
+  ],
+  "active_jobs": [],
+  "no_production_run": true,
+  "scope": "Recorded baseline fields, not a complete registry audit. Media hashes match package A; initial targeted source/profile/runtime hashes preserved except authorized development.py."
+}

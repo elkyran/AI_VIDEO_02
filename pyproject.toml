@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-ai-video-studio"
+version = "0.1.0"
+description = "Local video studio foundation with versioned contracts and a portable pilot"
+requires-python = ">=3.11"
+dependencies = ["pydantic==2.12.5", "numpy==2.4.3"]
+
+[project.optional-dependencies]
+mcp = ["mcp==1.30.0"]
+
+[project.scripts]
+studio = "app.cli:main"
+
+[tool.setuptools]
+packages = ["app", "scripts"]

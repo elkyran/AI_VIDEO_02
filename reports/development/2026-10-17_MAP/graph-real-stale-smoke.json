@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "actual_graphify": true,
+  "temporary_data_only": true,
+  "changed_refs": [
+    "app/probe.py"
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "TimelineSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "visual": {
+          "title": "Visual",
+          "type": "string"
+        },
+        "audio": {
+          "title": "Audio",
+          "type": "string"
+        },
+        "duration": {
+          "exclusiveMinimum": 0,
+          "title": "Duration",
+          "type": "number"
+        },
+        "visual_shots": {
+          "items": {
+            "$ref": "#/$defs/TimelineVisualShot"
+          },
+          "title": "Visual Shots",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "title",
+        "visual",
+        "audio",
+        "duration"
+      ],
+      "title": "TimelineSegment",
+      "type": "object"
+    },
+    "TimelineVisualShot": {
+      "additionalProperties": false,
+      "properties": {
+        "visual": {
+          "title": "Visual",
+          "type": "string"
+        },
+        "frames": {
+          "exclusiveMinimum": 0,
+          "title": "Frames",
+          "type": "integer"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "visual",
+        "frames"
+      ],
+      "title": "TimelineVisualShot",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "exclusiveMinimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "fps": {
+      "default": 30,
+      "maximum": 120,
+      "minimum": 1,
+      "title": "Fps",
+      "type": "integer"
+    },
+    "width": {
+      "default": 1920,
+      "exclusiveMinimum": 0,
+      "title": "Width",
+      "type": "integer"
+    },
+    "height": {
+      "default": 1080,
+      "exclusiveMinimum": 0,
+      "title": "Height",
+      "type": "integer"
+    },
+    "music": {
+      "title": "Music",
+      "type": "string"
+    },
+    "heading": {
+      "default": "",
+      "title": "Heading",
+      "type": "string"
+    },
+    "footer": {
+      "default": "",
+      "title": "Footer",
+      "type": "string"
+    },
+    "title_style": {
+      "default": "legacy",
+      "enum": [
+        "legacy",
+        "lower_third"
+      ],
+      "title": "Title Style",
+      "type": "string"
+    },
+    "segments": {
+      "items": {
+        "$ref": "#/$defs/TimelineSegment"
+      },
+      "minItems": 1,
+      "title": "Segments",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "revision",
+    "music",
+    "segments"
+  ],
+  "title": "Timeline",
+  "type": "object"
+}

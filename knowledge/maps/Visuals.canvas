@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "AREA-VIS",
+      "type": "file",
+      "file": "areas/AREA-VIS.md",
+      "x": 0,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#78a7d5"
+    },
+    {
+      "id": "home",
+      "type": "file",
+      "file": "START.md",
+      "x": 520,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко"
+    },
+    {
+      "id": "VIS-CATALOG",
+      "type": "file",
+      "file": "capabilities/VIS-CATALOG.md",
+      "x": 0,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#78a7d5"
+    },
+    {
+      "id": "VIS-MATCH",
+      "type": "file",
+      "file": "capabilities/VIS-MATCH.md",
+      "x": 520,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#78a7d5"
+    },
+    {
+      "id": "VIS-PREP",
+      "type": "file",
+      "file": "capabilities/VIS-PREP.md",
+      "x": 1040,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#78a7d5"
+    },
+    {
+      "id": "VIS-SEARCH",
+      "type": "file",
+      "file": "capabilities/VIS-SEARCH.md",
+      "x": 1560,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#78a7d5"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:AREA-VIS:home",
+      "fromNode": "AREA-VIS",
+      "fromSide": "bottom",
+      "toNode": "home",
+      "toSide": "top",
+      "label": "связано"
+    },
+    {
+      "id": "edge:AREA-VIS:VIS-CATALOG",
+      "fromNode": "AREA-VIS",
+      "fromSide": "bottom",
+      "toNode": "VIS-CATALOG",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-VIS:VIS-MATCH",
+      "fromNode": "AREA-VIS",
+      "fromSide": "bottom",
+      "toNode": "VIS-MATCH",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-VIS:VIS-PREP",
+      "fromNode": "AREA-VIS",
+      "fromSide": "bottom",
+      "toNode": "VIS-PREP",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-VIS:VIS-SEARCH",
+      "fromNode": "AREA-VIS",
+      "fromSide": "bottom",
+      "toNode": "VIS-SEARCH",
+      "toSide": "top",
+      "label": "содержит"
+    }
+  ]
+}

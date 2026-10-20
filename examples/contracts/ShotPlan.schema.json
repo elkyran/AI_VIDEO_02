@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "block_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Block Id",
+      "type": "string"
+    },
+    "asset_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Asset Id",
+      "type": "string"
+    },
+    "in_ms": {
+      "default": 0,
+      "minimum": 0,
+      "title": "In Ms",
+      "type": "integer"
+    },
+    "out_ms": {
+      "exclusiveMinimum": 0,
+      "title": "Out Ms",
+      "type": "integer"
+    },
+    "purpose": {
+      "enum": [
+        "illustration",
+        "atmosphere",
+        "explanation"
+      ],
+      "title": "Purpose",
+      "type": "string"
+    },
+    "reason": {
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "block_id",
+    "asset_id",
+    "out_ms",
+    "purpose",
+    "reason"
+  ],
+  "title": "ShotPlan",
+  "type": "object"
+}

@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "SourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "work_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Work Id",
+          "type": "string"
+        },
+        "text_revision": {
+          "exclusiveMinimum": 0,
+          "title": "Text Revision",
+          "type": "integer"
+        },
+        "chapter": {
+          "minLength": 1,
+          "title": "Chapter",
+          "type": "string"
+        },
+        "start_char": {
+          "minimum": 0,
+          "title": "Start Char",
+          "type": "integer"
+        },
+        "end_char": {
+          "exclusiveMinimum": 0,
+          "title": "End Char",
+          "type": "integer"
+        },
+        "source_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "work_id",
+        "text_revision",
+        "chapter",
+        "start_char",
+        "end_char",
+        "source_sha256"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "exclusiveMinimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "purpose": {
+      "minLength": 1,
+      "title": "Purpose",
+      "type": "string"
+    },
+    "text": {
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    },
+    "pronunciation_text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pronunciation Text"
+    },
+    "claim_ids": {
+      "items": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+        "type": "string"
+      },
+      "title": "Claim Ids",
+      "type": "array"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "interpretation": {
+      "default": false,
+      "title": "Interpretation",
+      "type": "boolean"
+    },
+    "fact_check": {
+      "default": "not_checked",
+      "enum": [
+        "passed",
+        "failed",
+        "not_checked"
+      ],
+      "title": "Fact Check",
+      "type": "string"
+    },
+    "delivery": {
+      "default": "neutral",
+      "title": "Delivery",
+      "type": "string"
+    },
+    "visual_need": {
+      "default": "",
+      "title": "Visual Need",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "revision",
+    "purpose",
+    "text"
+  ],
+  "title": "ScriptBlock",
+  "type": "object"
+}

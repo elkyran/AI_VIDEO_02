@@ -1,0 +1,80 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "instruction": {
+      "minLength": 1,
+      "title": "Instruction",
+      "type": "string"
+    },
+    "result_contract": {
+      "enum": [
+        "ScriptBlock",
+        "ShotPlan",
+        "ChapterAnalysis",
+        "Claim",
+        "Dossier"
+      ],
+      "title": "Result Contract",
+      "type": "string"
+    },
+    "state": {
+      "default": "pending",
+      "enum": [
+        "pending",
+        "running",
+        "done",
+        "failed",
+        "blocked",
+        "needs_review",
+        "stale"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "candidate_asset_ids": {
+      "items": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+        "type": "string"
+      },
+      "title": "Candidate Asset Ids",
+      "type": "array"
+    },
+    "context": {
+      "additionalProperties": true,
+      "title": "Context",
+      "type": "object"
+    },
+    "dependencies": {
+      "items": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "instruction",
+    "result_contract"
+  ],
+  "title": "Task",
+  "type": "object"
+}

@@ -1,0 +1,66 @@
+{
+  "task_id": "T09",
+  "revision": "corpus-sha256:8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+  "status": "passed",
+  "created_at": "2026-10-17T14:11:22.847915+00:00",
+  "graph_status": {
+    "state": "current",
+    "indexed_at": "2026-10-17T14:05:46.528718+00:00",
+    "graphify_version": "0.9.92",
+    "schema_version": 1,
+    "corpus_sha256": "8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+    "changed_count": 0,
+    "changed_refs": [],
+    "truncated": false,
+    "graph_changed": false,
+    "manifest_ref": "graphify-out/corpus.json",
+    "warnings": [
+      "warning: 1 code file(s) yielded no symbols (0.00 MB) — a data file, or source this extractor models no symbols for: app/__main__.py"
+    ]
+  },
+  "queries": [
+    {
+      "symbol": "app_tts_synthesize",
+      "source": "app/tts.py",
+      "exit_code": 0,
+      "log_ref": "reports/development/2026-10-17_MAP/query-tts.log"
+    },
+    {
+      "symbol": "app_speech_review_review_build_speech",
+      "source": "app/speech_review.py",
+      "exit_code": 0,
+      "log_ref": "reports/development/2026-10-17_MAP/query-asr.log"
+    },
+    {
+      "symbol": "app_timeline_build_timeline",
+      "source": "app/timeline.py",
+      "exit_code": 0,
+      "log_ref": "reports/development/2026-10-17_MAP/query-timeline.log"
+    }
+  ],
+  "export_notes": 855,
+  "native_export_links": "passed",
+  "native_obsidian_config": "excluded",
+  "tests_log": "reports/development/2026-10-17_MAP/code-map-tests.log",
+  "checks": [
+    "edit/delete/rename/add and graph tamper freshness",
+    "unknown files/user edits/.obsidian preserved",
+    "native export namespaced links"
+  ],
+  "html_external_resource": "https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js",
+  "network_isolation_tested": false,
+  "backend": "none",
+  "tokens": null,
+  "export_notes_including_retained": 865,
+  "actual_stale_smoke_ref": "reports/development/2026-10-17_MAP/graph-real-stale-smoke.json",
+  "html_browser_smoke": {
+    "status": "passed",
+    "search": "review_build_speech",
+    "source": "app/speech_review.py",
+    "neighbors": 22,
+    "screenshot_ref": "reports/development/2026-10-17_MAP/graphify-html-asr.png",
+    "scope": "Interactive HTML via loopback before final source-test reindex; Obsidian GUI not tested",
+    "direct_file_protocol": "blocked by IAB URL policy"
+  },
+  "final_native_links": "passed"
+}

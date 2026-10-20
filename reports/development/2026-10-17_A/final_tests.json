@@ -1,0 +1,24 @@
+{
+  "command": [
+    ".venv-core/Scripts/python.exe",
+    "-X",
+    "utf8",
+    "-m",
+    "unittest",
+    "tests.test_core",
+    "tests.test_cli",
+    "tests.test_library",
+    "tests.test_quality",
+    "tests.test_asr",
+    "tests.test_asr_runtime",
+    "tests.test_speech_review",
+    "tests.test_multishot.MultiShotContractTests",
+    "tests.test_production_profile",
+    "tests.test_development",
+    "tests.test_exchange",
+    "-v"
+  ],
+  "exit_code": 0,
+  "duration_seconds": 10.203,
+  "log_ref": "reports/development/2026-10-17_A/final_tests.log"
+}

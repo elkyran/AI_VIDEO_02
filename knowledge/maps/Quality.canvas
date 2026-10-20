@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "AREA-QA",
+      "type": "file",
+      "file": "areas/AREA-QA.md",
+      "x": 0,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b2be6b"
+    },
+    {
+      "id": "home",
+      "type": "file",
+      "file": "START.md",
+      "x": 520,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко"
+    },
+    {
+      "id": "QA-DELIVERY",
+      "type": "file",
+      "file": "capabilities/QA-DELIVERY.md",
+      "x": 0,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b2be6b"
+    },
+    {
+      "id": "QA-FACTS",
+      "type": "file",
+      "file": "capabilities/QA-FACTS.md",
+      "x": 520,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b2be6b"
+    },
+    {
+      "id": "QA-SOUND",
+      "type": "file",
+      "file": "capabilities/QA-SOUND.md",
+      "x": 1040,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b2be6b"
+    },
+    {
+      "id": "QA-TECH",
+      "type": "file",
+      "file": "capabilities/QA-TECH.md",
+      "x": 1560,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#b2be6b"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:AREA-QA:home",
+      "fromNode": "AREA-QA",
+      "fromSide": "bottom",
+      "toNode": "home",
+      "toSide": "top",
+      "label": "связано"
+    },
+    {
+      "id": "edge:AREA-QA:QA-DELIVERY",
+      "fromNode": "AREA-QA",
+      "fromSide": "bottom",
+      "toNode": "QA-DELIVERY",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-QA:QA-FACTS",
+      "fromNode": "AREA-QA",
+      "fromSide": "bottom",
+      "toNode": "QA-FACTS",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-QA:QA-SOUND",
+      "fromNode": "AREA-QA",
+      "fromSide": "bottom",
+      "toNode": "QA-SOUND",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-QA:QA-TECH",
+      "fromNode": "AREA-QA",
+      "fromSide": "bottom",
+      "toNode": "QA-TECH",
+      "toSide": "top",
+      "label": "содержит"
+    }
+  ]
+}

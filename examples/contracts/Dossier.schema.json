@@ -1,0 +1,103 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "work_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Work Id",
+      "type": "string"
+    },
+    "character_name": {
+      "minLength": 1,
+      "title": "Character Name",
+      "type": "string"
+    },
+    "aliases": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Aliases",
+      "type": "array"
+    },
+    "goals": {
+      "minLength": 1,
+      "title": "Goals",
+      "type": "string"
+    },
+    "first_meeting": {
+      "minLength": 1,
+      "title": "First Meeting",
+      "type": "string"
+    },
+    "relationships": {
+      "minLength": 1,
+      "title": "Relationships",
+      "type": "string"
+    },
+    "decisions": {
+      "minLength": 1,
+      "title": "Decisions",
+      "type": "string"
+    },
+    "plot_role": {
+      "minLength": 1,
+      "title": "Plot Role",
+      "type": "string"
+    },
+    "claim_ids": {
+      "items": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Claim Ids",
+      "type": "array"
+    },
+    "unresolved_questions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unresolved Questions",
+      "type": "array"
+    },
+    "reconciliation": {
+      "default": "not_checked",
+      "enum": [
+        "not_checked",
+        "needs_review",
+        "reviewed"
+      ],
+      "title": "Reconciliation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "work_id",
+    "character_name",
+    "goals",
+    "first_meeting",
+    "relationships",
+    "decisions",
+    "plot_role",
+    "claim_ids"
+  ],
+  "title": "Dossier",
+  "type": "object"
+}

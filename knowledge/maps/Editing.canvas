@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "AREA-EDT",
+      "type": "file",
+      "file": "areas/AREA-EDT.md",
+      "x": 0,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#db9494"
+    },
+    {
+      "id": "home",
+      "type": "file",
+      "file": "START.md",
+      "x": 520,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко"
+    },
+    {
+      "id": "EDT-EXPORT",
+      "type": "file",
+      "file": "capabilities/EDT-EXPORT.md",
+      "x": 0,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#db9494"
+    },
+    {
+      "id": "EDT-MOTION",
+      "type": "file",
+      "file": "capabilities/EDT-MOTION.md",
+      "x": 520,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#db9494"
+    },
+    {
+      "id": "EDT-TIMELINE",
+      "type": "file",
+      "file": "capabilities/EDT-TIMELINE.md",
+      "x": 1040,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#db9494"
+    },
+    {
+      "id": "EDT-TITLES",
+      "type": "file",
+      "file": "capabilities/EDT-TITLES.md",
+      "x": 1560,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#db9494"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:AREA-EDT:home",
+      "fromNode": "AREA-EDT",
+      "fromSide": "bottom",
+      "toNode": "home",
+      "toSide": "top",
+      "label": "связано"
+    },
+    {
+      "id": "edge:AREA-EDT:EDT-EXPORT",
+      "fromNode": "AREA-EDT",
+      "fromSide": "bottom",
+      "toNode": "EDT-EXPORT",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-EDT:EDT-MOTION",
+      "fromNode": "AREA-EDT",
+      "fromSide": "bottom",
+      "toNode": "EDT-MOTION",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-EDT:EDT-TIMELINE",
+      "fromNode": "AREA-EDT",
+      "fromSide": "bottom",
+      "toNode": "EDT-TIMELINE",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-EDT:EDT-TITLES",
+      "fromNode": "AREA-EDT",
+      "fromSide": "bottom",
+      "toNode": "EDT-TITLES",
+      "toSide": "top",
+      "label": "содержит"
+    }
+  ]
+}

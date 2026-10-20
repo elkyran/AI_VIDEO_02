@@ -1,0 +1,28 @@
+{
+	"nodes":[
+		{"id":"studio","type":"file","file":"START.md","x":1040,"y":420,"width":440,"height":300,"subpath":"#Кратко"},
+		{"id":"AREA-SRC","type":"file","file":"areas/AREA-SRC.md","x":0,"y":0,"width":440,"height":300,"subpath":"#Кратко","color":"#d49a57"},
+		{"id":"AREA-SCR","type":"file","file":"areas/AREA-SCR.md","x":520,"y":0,"width":440,"height":300,"subpath":"#Кратко","color":"#b593d3"},
+		{"id":"AREA-AUD","type":"file","file":"areas/AREA-AUD.md","x":1040,"y":0,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AREA-VIS","type":"file","file":"areas/AREA-VIS.md","x":1560,"y":0,"width":440,"height":300,"subpath":"#Кратко","color":"#78a7d5"},
+		{"id":"AREA-EDT","type":"file","file":"areas/AREA-EDT.md","x":2080,"y":0,"width":440,"height":300,"subpath":"#Кратко","color":"#db9494"},
+		{"id":"AREA-QA","type":"file","file":"areas/AREA-QA.md","x":0,"y":420,"width":440,"height":300,"subpath":"#Кратко","color":"#b2be6b"},
+		{"id":"AREA-OPS","type":"file","file":"areas/AREA-OPS.md","x":2080,"y":420,"width":440,"height":300,"subpath":"#Кратко","color":"#a0a9b9"},
+		{"id":"process","type":"file","file":"maps/Video_Process.canvas","x":520,"y":840,"width":440,"height":300},
+		{"id":"tasks","type":"file","file":"generated/TASKS.md","x":1040,"y":840,"width":440,"height":300},
+		{"id":"history","type":"file","file":"generated/HISTORY.md","x":1560,"y":840,"width":440,"height":300},
+		{"id":"legend","type":"text","text":"Цвет = область. Статус — текст в карточке.\nСодержит — иерархия; требует — предпосылка; связано — навигация.\nОткройте заметку области → ссылку на её Canvas.\nКарты ничего не запускают.","x":520,"y":420,"width":440,"height":300}
+	],
+	"edges":[
+		{"id":"edge:studio:AREA-SRC","fromNode":"studio","fromSide":"bottom","toNode":"AREA-SRC","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:AREA-SCR","fromNode":"studio","fromSide":"bottom","toNode":"AREA-SCR","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:AREA-AUD","fromNode":"studio","fromSide":"bottom","toNode":"AREA-AUD","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:AREA-VIS","fromNode":"studio","fromSide":"bottom","toNode":"AREA-VIS","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:AREA-EDT","fromNode":"studio","fromSide":"bottom","toNode":"AREA-EDT","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:AREA-QA","fromNode":"studio","fromSide":"bottom","toNode":"AREA-QA","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:AREA-OPS","fromNode":"studio","fromSide":"bottom","toNode":"AREA-OPS","toSide":"top","label":"содержит"},
+		{"id":"edge:studio:process","fromNode":"studio","fromSide":"bottom","toNode":"process","toSide":"top","label":"связано"},
+		{"id":"edge:studio:tasks","fromNode":"studio","fromSide":"bottom","toNode":"tasks","toSide":"top","label":"связано"},
+		{"id":"edge:studio:history","fromNode":"studio","fromSide":"bottom","toNode":"history","toSide":"top","label":"связано"}
+	]
+}

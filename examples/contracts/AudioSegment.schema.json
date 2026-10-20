@@ -1,0 +1,121 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "block_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Block Id",
+      "type": "string"
+    },
+    "text_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Text Hash",
+      "type": "string"
+    },
+    "voice_id": {
+      "minLength": 1,
+      "title": "Voice Id",
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "ru",
+        "en"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "path": {
+      "title": "Path",
+      "type": "string"
+    },
+    "duration_ms": {
+      "exclusiveMinimum": 0,
+      "title": "Duration Ms",
+      "type": "integer"
+    },
+    "sample_rate_hz": {
+      "exclusiveMinimum": 0,
+      "title": "Sample Rate Hz",
+      "type": "integer"
+    },
+    "channels": {
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Channels",
+      "type": "integer"
+    },
+    "generation_settings": {
+      "additionalProperties": true,
+      "title": "Generation Settings",
+      "type": "object"
+    },
+    "wav_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Wav Hash"
+    },
+    "model_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Hash"
+    },
+    "engine": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Engine"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "block_id",
+    "text_hash",
+    "voice_id",
+    "language",
+    "path",
+    "duration_ms",
+    "sample_rate_hz",
+    "channels"
+  ],
+  "title": "AudioSegment",
+  "type": "object"
+}

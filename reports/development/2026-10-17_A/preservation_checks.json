@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "protected_files": {
+    "output/roxy_rudeus_video.mp4": {
+      "same_sha256": true,
+      "same_size": true,
+      "same_mtime": true
+    },
+    "output/world_without_rudeus_ruslan.mp4": {
+      "same_sha256": true,
+      "same_size": true,
+      "same_mtime": true
+    },
+    "workspace/studio/jobs/job_0025176d576f44a7a7c5/project_attempt_1/project.mlt": {
+      "same_sha256": true,
+      "same_size": true,
+      "same_mtime": true
+    },
+    "workspace/studio/voice_replacements/ruslan_final/project/project.mlt": {
+      "same_sha256": true,
+      "same_size": true,
+      "same_mtime": true
+    },
+    "workspace/studio/runtime.json": {
+      "same_sha256": true,
+      "same_size": true,
+      "same_mtime": true
+    },
+    "workspace/studio/registry.sqlite": {
+      "same_sha256": true,
+      "same_size": true,
+      "same_mtime": true
+    }
+  },
+  "changed_existing_source_files": [
+    ".gitignore"
+  ]
+}

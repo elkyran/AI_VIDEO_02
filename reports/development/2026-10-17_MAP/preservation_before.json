@@ -1,0 +1,31 @@
+{
+  "created_at": "2026-10-17T13:40:47.895008+00:00",
+  "hashes": {
+    "config/production_profile.json": "b7383a73219f5921b7f1420d62bde63fef4df45c59263463d10ab67b9ab31c7f",
+    "workspace/studio/runtime.json": "f642a6653fed504ce915610ba88157d23673200e5759803c2c906747d12d15cc",
+    "requirements-tts.txt": "bd6722f4c7212125b0a6f1ebbc4ea20bfb8275e8e50c61e77dca6316d0b74766",
+    "pyproject.toml": "01089b5d1f9132b9feb01d6eb1cabb7ebafadb4f3908e3091eb4b52818f8855f",
+    "app/cli.py": "a6d53131881859d04038f653254c925c6da6ae0dab7a058cebc8950219c7c222",
+    "app/contracts.py": "17b36f82cbcd5bce06e4c79f7ccbaaa953603c054fbaae88c6ef1c90c541d79e",
+    "app/development.py": "7dea594b2ee9bd88fb655a316ab9522eff0641aaeaa882f3f6b1c40be7d47275",
+    "app/exchange.py": "0227c61916f486e8c801ee4d088e1f1315ea3ee925bbec019f698c1b340a415b",
+    "app/jobs.py": "2ab25a51d4e6d1e43fe7a2d11b0214a0daf6330ecc2031de308ba834c7ee7c20",
+    "app/library.py": "6fa5ada14a79a0507b1a112ef62d4fbe0a82c63d8a7b4da844696e824dd956f5",
+    "app/mcp_server.py": "186fa32bbe18e4f17c97bc547fb590bb8485cc9a8edb6d9e7557050470f9ed1c",
+    "app/media.py": "0489d84138028bedcfb143b448bcc1e9dcf316454dcd1fec3223c706e8b341d3",
+    "app/operations.py": "a8ded710b61f42625f8db6d696b3d02486a449fc07137ff9e0f414e09d39e15e",
+    "app/production_profile.py": "895bbebcacbd3d026a91b45f00df47cc91f103930ef4fe6b160d649ab1a5dd47",
+    "app/registry.py": "7094f2e1fb406f2f70a74ab435cba3997c68fd7e58255168c549cbd74cb821a1",
+    "app/review.py": "a624607aebf25b0baace99bdee06ebcb5818d3b5902ed07eef91e73804ff32f9",
+    "app/speech_review.py": "5954dba80d7e252c04eca82cc3f634dd08f5e3b8a902880010b004abaa2b275a",
+    "app/timeline.py": "6b7f8f550b07505460b57cfe7cb5b77972e00cadb536447473ced3a2981bbd55",
+    "app/tts.py": "68e5d6b7eae430c834de9ae76a134d7744f61303821a39903e8197b9525c8422",
+    "app/worker.py": "8e27f13c95d2da5d8edcd11063a7dce97b119aaa53d20d8f14bbeee87a6d8169",
+    "app/__init__.py": "280fe5a121432eb0d9cca54cf7211252e4ef235154cb2a9d3f1d5c1d2fc62463",
+    "app/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "workspace/studio/jobs/job_154a062f4b324170b915/audio_manifest.json": "f77019c46379dcdee1ca2d9aa000b445141b1db1aa3558c63febff4e3875d305",
+    "workspace/studio/voice_replacements/ruslan_final/audio_manifest.json": "ec0ab555dcc50dba20c67864f7b9a0c8055d417edde504c4518d866ee6a94a00",
+    "workspace/studio/jobs/job_7c4eb17065b34e79a300/project_attempt_1/timeline.json": "b6bcd5b575f15c5f343c1dce579e8e131f6928dcf55fd74e664961177ccfa330",
+    "models/piper/ru_RU-ruslan-medium.onnx": "72a5f88e0b20928064eb45d88e1daa21f8af62d18613580d32cbb4aed48dcf7f"
+  }
+}

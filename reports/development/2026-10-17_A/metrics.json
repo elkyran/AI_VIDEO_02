@@ -1,0 +1,129 @@
+{
+  "run_id": "2026-10-17_A",
+  "phase": "A",
+  "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+  "client_date": "2026-10-17",
+  "client_timezone": "Asia/Qyzylorda",
+  "baseline_recorded_at": "2026-10-17T12:11:48.785111+00:00",
+  "finished_at": "2026-10-17T12:26:36.165276+00:00",
+  "development": {
+    "seconds_since_baseline": 887.38,
+    "scope_note": "Includes implementation/tests/waiting after baseline; initial reading time not measured",
+    "baseline_tests": {
+      "count": 62,
+      "seconds": 7.438
+    },
+    "final_tests": {
+      "count": 93,
+      "seconds": 10.203
+    },
+    "installations": 0,
+    "subagents": 1,
+    "subagent_scope": "Narrow T03 code/API/tests; inherited model settings; no historical chat loading"
+  },
+  "repeatable_operations": {
+    "kind": "simulated; temporary registry; existing queue; no real media generation",
+    "initial_chain": {
+      "operation_id": "exchange_be019ff447d64442822f9ea2322db356",
+      "operation": "chain",
+      "version": "0.1.0",
+      "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+      "task_id": "T03",
+      "job_id": "job_f24de3836aaa4e13bbcd",
+      "elapsed_seconds": 0.187,
+      "job_elapsed_seconds": 0.006674289703369141,
+      "repeat": false,
+      "attempts": 1,
+      "cache_hits": null,
+      "speech_cache": null,
+      "repair_reason": "T03 isolated smoke; no production content",
+      "model": null,
+      "tokens": {
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning": null,
+        "total": null
+      }
+    },
+    "identical_repeat": {
+      "operation_id": "exchange_7fbc26f310b447aeb0e4ee0d40ce5c5a",
+      "operation": "chain",
+      "version": "0.1.0",
+      "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+      "task_id": "T03",
+      "job_id": "job_f24de3836aaa4e13bbcd",
+      "elapsed_seconds": 0.031,
+      "job_elapsed_seconds": 0.006674289703369141,
+      "repeat": true,
+      "attempts": 1,
+      "cache_hits": null,
+      "speech_cache": null,
+      "repair_reason": null,
+      "model": null,
+      "tokens": {
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning": null,
+        "total": null
+      }
+    },
+    "actual_mock_worker_executions_across_first_and_repeat": 5,
+    "jobs_created_across_first_and_repeat": 5,
+    "timeout": {
+      "operation_id": "exchange_c787da05927d443ab6e7aa0b19a92f70",
+      "operation": "wait",
+      "version": "0.1.0",
+      "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+      "task_id": "T03",
+      "job_id": "job_e2590761e8bd458e80f1",
+      "elapsed_seconds": 0.032,
+      "job_elapsed_seconds": null,
+      "repeat": false,
+      "attempts": 0,
+      "cache_hits": null,
+      "speech_cache": null,
+      "repair_reason": null,
+      "model": null,
+      "tokens": {
+        "input": null,
+        "cached_input": null,
+        "output": null,
+        "reasoning": null,
+        "total": null
+      }
+    },
+    "response_characters": {
+      "complete_and_repeat": 956,
+      "timeout": 891,
+      "error": 989
+    }
+  },
+  "production": {
+    "new_jobs": 0,
+    "new_videos": 0,
+    "models_loaded": 0,
+    "full_renders": 0,
+    "old_artifacts_unchanged": true
+  },
+  "model_settings": {
+    "model": null,
+    "reasoning_effort": null,
+    "source": "No structured current-session usage/settings source available; no settings were changed"
+  },
+  "tokens": {
+    "input": null,
+    "cached_input": null,
+    "output": null,
+    "reasoning": null,
+    "total": null
+  },
+  "cost": null,
+  "limitations": [
+    "No claim of lower subscription cost or quality-equivalent production speedup",
+    "No new voice quality evaluation; mocks test program logic",
+    "One narrowly scoped helper was used despite the attachment single-agent guideline; the session mandates delegation",
+    "No Graphify/Obsidian/other AI client acceptance in package A"
+  ]
+}

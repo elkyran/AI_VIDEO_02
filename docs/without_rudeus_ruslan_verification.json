@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "status": "ready_for_review",
+  "operation": "restore_previous_ruslan_voice",
+  "project_id": "world_without_rudeus",
+  "script_asset_id": "without_rudeus_video_v4",
+  "script_sha256": "74afcb242a92bd4174f397393bf2b682b4871daeb5dfd75d866a522270517fc1",
+  "voice": "ru_RU-ruslan-medium",
+  "synthesis_job_id": "job_154a062f4b324170b915",
+  "video_packets_identical": 15041,
+  "script_and_music_unchanged": true,
+  "old_deliverable_preserved": true,
+  "duration_seconds": 501.366667,
+  "audio_levels_dbfs": {
+    "mean_volume": -24.4,
+    "max_volume": -3.8
+  },
+  "complete_video_and_audio_decode": "passed",
+  "negation_sequences_matched": 28,
+  "narration_samples_trimmed": 0,
+  "human_listening": "not_checked",
+  "asr_status": "automated_warning",
+  "asr_warnings_retained": true,
+  "technical_replacement_report": "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\workspace\\studio\\voice_replacements\\ruslan_final\\replacement_report.json",
+  "speech_review": "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\workspace\\studio\\narration_fit\\ruslan_final\\speech_review.json",
+  "editable_project": "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\workspace\\studio\\voice_replacements\\ruslan_final\\project\\project.mlt",
+  "files": {
+    "world_without_rudeus_ruslan.mp4": {
+      "path": "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\output\\world_without_rudeus_ruslan.mp4",
+      "size_bytes": 383785528,
+      "sha256": "d15408e30ab75dc865a0fddbe45d9cfbcb43942111be6bf4fad505bea3c13434"
+    },
+    "world_without_rudeus_ruslan.srt": {
+      "path": "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\output\\world_without_rudeus_ruslan.srt",
+      "size_bytes": 18127,
+      "sha256": "93c4725195a5f430776917d7bb1e6f22565d65e8351cc68231331ad5b6ee67b2"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Source Id",
+      "type": "string"
+    },
+    "work_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Work Id",
+      "type": "string"
+    },
+    "text_revision": {
+      "exclusiveMinimum": 0,
+      "title": "Text Revision",
+      "type": "integer"
+    },
+    "chapter": {
+      "minLength": 1,
+      "title": "Chapter",
+      "type": "string"
+    },
+    "start_char": {
+      "minimum": 0,
+      "title": "Start Char",
+      "type": "integer"
+    },
+    "end_char": {
+      "exclusiveMinimum": 0,
+      "title": "End Char",
+      "type": "integer"
+    },
+    "source_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_id",
+    "work_id",
+    "text_revision",
+    "chapter",
+    "start_char",
+    "end_char",
+    "source_sha256"
+  ],
+  "title": "SourceRef",
+  "type": "object"
+}

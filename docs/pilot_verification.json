@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "project_id": "mushoku_pilot",
+  "scope": "Technical pilot; full novel not analyzed",
+  "project_revision": 17,
+  "jobs": {
+    "synthesize": "job_3676981d28d34ee88464",
+    "build": "job_0597a2993b76413bb4dd",
+    "render": "job_48c599267b6e4ffca447",
+    "qa": "job_20b1b664d5a1413b8fb5",
+    "package": "job_a3990556fdc74d1daea9"
+  },
+  "video_sha256": "87d6fe904d0e50c7d682790e7237d549e4038a667b1a47a6a77c783264534c29",
+  "duration_seconds": 73.002667,
+  "model_frame_review": {
+    "status": "passed",
+    "method": "Viewed one midpoint frame from each of seven scenes",
+    "limitations": [
+      "Not a complete motion review",
+      "Not human listening",
+      "Not manual editor interaction"
+    ],
+    "frame_hashes": {
+      "1": "262d0cda64c2686261e4b2e7f34dde244ea59df6d1e0b085b85bfad17dc60b21",
+      "2": "d9533522fa1c77fc8a166652b6cfe0d679e47ae02fc61eae5074ee9aa2f43e25",
+      "3": "5a0b1ab27b955cf1247b52e76db28f0e68b028db3cd23bb9659bbc4119f3200e",
+      "4": "76e6bbff655dba5049de4ea9d128e47d4bd4f56ef80a66b9768662605b0b00ab",
+      "5": "a73871e5605b5653036ca3924729e5afcaf212d2e8cf5f6a87e53fb4ce4968ef",
+      "6": "a668475cbe89dd6c2b04fa1fdb87ba8ef4f87c158cada6bf30b88ab7607e0d6f",
+      "7": "f2cc8ae4df0d8e5f2260ff450ccece0734d5f2bd317335f0f6f0eafc56a02808"
+    }
+  },
+  "tests": {
+    "full_suite_total": 60,
+    "passed": 59,
+    "skipped": 1,
+    "skip_reason": "Piper installed in separate speech environment",
+    "latest_jobs_regression_passed": 9
+  },
+  "acceptance": "ready_for_review"
+}

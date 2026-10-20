@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "project_id": "roxy_rudeus_story",
+  "date": "2026-10-16",
+  "milestone": "editorial_review",
+  "render_job_id": "job_b60bc8fc80a145a291f7",
+  "qa_job_id": "job_7b08c0affe464929a8c9",
+  "package_job_id": "job_522ac556c7d541898c88",
+  "status": "ready_for_review",
+  "video_sha256": "40c546b5fe33bea435c66683c52f8fc02da376e4adc5e675f6f71c325ace8ef4",
+  "duration_seconds": 605.034667,
+  "narration_blocks": 47,
+  "visual_shots": 151,
+  "unique_anime_images": 50,
+  "unique_manga_images": 6,
+  "rendered_frame_inspection": {
+    "status": "passed",
+    "reviewer": "root_model_visual_inspection",
+    "method": "Viewed one actual final-v3 MP4 midpoint frame from every shot in seven labelled contact sheets; additionally inspected two full-size frames. Prior-v2 manga full-size inspections also established the unchanged panel framing.",
+    "frame_count": 151,
+    "full_size_frames": ["001_01.png", "047_04.png"],
+    "black_or_missing_images_found": false,
+    "stretched_portrait_panels_found": false,
+    "clipped_titles_found": false,
+    "limitations": [
+      "This is sampled visual inspection, not playback of all 18151 frames.",
+      "The montage includes reused contextual portraits and visual recollections, not 151 unique scenes.",
+      "The manga panels retain their Japanese lettering; Russian narration conveys the story."
+    ]
+  },
+  "editorial_asset_correspondence": {
+    "status": "pass_for_illustrative_montage",
+    "reviewer": "anime_assets",
+    "blocks_checked": 47,
+    "shots_checked": 151,
+    "blocking_findings": [],
+    "context_note": "Norn's tearful portrait originates in grief over Paul and is used as family-conversation context; it is not direct evidence of her reaction to Roxy."
+  },
+  "full_video_audio_decode": "passed",
+  "audio_mean_dbfs": -23.4,
+  "audio_peak_dbfs": -3.8,
+  "speech_qa": {
+    "status": "automated_warning",
+    "engine": "faster-whisper medium",
+    "device": "cuda",
+    "compute_type": "int8_float16",
+    "elapsed_seconds": 94.62,
+    "blocks": 47,
+    "negations_match_all_blocks": true,
+    "subtitle_cues": 184,
+    "subtitle_timing_and_block_coverage": "passed",
+    "final_qa_reused_verified_preflight_cache": true,
+    "remaining_limitations": "ASR still flags some names, individual words and interpolated subtitle timestamps. No human listening is claimed.",
+    "previous_v2": "QA correctly blocked two ambiguous negation transcriptions. Four paragraphs were rephrased and synthesized anew; 43 unchanged WAVs came from the verified TTS cache."
+  },
+  "human_listening": "not_checked",
+  "user_acceptance": "not_checked",
+  "whole_novel_analysis": "unfinished",
+  "complete_wn_ln_reconciliation": "unfinished"
+}

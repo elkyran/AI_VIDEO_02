@@ -1,0 +1,408 @@
+{
+  "schema_version": 1,
+  "package_id": "MAI-05",
+  "operation_key": "MAI-05-2026-10-19-account-quota-audit",
+  "generation": 12,
+  "updated_at": "2026-10-19T22:47:57.534061+05:00",
+  "revision": "source-sha256:f065b7086795d17e6e355c9f8697873366097772b9664f1c10cb4abfb91b361d",
+  "plan_ref": "development/multi_ai/IMPLEMENTATION_PLAN.txt",
+  "plan_sha256": "6c70cb6b11b6434a4918914149424429707b6d802a54e85850b7d22b8275d638",
+  "roadmap_ref": "development/multi_ai/ROADMAP.md",
+  "legacy_task_journal": "preserved; not merged",
+  "stages": [
+    {
+      "id": "MAI-01",
+      "stage": 1,
+      "status": "done",
+      "depends_on": [],
+      "implemented": "Аудит и карта интеграции; baseline, профиль и старый CLI проверены.",
+      "limitations": null,
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [
+        "reports/development/2026-10-18_MULTI_AI/repo_audit.md",
+        "development/multi_ai/ROADMAP.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/MAI-01_checks.json"
+      ],
+      "next_stage": "MAI-02"
+    },
+    {
+      "id": "MAI-02",
+      "stage": 2,
+      "status": "done",
+      "depends_on": [
+        "MAI-01"
+      ],
+      "implemented": "Строгие контракты, точный MLT, каталог и read-only descriptors старых операций; реальный короткий preview.",
+      "limitations": "Подтверждён минимальный технический мост. Production TTS не запускался; fades/speed/transforms/transitions возвращают capability_gap; SRT отдельно.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [
+        "app/editorial.py",
+        "app/production_bridge.py",
+        "scripts/check_multi_ai_render.py"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/MAI-02_checks.json"
+      ],
+      "next_stage": "MAI-03"
+    },
+    {
+      "id": "MAI-03",
+      "stage": 3,
+      "status": "done",
+      "depends_on": [
+        "MAI-02"
+      ],
+      "implemented": "Сохраняемая очередь, зависимости, 3/1/1, однократное принятие, FakeAdapter.",
+      "limitations": "Облачные процессы не запускаются; завершение задачи не означает художественную приёмку.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [
+        "app/multi_ai.py",
+        "app/ai_adapters.py"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/MAI-03_checks.json"
+      ],
+      "next_stage": "MAI-04"
+    },
+    {
+      "id": "MAI-04",
+      "stage": 4,
+      "status": "done",
+      "depends_on": [
+        "MAI-03"
+      ],
+      "implemented": "Локальная панель, SSE, 3 роли/9 позиций, preview, пауза/остановка и восстановление.",
+      "limitations": "Первая панель офлайн; подключение реального аккаунта недоступно.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [
+        "app/multi_ai_ui.py",
+        "app/multi_ai_preview.py",
+        "multi_ai.cmd"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/MAI-04_checks.json"
+      ],
+      "next_stage": "MAI-05"
+    },
+    {
+      "id": "MAI-05",
+      "stage": 5,
+      "status": "partial",
+      "depends_on": [
+        "MAI-03",
+        "MAI-04"
+      ],
+      "implemented": "Восемь позиций сохранены; GPT-1…4 прошли свежую официальную проверку аккаунта/лимитов; ранее подтверждён один ответ Gemini-1; GPT-only цепочка 3/3 сохранена. Аудит учёта и квот завершён; группы MAI-05 (107 тестов) и panel (12 тестов) прошли.",
+      "limitations": "Статус остаётся partial. GPT-1 исчерпал недельный лимит; GPT-2 сообщает plus и его подтверждение условий списаний истекло; подтверждения GPT-3/4 также истекли. Gemini-1 имеет неразрешённое расхождение: AI Studio показывает Gemini 3.6 Flash, профиль/CLI — gemini-3.8-flash; повторный запрос запрещён до выяснения. Gemini-2…4 не подтверждены; независимая критика Gemini и медиа-QA не выполнены. Производство не запускалось.",
+      "revision": "source-sha256:f065b7086795d17e6e355c9f8697873366097772b9664f1c10cb4abfb91b361d",
+      "result_refs": [
+        "reports/development/2026-10-18_MAI05/REPORT.md",
+        "development/multi_ai/MAI05_RUNBOOK.md",
+        "reports/development/2026-10-18_MAI05_RECHECK/REPORT_MAI05_RECHECK.md",
+        "reports/development/2026-10-18_MAI05_RECHECK/gpt1_limit_blocker_20261019.json",
+        "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/REPORT_ACCOUNT_QUOTA_AUDIT.md",
+        "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/evidence.json"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MAI05/checks_20261018T130851Z_f4ce86/checks.json",
+        "reports/development/2026-10-18_MAI05_RECHECK/checks_20261018T184752Z_eef6b0/checks.json",
+        "reports/development/2026-10-18_MAI05_RECHECK/checks_20261018T185516Z_6f5fed/checks.json",
+        "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/checks_20261019T174429Z_a126d3/checks.json"
+      ],
+      "next_stage": "Очередь держать на паузе. Не продолжать через другой профиль после исчерпания лимита. До новых заданий получить отдельное актуальное подтверждение условий GPT-2…4 и разобраться в расхождении Gemini 3.8/3.6 без повторного запроса; MAI-06 требует отдельного поручения и выбранных материалов."
+    },
+    {
+      "id": "MAI-06",
+      "stage": 6,
+      "status": "blocked",
+      "depends_on": [
+        "MAI-02",
+        "MAI-05"
+      ],
+      "implemented": "Технические контракты и реальная короткая текстовая цепочка GPT-only проверены; настоящая сцена с голосом и монтажом ещё не выполнена.",
+      "limitations": "Настоящая сцена, голос, монтаж и QA не выполнялись. Нужны отдельное поручение, выбранный бриф/материалы и Ruslan WAV; доступность Gemini ограничена неразрешённым несоответствием модели, GPT задания закрыты до актуальных подтверждений.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [
+        "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/REPORT_ACCOUNT_QUOTA_AUDIT.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json"
+      ],
+      "next_stage": "По отдельному поручению выполнить одну настоящую сцену штатными операциями; затем MAI-07."
+    },
+    {
+      "id": "MAI-07",
+      "stage": 7,
+      "status": "partial",
+      "depends_on": [
+        "MAI-06"
+      ],
+      "implemented": "Read-only каталог, происхождение и пересечение диапазонов, версии обзоров проверены.",
+      "limitations": "Нет проверенной визуальной разведки и творческой петли; требуется сцена MAI-06.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json"
+      ],
+      "next_stage": "MAI-08"
+    },
+    {
+      "id": "MAI-08",
+      "stage": 8,
+      "status": "blocked",
+      "depends_on": [
+        "MAI-06",
+        "MAI-07"
+      ],
+      "implemented": "Критерии и метрики пилота сохранены.",
+      "limitations": "Сравнение старого и нового видео возможно после MAI-06/07; улучшение качества пока не измерено.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json"
+      ],
+      "next_stage": "MAI-09"
+    },
+    {
+      "id": "MAI-09",
+      "stage": 9,
+      "status": "partial",
+      "depends_on": [
+        "MAI-03",
+        "MAI-05"
+      ],
+      "implemented": "Восемь активных позиций: GPT-1…4, Gemini-1…4; три Claude в истории. Выбор группы/профиля, drain, пауза, сохранение после перезапуска проверены. GPT-1…4 дали реальные ответы.",
+      "limitations": "Четыре GPT профиля имеют разные подтверждённые личности, но только для GPT-1 свежая отметка условий; остальные требуют повторной проверки допустимости тарифа. Gemini-1 использует один Free Tier проект с двумя ключами на общей квоте; Gemini-2…4 не проверены. Ротация выключена.",
+      "revision": "source-sha256:f065b7086795d17e6e355c9f8697873366097772b9664f1c10cb4abfb91b361d",
+      "result_refs": [
+        "reports/development/2026-10-18_MAI05_RECHECK/REPORT_MAI05_RECHECK.md",
+        "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/REPORT_ACCOUNT_QUOTA_AUDIT.md",
+        "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/evidence.json"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json",
+        "reports/development/2026-10-18_MAI05_RECHECK/checks_20261018T184752Z_eef6b0/checks.json",
+        "reports/development/2026-10-18_MAI05_RECHECK/checks_20261018T185516Z_6f5fed/checks.json"
+      ],
+      "next_stage": "Оставить очередь на ручной паузе; проверять другие Gemini только при поддерживаемом маршруте и без обхода проектных лимитов; затем MAI-10."
+    },
+    {
+      "id": "MAI-10",
+      "stage": 10,
+      "status": "partial",
+      "depends_on": [
+        "MAI-03"
+      ],
+      "implemented": "Файлы до повтора, CAS, процессный lock, native identity/recovery/stop, bounded retries и адресная инвалидизация проверены.",
+      "limitations": "Live-provider process recovery не проверен; partial WAV/render rebuild и неизвестный launch gap требуют дальнейшей интеграции/ручной диагностики.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json"
+      ],
+      "next_stage": "MAI-11"
+    },
+    {
+      "id": "MAI-11",
+      "stage": 11,
+      "status": "partial",
+      "depends_on": [
+        "MAI-02",
+        "MAI-04",
+        "MAI-10"
+      ],
+      "implemented": "Редактирование текста, версия, pin, история и роли в UI проверены.",
+      "limitations": "Замена/закрепление отдельного кадра, просмотр замечаний по таймкоду и адресная реальная пересборка WAV/preview ещё не завершены.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json"
+      ],
+      "next_stage": "MAI-12"
+    },
+    {
+      "id": "MAI-12",
+      "stage": 12,
+      "status": "blocked",
+      "depends_on": [
+        "MAI-08",
+        "MAI-09",
+        "MAI-10",
+        "MAI-11"
+      ],
+      "implemented": "Runbook и передача сохранены; старый режим доступен.",
+      "limitations": "Полный выпуск не запускался. Нужны успешный пилот и выбранные владельцем длительность/материалы; production запрещён внутри этого development пакета.",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "result_refs": [],
+      "test_refs": [
+        "reports/development/2026-10-18_MULTI_AI/checks_20261018T100251Z_1e6ed3/checks.json"
+      ],
+      "next_stage": null
+    }
+  ],
+  "test_counts": {
+    "contracts": {
+      "total": 14,
+      "skipped": 0
+    },
+    "queue": {
+      "total": 50,
+      "skipped": 0
+    },
+    "adapters": {
+      "total": 16,
+      "skipped": 0
+    },
+    "panel": {
+      "total": 12,
+      "skipped": 0
+    },
+    "mai05": {
+      "total": 107,
+      "skipped": 0
+    },
+    "legacy": {
+      "total": 126,
+      "skipped": 1
+    }
+  },
+  "total_tests": 325,
+  "skipped_tests": 1,
+  "model_requests": null,
+  "paid_api_requests": 0,
+  "verified_real_profiles": 5,
+  "creative_quality": null,
+  "accepted_video_minutes": null,
+  "next_action": "Держать очередь на паузе. До MAI-06 владелец отдельно выбирает короткий бриф, материалы и существующий Ruslan WAV; сначала подтвердить допустимость тарифа GPT-2 Plus/условий GPT-3…4 и разобраться в метке Gemini 3.8 против 3.6 без повторного сетевого запроса. Не запускать выпуск, TTS или рендер.",
+  "offline_followups": [
+    "Frame replacement/pinning and per-scene rebuild UI (MAI-11) remain partial; final acceptance depends on MAI-06.",
+    "Unknown native launch identity stays blocked; no automatic duplicate launch."
+  ],
+  "graphify": {
+    "state": "stale",
+    "backend": "none",
+    "canvas": "knowledge/generated/code/graph.proposed.canvas",
+    "manual_canvas_preserved": true,
+    "refreshed_in_mai05": false
+  },
+  "history": [
+    {
+      "generation": 1,
+      "package_id": "MULTI-AI-OFFLINE",
+      "revision": "source-sha256:09a45702664111005a2b1f39e5b1466842441bc95ed1424816ad902c2193b0b4",
+      "updated_at": "2026-10-18T10:11:55.047318+00:00"
+    },
+    {
+      "generation": 2,
+      "package_id": "MAI-05",
+      "revision": "source-sha256:ead18e522fad41b1e7234cac7ea6d2a726c4c82df9d7a300f46ff6913c4e623a",
+      "updated_at": "2026-10-18T11:53:25.780522+00:00"
+    },
+    {
+      "generation": 3,
+      "package_id": "MAI-05",
+      "revision": "source-sha256:92ee8de01b588f2f1fce3ebce60f636b6051f74cad68c81b49fc810303a8872c",
+      "updated_at": "2026-10-18T12:10:36.910626+00:00"
+    },
+    {
+      "generation": 7,
+      "package_id": "MAI-05",
+      "revision": "source-sha256:9a0a877e6c14df212887f54e6e103aac4c28ee1c691aed02e04caed115589178",
+      "updated_at": "2026-10-18T13:03:13.426237+00:00"
+    },
+    {
+      "generation": 8,
+      "package_id": "MAI-05",
+      "operation_key": "MAI-05-2026-10-18-cli-profiles-v1",
+      "revision": "source-sha256:2e02d1e719c5c469d8b525afacfb741c41e57aa7a9e57f08adbd7882766e634a",
+      "updated_at": "2026-10-18T13:09:55.995419+00:00",
+      "verified_real_profiles": 3,
+      "creative_chain_passed": false
+    },
+    {
+      "generation": 9,
+      "package_id": "MAI-05",
+      "operation_key": "MAI-05-2026-10-18-eight-profiles-free-route",
+      "revision": "source-sha256:a361c84433781aecb9712ac4534996f49ddca5d87a30064307bbb2807391c821",
+      "updated_at": "2026-10-18T18:52:10.101451+00:00",
+      "verified_real_profiles": 4,
+      "creative_chain_passed": true
+    },
+    {
+      "generation": 10,
+      "package_id": "MAI-05",
+      "operation_key": "MAI-05-2026-10-19-gemini-free-verified",
+      "revision": "source-sha256:f065b7086795d17e6e355c9f8697873366097772b9664f1c10cb4abfb91b361d",
+      "updated_at": "2026-10-19T13:08:10.553554+00:00",
+      "verified_real_profiles": 5,
+      "creative_chain_passed": true
+    },
+    {
+      "generation": 11,
+      "operation_key": "MAI-05-2026-10-19-gpt1-limit-blocked",
+      "updated_at": "2026-10-19T13:14:16.221936+00:00",
+      "revision": "source-sha256:f065b7086795d17e6e355c9f8697873366097772b9664f1c10cb4abfb91b361d",
+      "verified_real_profiles": 5,
+      "currently_runnable_profile_ids": [
+        "gemini-1"
+      ],
+      "model_requests": null,
+      "paid_api_requests": 0,
+      "next_action": "Дождаться восстановления включённого лимита GPT-1 по данным официального клиента; после повторной проверки доступа выполнить короткий цикл GPT → Gemini → GPT. Не переключать аккаунт для обхода лимита и не покупать кредиты."
+    }
+  ],
+  "actual_model_requests": null,
+  "model_requests_lower_bound": 9,
+  "verified_model_response_count": 8,
+  "accepted_real_access_checks": 5,
+  "creative_chain_passed": true,
+  "active_profile_count": 8,
+  "verified_profile_ids": [
+    "codex-1",
+    "codex-2",
+    "codex-3",
+    "codex-4",
+    "gemini-1"
+  ],
+  "historical_provider": "claude",
+  "creative_chain_mode": "gpt_only",
+  "creative_review_mode": "gpt_self_review",
+  "media_qa_passed": false,
+  "gemini_api_free": {
+    "profile_id": "gemini-1",
+    "model": "gemini-3.8-flash",
+    "project_id": "gen-lang-client-0391540777",
+    "access_state": "verified",
+    "auth_state": "authenticated",
+    "reason": null,
+    "real_access_result_ref": "reports/development/2026-10-18_MAI05_RECHECK/gemini1_api_result.json",
+    "identity_automatically_verified": false,
+    "quota_isolation_verified": false
+  },
+  "currently_runnable_profile_ids": [],
+  "latest_account_quota_audit": {
+    "report_ref": "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/REPORT_ACCOUNT_QUOTA_AUDIT.md",
+    "evidence_ref": "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/evidence.json",
+    "checks_ref": "reports/development/2026-10-19_ACCOUNT_QUOTA_AUDIT/checks_20261019T174429Z_a126d3/checks.json",
+    "gpt_fresh_diagnostics": 4,
+    "gemini_supported_profiles": 1,
+    "gemini_model_label_mismatch": true,
+    "queue_control": "paused",
+    "audit_model_requests": 0,
+    "audit_paid_api_requests": 0,
+    "operationally_startable_profile_ids": [],
+    "checks": {
+      "mai05": {
+        "status": "passed",
+        "tests_run": 107
+      },
+      "panel": {
+        "status": "passed",
+        "tests_run": 12
+      }
+    },
+    "next_gate": "Owner to clarify allowed GPT-2 Plus use and Gemini 3.8/3.6 mismatch; keep paused until resolved."
+  }
+}

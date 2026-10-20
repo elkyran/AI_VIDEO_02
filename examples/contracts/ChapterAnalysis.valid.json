@@ -1,0 +1,27 @@
+{
+  "id": "analysis01",
+  "project_id": "pilot",
+  "source_id": "source01",
+  "chapter_id": "chapter01",
+  "summary": "Разбор тестового раздела",
+  "claims": [
+    {
+      "id": "claim01",
+      "project_id": "pilot",
+      "work_id": "work01",
+      "kind": "event",
+      "statement": "Тестовое событие",
+      "source_refs": [
+        {
+          "source_id": "source01",
+          "work_id": "work01",
+          "text_revision": 1,
+          "chapter": "1",
+          "start_char": 0,
+          "end_char": 10,
+          "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ]
+    }
+  ]
+}

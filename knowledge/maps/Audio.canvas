@@ -1,0 +1,26 @@
+{
+	"nodes":[
+		{"id":"AREA-AUD","type":"file","file":"areas/AREA-AUD.md","x":0,"y":0,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"home","type":"file","file":"START.md","x":520,"y":0,"width":440,"height":300,"subpath":"#Кратко"},
+		{"id":"AUD-ALIGN","type":"file","file":"capabilities/AUD-ALIGN.md","x":0,"y":420,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-ASR","type":"file","file":"capabilities/AUD-ASR.md","x":520,"y":420,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-CHARACTERS","type":"file","file":"capabilities/AUD-CHARACTERS.md","x":1040,"y":420,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-MIX","type":"file","file":"capabilities/AUD-MIX.md","x":1560,"y":420,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-PROFILE","type":"file","file":"capabilities/AUD-PROFILE.md","x":0,"y":820,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-PRONUNCIATION","type":"file","file":"capabilities/AUD-PRONUNCIATION.md","x":520,"y":820,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-REPLACE","type":"file","file":"capabilities/AUD-REPLACE.md","x":1040,"y":820,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"},
+		{"id":"AUD-WAV","type":"file","file":"capabilities/AUD-WAV.md","x":1560,"y":820,"width":440,"height":300,"subpath":"#Кратко","color":"#65bba9"}
+	],
+	"edges":[
+		{"id":"edge:AREA-AUD:home","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"home","toSide":"top","label":"связано"},
+		{"id":"edge:AREA-AUD:AUD-ALIGN","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-ALIGN","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-ASR","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-ASR","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-CHARACTERS","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-CHARACTERS","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-MIX","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-MIX","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-PROFILE","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-PROFILE","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-PRONUNCIATION","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-PRONUNCIATION","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-REPLACE","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-REPLACE","toSide":"top","label":"содержит"},
+		{"id":"edge:AREA-AUD:AUD-WAV","fromNode":"AREA-AUD","fromSide":"bottom","toNode":"AUD-WAV","toSide":"top","label":"содержит"},
+		{"id":"edge:AUD-PRONUNCIATION:AUD-PROFILE","fromNode":"AUD-PRONUNCIATION","fromSide":"bottom","toNode":"AUD-PROFILE","toSide":"top","label":"требует"}
+	]
+}

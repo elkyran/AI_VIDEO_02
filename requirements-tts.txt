@@ -1,0 +1,12 @@
+# Versions observed in the working Windows Python 3.11 TTS/ASR environment.
+# Install deliberately into .venv-tts; no model is downloaded by pip.
+piper-tts==1.8.0
+pathvalidate==3.3.1
+onnxruntime==1.24.4
+numpy==2.4.4
+faster-whisper==1.2.1
+ctranslate2==4.7.1
+av==17.0.1
+huggingface-hub==1.11.0
+tokenizers==0.22.2
+soundfile==0.13.1

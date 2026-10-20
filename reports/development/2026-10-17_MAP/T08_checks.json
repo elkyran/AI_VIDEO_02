@@ -1,0 +1,29 @@
+{
+  "task_id": "T08",
+  "revision": "canvas-sha256:5fe0029d13b2aa965d93192fa5f4cf3df412ccbcfae5d77de5d04f1f1fb0400b",
+  "status": "passed",
+  "created_at": "2026-10-17T14:11:22.846906+00:00",
+  "validation": {
+    "status": "passed",
+    "notes": 43,
+    "canvases": 9,
+    "errors": [],
+    "truncated": false
+  },
+  "checks": [
+    "no overlaps",
+    "main has seven areas, no capability dump",
+    "main → audio → AUD-ASR links and return",
+    "temporary capability without generator changes",
+    "manual geometry/color/unknown properties/text/edges preserved",
+    "two no-op syncs preserve mtime",
+    "conflict .proposed.canvas",
+    "active app .proposed.canvas",
+    "Cyrillic paths"
+  ],
+  "gui": "not_checked",
+  "gui_reason": "Obsidian absent from sky.list_apps and standard executable locations; no application installed by this task",
+  "visual_acceptance": null,
+  "automated_tests_ref": "reports/development/2026-10-17_MAP/adapter-tests.log",
+  "artifact_manifest_ref": "reports/development/2026-10-17_MAP/artifact_manifest.json"
+}

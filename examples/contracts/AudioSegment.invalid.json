@@ -1,0 +1,13 @@
+{
+  "id": "audio01",
+  "project_id": "pilot",
+  "block_id": "block01",
+  "text_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "voice_id": "denis",
+  "language": "ru",
+  "path": "audio/01.wav",
+  "duration_ms": 5000,
+  "sample_rate_hz": 22050,
+  "channels": 1,
+  "schema_version": "unsupported"
+}

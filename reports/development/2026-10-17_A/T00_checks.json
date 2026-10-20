@@ -1,0 +1,18 @@
+{
+  "task_id": "T00",
+  "status": "passed",
+  "revision": "snapshot-sha256:25d00c16968772058b9076e5f59313068ee917d524731fa253e7f61210dc8aee",
+  "checks": {
+    "active_studio_jobs": 0,
+    "active_studio_processes": 0,
+    "sqlite_backup_integrity": "ok",
+    "baseline_tests": {
+      "count": 62,
+      "failed": 0,
+      "ref": "reports/development/2026-10-17_A/baseline_tests.json"
+    },
+    "protected_files": "all 6 SHA-256 values unchanged after baseline tests",
+    "commands": "development/INTERFACES.md",
+    "git": "unborn; reversible source snapshot used"
+  }
+}

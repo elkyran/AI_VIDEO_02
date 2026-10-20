@@ -1,0 +1,512 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-10-16",
+  "project_id": "world_without_rudeus",
+  "script_asset_id": "without_rudeus_video_v4",
+  "milestone": "editorial_review",
+  "source_status": "partial",
+  "status": "ready_for_review",
+  "jobs": {
+    "synthesize": "job_4cba3101d6f34f53bbbe",
+    "build": "job_7c4eb17065b34e79a300",
+    "render": "job_b986656e7e184c7ca1e8",
+    "qa": "job_09e3ce3a7725480a8117",
+    "package": "job_5667a0290f0c4fd9bf3f"
+  },
+  "video_sha256": "fc57e0a8b20e573debf031d9c6952109175fa0cc6cc57ed3ab0c9656065c6f2f",
+  "duration_seconds": 501.376,
+  "narration_blocks": 28,
+  "visual_shots": 148,
+  "unique_visual_assets": 58,
+  "source_kind_seconds": {
+    "image": 39.1,
+    "video": 462.26666666666665
+  },
+  "video_source_fraction": 0.9220131640183499,
+  "source_kind_metric_limit": "Video sources can contain held animation frames; this is not a per-pixel motion percentage.",
+  "overlays_enabled": false,
+  "audio_engine": "Silero v4_ru / aidar, 48000 Hz, CPU",
+  "narration_generation": "One complete synthesis unit per block; no samples trimmed; source audio from anime excluded.",
+  "rendered_frame_inspection": {
+    "schema_version": "1.0",
+    "status": "passed",
+    "render_job_id": "job_b986656e7e184c7ca1e8",
+    "qa_job_id": "job_09e3ce3a7725480a8117",
+    "video_sha256": "fc57e0a8b20e573debf031d9c6952109175fa0cc6cc57ed3ab0c9656065c6f2f",
+    "frame_count": 148,
+    "method": "Viewed one actual final v4 MP4 midpoint frame from every shot in seven contact sheets. Root reviewed sheets1–4 (96shots); montage_upgrade reviewed sheets5–7 (52shots). Full-size samples and corrected edit boundaries were inspected separately.",
+    "reviewers": {
+      "root_model_visual_inspection": 96,
+      "montage_upgrade": 52
+    },
+    "black_or_missing_images_found": false,
+    "stretched_images_found": false,
+    "unexpected_title_cards_or_added_labels_found": false,
+    "decode_corruption_seen": false,
+    "corrections_verified": [
+      "b20 second shot now shows Norn instead of Aisha",
+      "b25a-to-b25b no longer repeats the same Zanoba movement consecutively"
+    ],
+    "sheets": {
+      "export_sheet_01.jpg": "55422f2303989319589be39dd2145c8aecee9e99e1503d17c00c8255bb37c401",
+      "export_sheet_02.jpg": "f048c529ef3f5b3c9c33eadeaff0e4d402f8b5cef31ba9c7d466748e9b1ac069",
+      "export_sheet_03.jpg": "96b3d260a654f24617f2fe985adf83436595243517568100dad3f9836c35f887",
+      "export_sheet_04.jpg": "12d95ef9f20327afca50093ee7fe9b9f42c08c9684f43ec6722129f896c0b47e",
+      "export_sheet_05.jpg": "2e36e7117f001b291766ca46f65216f536068d772d23508a96322e6383e01fea",
+      "export_sheet_06.jpg": "1698223c40f716e1662778932e30bc31e1d52a590d39cf6f9aa2f5564f78f2cb",
+      "export_sheet_07.jpg": "1542119ba6c13f04da0bb914bfa54e4285364b388baf506c2e0d56ae61ee5888"
+    },
+    "limitations": [
+      "Sampled inspection, not playback of all15041frames.",
+      "No human listening assessment or user acceptance is claimed.",
+      "Original preview logos remain in some footage.",
+      "Official mainline footage illustrates characters and possibilities; it is not an adaptation of the alternate timeline.",
+      "Some clips are reused and some shots are symbolic scenery."
+    ]
+  },
+  "editorial_asset_correspondence": {
+    "schema_version": "1.0",
+    "reviewed_at_utc": "2026-10-16T17:43:34.015571+00:00",
+    "reviewer": "plan_audit",
+    "status": "pass_for_render_with_known_limits",
+    "scope": {
+      "all_narration_blocks_and_shot_rows_read": true,
+      "blocks": [
+        "b01",
+        "b02",
+        "b03",
+        "b04",
+        "b05",
+        "b06",
+        "b07",
+        "b09",
+        "b13",
+        "b16",
+        "b18",
+        "b19",
+        "b20",
+        "b21",
+        "b22",
+        "b23",
+        "b24",
+        "b24a",
+        "b25",
+        "b25a",
+        "b25b",
+        "b27",
+        "b28",
+        "b29",
+        "b29a",
+        "b29b",
+        "b30",
+        "b31"
+      ],
+      "block_count": 28,
+      "shot_count": 148,
+      "method": "Сопоставлены все тексты и 148 записей плана, их назначения и continuity_warnings. Визуальная идентичность проверялась по контактным листам клипов, исправленным листам границ и индивидуально просмотренным stills; критические слоты проверены отдельно.",
+      "not_claimed": [
+        "Просмотр каждого кадра итогового MP4",
+        "Полное прослушивание финальной озвучки",
+        "Автоматический финальный QA",
+        "Переносимость или готовность пакета",
+        "Полный аудит всех WN/LN"
+      ],
+      "timing_limit": "Детальное совпадение слов с кадрами оценивалось по имеющимся ASR-меткам; они не объявлены точным forced alignment."
+    },
+    "inputs_sha256": {
+      "research/without_rudeus/story.json": "979cfaeb5d0b7c4582d700d530ca5e09de0cabcaff515c467a2a6241565ff182",
+      "research/without_rudeus/shot_plan.json": "d4f115f52612a0a5bce968f427efd1d4fce3c2d8039115bee85f17ee93baba90",
+      "research/without_rudeus/editorial_shot_review.json": "1b966305f695c864f6ee3b6552614370764f7bb48539240d85157cf4fa450801"
+    },
+    "registered_script_reported_by_producer": {
+      "asset_id": "without_rudeus_video_v4",
+      "sha256": "74afcb242a92bd4174f397393bf2b682b4871daeb5dfd75d866a522270517fc1",
+      "independently_verified_registry": true
+    },
+    "plan_metrics": {
+      "duration_seconds": 501.3666666666667,
+      "shots": 148,
+      "unique_assets": 58,
+      "source_kind_seconds": {
+        "image": 39.1,
+        "video": 462.26666666666665
+      },
+      "video_source_fraction": 0.9220131640183499,
+      "min_shot_seconds": 1.2666666666666666,
+      "max_shot_seconds": 5.966666666666667
+    },
+    "resolved_findings": [
+      {
+        "block": "b04",
+        "finding": "Нанахоси могла восприниматься как Мико; сцена разрушенного дворца — как катастрофа Фиттоа.",
+        "resolution": "Оставлены канонический кадр катастрофы и нейтральные пейзажи/детали, без портрета Нанахоси в роли Мико.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b23",
+        "finding": "Нанахоси могла восприниматься как ребёнок Норн и Руйджерда.",
+        "resolution": "Выбраны Орстед, нейтральные виды и Руйджерд; Нанахоси отсутствует.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b24a",
+        "finding": "Портреты Пакса/Занобы могли выдавать их за названного в тексте предка Лапласа.",
+        "resolution": "Используются виды Широна и общие детали; неподтверждённого портрета Болта Македониуса нет.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b16",
+        "finding": "Повреждённая комната после асурского покушения могла восприниматься как последствия катастрофы Фиттоа.",
+        "resolution": "051 заменён на 075, придворный план Ариэль/Люка.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b19",
+        "finding": "Повреждённая асурская комната могла восприниматься как вымершее поселение Супардов.",
+        "resolution": "063 заменён на 024, снежный лес как общий фон.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b13",
+        "finding": "Гал Фарион в 033 появлялся на словах о муже Эрис и охране Ариэль, создавая подмену Люка.",
+        "resolution": "033 заменён на 075, Ариэль/Люк; проверены и shot_plan.json, и editorial_shot_review.json.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b20",
+        "finding": "Крупный план Айши в 053 попадал на рассказ о Норн.",
+        "resolution": "Второй план заменён на 054 с Норн. Контактный лист повторно просмотрен: Руйджерд приветствует детскую Норн; это портретная иллюстрация, а не её взрослая жизнь.",
+        "status": "verified_applied"
+      },
+      {
+        "block": "b25b",
+        "finding": "Смежный повтор 074 на стыке с концом b25a.",
+        "resolution": "Порядок изменён с [74,39,20,14,68] на [39,20,14,74,68]; соседство 074/074 устранено. Состав кадров и их длительности внутри b25b сохранены.",
+        "status": "verified_applied"
+      }
+    ],
+    "verified_corrected_sequences": {
+      "b04": [
+        "wr_motion_047",
+        "wr_motion_058",
+        "wr_motion_042",
+        "wr_motion_073",
+        "wr_motion_024"
+      ],
+      "b13": [
+        "wr_motion_062",
+        "wr_motion_034",
+        "wr_motion_028",
+        "wr_motion_031",
+        "wr_motion_032",
+        "wr_motion_075",
+        "wr_motion_049",
+        "wr_motion_052"
+      ],
+      "b16": [
+        "wr_motion_048",
+        "wr_motion_049",
+        "wr_motion_045",
+        "wr_motion_075",
+        "wr_motion_052",
+        "wr_motion_028",
+        "wr_motion_064"
+      ],
+      "b19": [
+        "wr_motion_024",
+        "wr_motion_007",
+        "wr_motion_006",
+        "wr_motion_058",
+        "wr_motion_054"
+      ],
+      "b23": [
+        "wr_motion_014",
+        "wr_motion_012",
+        "wr_motion_058",
+        "wr_motion_073",
+        "wr_motion_011"
+      ],
+      "b24a": [
+        "wr_motion_069",
+        "wr_still_shirone",
+        "wr_motion_042",
+        "wr_motion_070",
+        "wr_motion_058",
+        "wr_motion_073"
+      ],
+      "b20": [
+        "wr_motion_055",
+        "wr_motion_054",
+        "wr_motion_065",
+        "wr_motion_058"
+      ],
+      "b25b": [
+        "wr_motion_039",
+        "wr_motion_020",
+        "wr_motion_014",
+        "wr_motion_074",
+        "wr_motion_068"
+      ]
+    },
+    "mandatory_findings_remaining": [],
+    "critical_checks": [
+      {
+        "blocks": [
+          "b22"
+        ],
+        "result": "В блоке о взрослом браке Норн нет изображения детской Норн; прямой подмены ребёнка взрослой супругой не найдено."
+      },
+      {
+        "blocks": [
+          "b24",
+          "b24a",
+          "b25"
+        ],
+        "result": "Опорные изображения страны/города относятся к Широну; Асура и Перугиус не выдаются за Широн. Джинджер не подписана Паксом."
+      },
+      {
+        "blocks": [
+          "b29a"
+        ],
+        "result": "Канонические семейные кадры служат иллюстрацией темы потомков; конкретные неопознанные дети не объявлены названными будущими союзниками."
+      },
+      {
+        "blocks": [
+          "b01",
+          "b02",
+          "b03",
+          "b04",
+          "b05",
+          "b06",
+          "b07",
+          "b09",
+          "b13",
+          "b16",
+          "b18",
+          "b19",
+          "b20",
+          "b21",
+          "b22",
+          "b23",
+          "b24",
+          "b24a",
+          "b25",
+          "b25a",
+          "b25b",
+          "b27",
+          "b28",
+          "b29",
+          "b29a",
+          "b29b",
+          "b30",
+          "b31"
+        ],
+        "result": "После шести применённых исправлений новых обязательных замен персонажа или события не обнаружено."
+      }
+    ],
+    "known_limits": [
+      "Официальные аниме-кадры иллюстрируют исходный канон. Они не являются экранизацией прежних циклов или альтернативного мира без Рудеуса.",
+      "Молодой Пакс используется как портрет персонажа, а не как документальная сцена взрослого переворота, республики или его смерти.",
+      "Кадры детской Норн вне b22 служат представлению персонажа и канонического знакомства; последующая семейная жизнь не экранизирована этими кадрами.",
+      "Неназванные города, лес, светильник, повреждённый интерьер и другие общие планы являются атмосферными фонами и не доказывают место или событие альтернативной линии.",
+      "В коротких официальных промофрагментах иногда присутствуют Рудеус и второстепенные персонажи; это иллюстрации канона, а не утверждение об их присутствии в сценарии без Рудеуса.",
+      "Короткие материалы повторяются; 92,20% длительности плана основано на видеоисточниках, но это не 92,20% уникальной непрерывной анимации.",
+      "Проверено выбранное первичное источниковое покрытие. Полные WN и LN не прочитаны и не сопоставлены; официальные аннотации LN не заменяют содержание томов.",
+      "Права внешних визуальных материалов отмечены unknown, использование local_review с атрибуцией; разрешение на публичную публикацию не подтверждено.",
+      "Этот отчёт завершает редакторскую проверку плана и не подменяет финальные render/QA, субтитры, прослушивание или технический аудит пакета."
+    ],
+    "version": "v4",
+    "previous_review": {
+      "path": "research/without_rudeus/editorial_correspondence_review_v3.json",
+      "sha256": "333ce34c9dbc3fcf5c6a92e80f50f58f7ebbf2f7c3a13ca6c74057b7d052200c",
+      "coverage_inherited": "Полная проверка 28 блоков и 148 планов v3; для v4 проверены только два изменённых блока и отсутствие остальных изменений."
+    },
+    "v4_delta_verification": {
+      "status": "pass",
+      "changed_script_segment_ids": [
+        "b20",
+        "b25b"
+      ],
+      "only_visual_shots_changed_in_segments": true,
+      "other_26_segments_unchanged": true,
+      "text_pronunciation_and_story_unchanged": true,
+      "all_28_block_durations_unchanged": true,
+      "all_28_built_wav_sha256_unchanged": true,
+      "built_wav_sha256": {
+        "b01": "74fcb77a3dea07670e2361ba3317a052130972fc2094fb08e457e816913c6d5d",
+        "b02": "cc331b0d430c0dd20204543da6124797949e7a21fd4fa703243f8df1ff7761fa",
+        "b03": "8b28c62e5a6f5a301d40fec13500f3eeeb48deb8549d1536eb2312b057a013e4",
+        "b04": "85fa6b6a06e8dd5db5844b361fe951c083cabc94aa106f30c27a2b36db0dff0a",
+        "b05": "7215aeeee921efe0440a821b8d4903f944e4ae427e1484718cc78c2558e928e6",
+        "b06": "752285829aa63b8c9298496859172d2d3bcf27c28ae2cfef36489cf39ede0aae",
+        "b07": "26d0534a593a91171d575bafd32c71e9ee14a01c32a0b738d9530e8cc97d8672",
+        "b09": "5b3d6fb55a74b8a2f8313028a35b0514e30b88c7811a52fa9485559761a966b4",
+        "b13": "25379a1adbbc9a051cb1f812a32859aed40c23670393ed0ea3022358cbb30ef6",
+        "b16": "bbfee383a3de000d8e15725dee233194b383c199d31467ea785b9f884aeb8bc9",
+        "b18": "16ddece3f3dcbe10021586b83f66c77173623540f84d3e6bb29114daa7a4463e",
+        "b19": "b5f02a78c55ff2ba5a852efdd1d838d82cc442ae4e07d5cf20966a17bfe11486",
+        "b20": "f54b5eefb1188113ff9e665e28c8baa0cf14a9dd29905081d304fbccfe2a61d1",
+        "b21": "6f390a205330c24eafd7673bbba53e0a075adaf7977c7762afcb2b0b103fd5c5",
+        "b22": "5438fe5df12af177421ee5972f4da4b5ad143677d1c820fadd19b5b35329e42d",
+        "b23": "59ddf58d3c2d15661108de17fcfa3c67be1058c46d3d02cb762efe4921b99057",
+        "b24": "a4c9da92c2d96807b2f7f5e0c8a0b316d41acb8a88fdb8dca6b55d2b43ca0790",
+        "b24a": "ac18edaff6921db28f284fdbcac76ad42a060abde3a201d8b4a395b7fee2ab36",
+        "b25": "c88cbd46d5b5b109ac34adde940c396370340d303f1a57538ae1a2736af99670",
+        "b25a": "b9afcde8062cc4531ce53dd4d67d3e764ade4a630d315fa935cda418cbc40ffb",
+        "b25b": "34719c3eefad4154a7507348a75edb3de5ebef533636a5febf1ab0c672c7e817",
+        "b27": "7a562ca06175750aad7d8248a216ecba4bfe13639866e05fbdd843537a372967",
+        "b28": "d3f7acc96801bb9753f4f632e0a98b4ebd6bf5194e652929c4bcdb7cdf810074",
+        "b29": "2147c191193e2145c68ad4ade5b4b9a3561e6cb2fe65b4855c205512e43bcfb9",
+        "b29a": "74eca824ce804f5da895d54dded67b4f3ac565160ab46b0ce7a38477478697c7",
+        "b29b": "e6b0b859298ee307b06bd1b395badef63019b4993a5b6d99228d03178d1afe9a",
+        "b30": "689a44a28f1ecac7f8381f16d034945b48cfe320eae888b945c8151e0f324692",
+        "b31": "a7b550ae85c83115fbc408c7e9bf7145b4b51953e33ed8e24f550ff46952a2a3"
+      },
+      "source_credit_change": "Удалена только запись больше не используемого wr_motion_053; остальные атрибуции прежние.",
+      "b20_weight_adjustment": "При замене источника перераспределились кадры внутри b20; общий блок остался той же длительности.",
+      "frame_allocation": {
+        "b20": {
+          "v3": [
+            69,
+            100,
+            161,
+            91
+          ],
+          "v4": [
+            69,
+            104,
+            158,
+            90
+          ],
+          "total_frames": 421
+        },
+        "b25b": {
+          "v3": [
+            43,
+            71,
+            104,
+            77,
+            98
+          ],
+          "v4": [
+            71,
+            104,
+            77,
+            43,
+            98
+          ],
+          "total_frames": 393
+        }
+      },
+      "build_jobs_compared": {
+        "v3": "job_df4f9aa057d54628bf6a",
+        "v4": "job_7c4eb17065b34e79a300"
+      },
+      "previous_script_sha256": "de1d361ab20e489212d8d03c7579c7f47dd3c1fbcb884fa6f51e1eb53adfe684",
+      "current_script_sha256": "74afcb242a92bd4174f397393bf2b682b4871daeb5dfd75d866a522270517fc1",
+      "not_repeated": "Полный визуальный обзор исходных материалов не повторялся; новый итоговый MP4 не просматривался в рамках этой проверки."
+    }
+  },
+  "qa_checks": {
+    "video_profile": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "frame_rate": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "square_pixels": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "audio_stream": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "duration": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "complete_decode": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "audio_level": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "speech_cache_integrity": {
+      "status": "passed",
+      "severity": "info"
+    },
+    "speech_negations": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "speech_transcript": {
+      "status": "failed",
+      "severity": "warning"
+    },
+    "subtitle_timing": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "all_media_present": {
+      "status": "passed",
+      "severity": "error"
+    },
+    "visual_pacing": {
+      "status": "passed",
+      "severity": "info"
+    },
+    "human_listening": {
+      "status": "not_checked",
+      "severity": "warning"
+    },
+    "visual_editor_review": {
+      "status": "not_checked",
+      "severity": "warning"
+    },
+    "source_content_review": {
+      "status": "not_checked",
+      "severity": "warning"
+    },
+    "other_ai_clients": {
+      "status": "not_checked",
+      "severity": "warning"
+    },
+    "user_acceptance": {
+      "status": "not_checked",
+      "severity": "warning"
+    },
+    "source_scope": {
+      "status": "not_checked",
+      "severity": "warning"
+    }
+  },
+  "audio_level_evidence": "mean=-21.8 dBFS, max=-3.6 dBFS",
+  "speech_cache": {
+    "hit": true,
+    "key": "28fb2cff674332c4c63f7daac83ab94ef08da623896995790fd924594eac665a"
+  },
+  "asr_status": "automated_warning",
+  "human_listening": "not_checked",
+  "user_acceptance": "not_checked",
+  "previous_deliverables_unchanged": {
+    "roxy_rudeus_video.mp4": true,
+    "roxy_rudeus_video.srt": true,
+    "roxy_rudeus_editable.zip": true,
+    "universal_video_studio_mvp_multishot.zip": true
+  },
+  "whole_novel_analysis": "unfinished",
+  "complete_wn_ln_reconciliation": "unfinished",
+  "source_scope": "Selected original WN and author side-story scenes; official LN16/LN26 publisher blurbs only. Facts of old loops separated from inference.",
+  "research_receipt_hashes": {
+    "applied_review.json": "2ed660907765b5f0476dcfe451e93e902bdfb14e5ae0777b980c1bfb185ac430",
+    "sources_core.json": "d6c98f27577c00b65a68e18a0f0a3afd4cd846cace9a4a2ff1bf351cd46abbfb",
+    "ln_scope.json": "b1ad78980bd2add999508c12e54381e26c8e384a8edc6ee5ff2116a99cf232db",
+    "editorial_shot_review.json": "1b966305f695c864f6ee3b6552614370764f7bb48539240d85157cf4fa450801",
+    "voice/episode_revision_v2_review.json": "a792bda2be738a57549a62076435670f857bb8aec8684c460d947f63eace1fa6"
+  }
+}

@@ -1,0 +1,1363 @@
+{
+  "complete_and_repeat": {
+    "response": {
+      "task_id": "T03",
+      "job_id": "job_f24de3836aaa4e13bbcd",
+      "state": "done",
+      "quality_status": "ready_for_review",
+      "artifacts": [],
+      "warnings": [],
+      "errors": [],
+      "log_ref": "exchange_logs/exchange_be019ff447d64442822f9ea2322db356.json",
+      "next_action": "review_saved_artifacts",
+      "wait_status": "completed",
+      "metrics": {
+        "operation_id": "exchange_be019ff447d64442822f9ea2322db356",
+        "operation": "chain",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_f24de3836aaa4e13bbcd",
+        "elapsed_seconds": 0.187,
+        "job_elapsed_seconds": 0.006674289703369141,
+        "repeat": false,
+        "attempts": 1,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": "T03 isolated smoke; no production content",
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "truncated": false,
+      "counts": {
+        "errors": 0,
+        "warnings": 0,
+        "artifacts": 0
+      }
+    },
+    "repeat_response": {
+      "task_id": "T03",
+      "job_id": "job_f24de3836aaa4e13bbcd",
+      "state": "done",
+      "quality_status": "ready_for_review",
+      "artifacts": [],
+      "warnings": [],
+      "errors": [],
+      "log_ref": "exchange_logs/exchange_7fbc26f310b447aeb0e4ee0d40ce5c5a.json",
+      "next_action": "review_saved_artifacts",
+      "wait_status": "completed",
+      "metrics": {
+        "operation_id": "exchange_7fbc26f310b447aeb0e4ee0d40ce5c5a",
+        "operation": "chain",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_f24de3836aaa4e13bbcd",
+        "elapsed_seconds": 0.031,
+        "job_elapsed_seconds": 0.006674289703369141,
+        "repeat": true,
+        "attempts": 1,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "truncated": false,
+      "counts": {
+        "errors": 0,
+        "warnings": 0,
+        "artifacts": 0
+      }
+    },
+    "worker_executions": 5,
+    "saved_log": {
+      "request": {
+        "action": "chain",
+        "project_id": "demo",
+        "script_asset_id": "script",
+        "base_revision": 3,
+        "key": "chain-one",
+        "task_id": "T03",
+        "mode": "development",
+        "timeout": 60,
+        "poll_interval": 0.25,
+        "repair_reason": "T03 isolated smoke; no production content"
+      },
+      "job": {
+        "project_id": "demo",
+        "operation": "package",
+        "parameters": {
+          "qa_job_id": "job_2cdf49449f6f44679429"
+        },
+        "state": "done",
+        "progress": 1.0,
+        "message": "Completed",
+        "result": {
+          "status": "ready_for_review"
+        },
+        "error": null,
+        "created": 1792239849.212775,
+        "started": 1792239849.2200687,
+        "finished": 1792239849.226743,
+        "worker_pid": 30276,
+        "cancel_requested": 0,
+        "attempts": 1,
+        "input_revision": 8,
+        "invalidated": 0,
+        "job_id": "job_f24de3836aaa4e13bbcd"
+      },
+      "stages": [
+        {
+          "operation": "synthesize",
+          "receipt": {
+            "project_id": "demo",
+            "revision": 4,
+            "job_id": "job_268c2a9b17f34a53bd74",
+            "state": "pending"
+          },
+          "repeat": false,
+          "job": {
+            "project_id": "demo",
+            "operation": "synthesize",
+            "parameters": {
+              "script_asset_id": "script"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "cache_hits": 1,
+              "manifest": "simulated.json"
+            },
+            "error": null,
+            "created": 1792239849.0790186,
+            "started": 1792239849.088053,
+            "finished": 1792239849.0952275,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 4,
+            "invalidated": 0,
+            "job_id": "job_268c2a9b17f34a53bd74"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.031,
+          "cache_hits": 1,
+          "attempts": 1
+        },
+        {
+          "operation": "build",
+          "receipt": {
+            "project_id": "demo",
+            "revision": 5,
+            "job_id": "job_a2be8f138ee04f4e91fe",
+            "state": "pending"
+          },
+          "repeat": false,
+          "job": {
+            "project_id": "demo",
+            "operation": "build",
+            "parameters": {
+              "audio_job_id": "job_268c2a9b17f34a53bd74",
+              "script_asset_id": "script"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "cache_hits": 1,
+              "manifest": "simulated.json"
+            },
+            "error": null,
+            "created": 1792239849.1131096,
+            "started": 1792239849.1206336,
+            "finished": 1792239849.1289861,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 5,
+            "invalidated": 0,
+            "job_id": "job_a2be8f138ee04f4e91fe"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.032,
+          "cache_hits": 1,
+          "attempts": 1
+        },
+        {
+          "operation": "render",
+          "receipt": {
+            "project_id": "demo",
+            "revision": 6,
+            "job_id": "job_feadea69ffac4277813f",
+            "state": "pending"
+          },
+          "repeat": false,
+          "job": {
+            "project_id": "demo",
+            "operation": "render",
+            "parameters": {
+              "build_job_id": "job_a2be8f138ee04f4e91fe"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "cache_hits": 1,
+              "manifest": "simulated.json"
+            },
+            "error": null,
+            "created": 1792239849.1445296,
+            "started": 1792239849.1537015,
+            "finished": 1792239849.1627314,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 6,
+            "invalidated": 0,
+            "job_id": "job_feadea69ffac4277813f"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.031,
+          "cache_hits": 1,
+          "attempts": 1
+        },
+        {
+          "operation": "qa",
+          "receipt": {
+            "project_id": "demo",
+            "revision": 7,
+            "job_id": "job_2cdf49449f6f44679429",
+            "state": "pending"
+          },
+          "repeat": false,
+          "job": {
+            "project_id": "demo",
+            "operation": "qa",
+            "parameters": {
+              "render_job_id": "job_feadea69ffac4277813f"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "report": "job_2cdf49449f6f44679429_qa.json",
+              "status": "ready_for_review"
+            },
+            "error": null,
+            "created": 1792239849.1773694,
+            "started": 1792239849.1860895,
+            "finished": 1792239849.1964328,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 7,
+            "invalidated": 0,
+            "job_id": "job_2cdf49449f6f44679429"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "ready_for_review",
+            "warnings": [],
+            "errors": [],
+            "reports": {
+              "qa": {
+                "path": "job_2cdf49449f6f44679429_qa.json",
+                "content": {
+                  "status": "ready_for_review",
+                  "checks": [],
+                  "limitations": []
+                }
+              }
+            }
+          },
+          "elapsed_seconds": 0.047,
+          "cache_hits": null,
+          "attempts": 1
+        },
+        {
+          "operation": "package",
+          "receipt": {
+            "project_id": "demo",
+            "revision": 8,
+            "job_id": "job_f24de3836aaa4e13bbcd",
+            "state": "pending"
+          },
+          "repeat": false,
+          "job": {
+            "project_id": "demo",
+            "operation": "package",
+            "parameters": {
+              "qa_job_id": "job_2cdf49449f6f44679429"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "status": "ready_for_review"
+            },
+            "error": null,
+            "created": 1792239849.212775,
+            "started": 1792239849.2200687,
+            "finished": 1792239849.226743,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 8,
+            "invalidated": 0,
+            "job_id": "job_f24de3836aaa4e13bbcd"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "ready_for_review",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.015,
+          "cache_hits": null,
+          "attempts": 1
+        }
+      ],
+      "diagnostics": [
+        {
+          "job_id": "job_268c2a9b17f34a53bd74",
+          "operation": "synthesize",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        },
+        {
+          "job_id": "job_a2be8f138ee04f4e91fe",
+          "operation": "build",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        },
+        {
+          "job_id": "job_feadea69ffac4277813f",
+          "operation": "render",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        },
+        {
+          "job_id": "job_2cdf49449f6f44679429",
+          "operation": "qa",
+          "quality_status": "ready_for_review",
+          "warnings": [],
+          "errors": [],
+          "reports": {
+            "qa": {
+              "path": "job_2cdf49449f6f44679429_qa.json",
+              "content": {
+                "status": "ready_for_review",
+                "checks": [],
+                "limitations": []
+              }
+            }
+          }
+        },
+        {
+          "job_id": "job_f24de3836aaa4e13bbcd",
+          "operation": "package",
+          "quality_status": "ready_for_review",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        }
+      ],
+      "code_revision_files": [
+        "app/__init__.py",
+        "app/contracts.py",
+        "app/registry.py",
+        "app/jobs.py",
+        "app/worker.py",
+        "app/operations.py",
+        "app/exchange.py",
+        "app/production_profile.py",
+        "app/timeline.py",
+        "app/media.py",
+        "app/tts.py",
+        "app/speech_review.py",
+        "scripts/render_project.py",
+        "scripts/synthesize_script.py",
+        "scripts/transcribe_audio.py",
+        "scripts/speech_model_identity.py"
+      ],
+      "metrics": {
+        "operation_id": "exchange_be019ff447d64442822f9ea2322db356",
+        "operation": "chain",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_f24de3836aaa4e13bbcd",
+        "elapsed_seconds": 0.187,
+        "job_elapsed_seconds": 0.006674289703369141,
+        "repeat": false,
+        "attempts": 1,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": "T03 isolated smoke; no production content",
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "wait_status": "completed",
+      "errors": [],
+      "warnings": [],
+      "artifacts": [],
+      "exception_trace": null,
+      "response": {
+        "task_id": "T03",
+        "job_id": "job_f24de3836aaa4e13bbcd",
+        "state": "done",
+        "quality_status": "ready_for_review",
+        "artifacts": [],
+        "warnings": [],
+        "errors": [],
+        "log_ref": "exchange_logs/exchange_be019ff447d64442822f9ea2322db356.json",
+        "next_action": "review_saved_artifacts",
+        "wait_status": "completed",
+        "metrics": {
+          "operation_id": "exchange_be019ff447d64442822f9ea2322db356",
+          "operation": "chain",
+          "version": "0.1.0",
+          "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+          "task_id": "T03",
+          "job_id": "job_f24de3836aaa4e13bbcd",
+          "elapsed_seconds": 0.187,
+          "job_elapsed_seconds": 0.006674289703369141,
+          "repeat": false,
+          "attempts": 1,
+          "cache_hits": null,
+          "speech_cache": null,
+          "repair_reason": "T03 isolated smoke; no production content",
+          "model": null,
+          "tokens": {
+            "input": null,
+            "cached_input": null,
+            "output": null,
+            "reasoning": null,
+            "total": null
+          }
+        },
+        "truncated": false,
+        "counts": {
+          "errors": 0,
+          "warnings": 0,
+          "artifacts": 0
+        }
+      }
+    },
+    "repeat_log": {
+      "request": {
+        "action": "chain",
+        "project_id": "demo",
+        "script_asset_id": "script",
+        "base_revision": 3,
+        "key": "chain-one",
+        "task_id": "T03",
+        "mode": "development",
+        "timeout": 60,
+        "poll_interval": 0.25,
+        "repair_reason": null
+      },
+      "job": {
+        "project_id": "demo",
+        "operation": "package",
+        "parameters": {
+          "qa_job_id": "job_2cdf49449f6f44679429"
+        },
+        "state": "done",
+        "progress": 1.0,
+        "message": "Completed",
+        "result": {
+          "status": "ready_for_review"
+        },
+        "error": null,
+        "created": 1792239849.212775,
+        "started": 1792239849.2200687,
+        "finished": 1792239849.226743,
+        "worker_pid": 30276,
+        "cancel_requested": 0,
+        "attempts": 1,
+        "input_revision": 8,
+        "invalidated": 0,
+        "job_id": "job_f24de3836aaa4e13bbcd"
+      },
+      "stages": [
+        {
+          "operation": "synthesize",
+          "receipt": {
+            "job_id": "job_268c2a9b17f34a53bd74",
+            "project_id": "demo",
+            "revision": 4,
+            "state": "pending"
+          },
+          "repeat": true,
+          "job": {
+            "project_id": "demo",
+            "operation": "synthesize",
+            "parameters": {
+              "script_asset_id": "script"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "cache_hits": 1,
+              "manifest": "simulated.json"
+            },
+            "error": null,
+            "created": 1792239849.0790186,
+            "started": 1792239849.088053,
+            "finished": 1792239849.0952275,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 4,
+            "invalidated": 0,
+            "job_id": "job_268c2a9b17f34a53bd74"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.0,
+          "cache_hits": 1,
+          "attempts": 1
+        },
+        {
+          "operation": "build",
+          "receipt": {
+            "job_id": "job_a2be8f138ee04f4e91fe",
+            "project_id": "demo",
+            "revision": 5,
+            "state": "pending"
+          },
+          "repeat": true,
+          "job": {
+            "project_id": "demo",
+            "operation": "build",
+            "parameters": {
+              "audio_job_id": "job_268c2a9b17f34a53bd74",
+              "script_asset_id": "script"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "cache_hits": 1,
+              "manifest": "simulated.json"
+            },
+            "error": null,
+            "created": 1792239849.1131096,
+            "started": 1792239849.1206336,
+            "finished": 1792239849.1289861,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 5,
+            "invalidated": 0,
+            "job_id": "job_a2be8f138ee04f4e91fe"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.016,
+          "cache_hits": 1,
+          "attempts": 1
+        },
+        {
+          "operation": "render",
+          "receipt": {
+            "job_id": "job_feadea69ffac4277813f",
+            "project_id": "demo",
+            "revision": 6,
+            "state": "pending"
+          },
+          "repeat": true,
+          "job": {
+            "project_id": "demo",
+            "operation": "render",
+            "parameters": {
+              "build_job_id": "job_a2be8f138ee04f4e91fe"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "cache_hits": 1,
+              "manifest": "simulated.json"
+            },
+            "error": null,
+            "created": 1792239849.1445296,
+            "started": 1792239849.1537015,
+            "finished": 1792239849.1627314,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 6,
+            "invalidated": 0,
+            "job_id": "job_feadea69ffac4277813f"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.0,
+          "cache_hits": 1,
+          "attempts": 1
+        },
+        {
+          "operation": "qa",
+          "receipt": {
+            "job_id": "job_2cdf49449f6f44679429",
+            "project_id": "demo",
+            "revision": 7,
+            "state": "pending"
+          },
+          "repeat": true,
+          "job": {
+            "project_id": "demo",
+            "operation": "qa",
+            "parameters": {
+              "render_job_id": "job_feadea69ffac4277813f"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "report": "job_2cdf49449f6f44679429_qa.json",
+              "status": "ready_for_review"
+            },
+            "error": null,
+            "created": 1792239849.1773694,
+            "started": 1792239849.1860895,
+            "finished": 1792239849.1964328,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 7,
+            "invalidated": 0,
+            "job_id": "job_2cdf49449f6f44679429"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "ready_for_review",
+            "warnings": [],
+            "errors": [],
+            "reports": {
+              "qa": {
+                "path": "job_2cdf49449f6f44679429_qa.json",
+                "content": {
+                  "status": "ready_for_review",
+                  "checks": [],
+                  "limitations": []
+                }
+              }
+            }
+          },
+          "elapsed_seconds": 0.015,
+          "cache_hits": null,
+          "attempts": 1
+        },
+        {
+          "operation": "package",
+          "receipt": {
+            "job_id": "job_f24de3836aaa4e13bbcd",
+            "project_id": "demo",
+            "revision": 8,
+            "state": "pending"
+          },
+          "repeat": true,
+          "job": {
+            "project_id": "demo",
+            "operation": "package",
+            "parameters": {
+              "qa_job_id": "job_2cdf49449f6f44679429"
+            },
+            "state": "done",
+            "progress": 1.0,
+            "message": "Completed",
+            "result": {
+              "status": "ready_for_review"
+            },
+            "error": null,
+            "created": 1792239849.212775,
+            "started": 1792239849.2200687,
+            "finished": 1792239849.226743,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 8,
+            "invalidated": 0,
+            "job_id": "job_f24de3836aaa4e13bbcd"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "ready_for_review",
+            "warnings": [],
+            "errors": [],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.0,
+          "cache_hits": null,
+          "attempts": 1
+        }
+      ],
+      "diagnostics": [
+        {
+          "job_id": "job_268c2a9b17f34a53bd74",
+          "operation": "synthesize",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        },
+        {
+          "job_id": "job_a2be8f138ee04f4e91fe",
+          "operation": "build",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        },
+        {
+          "job_id": "job_feadea69ffac4277813f",
+          "operation": "render",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        },
+        {
+          "job_id": "job_2cdf49449f6f44679429",
+          "operation": "qa",
+          "quality_status": "ready_for_review",
+          "warnings": [],
+          "errors": [],
+          "reports": {
+            "qa": {
+              "path": "job_2cdf49449f6f44679429_qa.json",
+              "content": {
+                "status": "ready_for_review",
+                "checks": [],
+                "limitations": []
+              }
+            }
+          }
+        },
+        {
+          "job_id": "job_f24de3836aaa4e13bbcd",
+          "operation": "package",
+          "quality_status": "ready_for_review",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        }
+      ],
+      "code_revision_files": [
+        "app/__init__.py",
+        "app/contracts.py",
+        "app/registry.py",
+        "app/jobs.py",
+        "app/worker.py",
+        "app/operations.py",
+        "app/exchange.py",
+        "app/production_profile.py",
+        "app/timeline.py",
+        "app/media.py",
+        "app/tts.py",
+        "app/speech_review.py",
+        "scripts/render_project.py",
+        "scripts/synthesize_script.py",
+        "scripts/transcribe_audio.py",
+        "scripts/speech_model_identity.py"
+      ],
+      "metrics": {
+        "operation_id": "exchange_7fbc26f310b447aeb0e4ee0d40ce5c5a",
+        "operation": "chain",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_f24de3836aaa4e13bbcd",
+        "elapsed_seconds": 0.031,
+        "job_elapsed_seconds": 0.006674289703369141,
+        "repeat": true,
+        "attempts": 1,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "wait_status": "completed",
+      "errors": [],
+      "warnings": [],
+      "artifacts": [],
+      "exception_trace": null,
+      "response": {
+        "task_id": "T03",
+        "job_id": "job_f24de3836aaa4e13bbcd",
+        "state": "done",
+        "quality_status": "ready_for_review",
+        "artifacts": [],
+        "warnings": [],
+        "errors": [],
+        "log_ref": "exchange_logs/exchange_7fbc26f310b447aeb0e4ee0d40ce5c5a.json",
+        "next_action": "review_saved_artifacts",
+        "wait_status": "completed",
+        "metrics": {
+          "operation_id": "exchange_7fbc26f310b447aeb0e4ee0d40ce5c5a",
+          "operation": "chain",
+          "version": "0.1.0",
+          "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+          "task_id": "T03",
+          "job_id": "job_f24de3836aaa4e13bbcd",
+          "elapsed_seconds": 0.031,
+          "job_elapsed_seconds": 0.006674289703369141,
+          "repeat": true,
+          "attempts": 1,
+          "cache_hits": null,
+          "speech_cache": null,
+          "repair_reason": null,
+          "model": null,
+          "tokens": {
+            "input": null,
+            "cached_input": null,
+            "output": null,
+            "reasoning": null,
+            "total": null
+          }
+        },
+        "truncated": false,
+        "counts": {
+          "errors": 0,
+          "warnings": 0,
+          "artifacts": 0
+        }
+      }
+    },
+    "source": "temporary registry; mocked worker/execute; original log_ref is workspace-relative"
+  },
+  "timeout": {
+    "response": {
+      "task_id": "T03",
+      "job_id": "job_e2590761e8bd458e80f1",
+      "state": "pending",
+      "quality_status": "not_checked",
+      "artifacts": [],
+      "warnings": [],
+      "errors": [],
+      "log_ref": "exchange_logs/exchange_c787da05927d443ab6e7aa0b19a92f70.json",
+      "next_action": "wait_for_same_job",
+      "wait_status": "timeout",
+      "metrics": {
+        "operation_id": "exchange_c787da05927d443ab6e7aa0b19a92f70",
+        "operation": "wait",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_e2590761e8bd458e80f1",
+        "elapsed_seconds": 0.032,
+        "job_elapsed_seconds": null,
+        "repeat": false,
+        "attempts": 0,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "truncated": false,
+      "counts": {
+        "errors": 0,
+        "warnings": 0,
+        "artifacts": 0
+      }
+    },
+    "cancelled_response": {
+      "task_id": "T03",
+      "job_id": "job_e2590761e8bd458e80f1",
+      "state": "pending",
+      "quality_status": "not_checked",
+      "artifacts": [],
+      "warnings": [],
+      "errors": [],
+      "log_ref": "exchange_logs/exchange_76ea0f3c9be149a88697f03931d0775d.json",
+      "next_action": "wait_for_same_job",
+      "wait_status": "cancelled",
+      "metrics": {
+        "operation_id": "exchange_76ea0f3c9be149a88697f03931d0775d",
+        "operation": "wait",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_e2590761e8bd458e80f1",
+        "elapsed_seconds": 0.015,
+        "job_elapsed_seconds": null,
+        "repeat": false,
+        "attempts": 0,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "truncated": false,
+      "counts": {
+        "errors": 0,
+        "warnings": 0,
+        "artifacts": 0
+      }
+    },
+    "saved_log": {
+      "request": {
+        "action": "wait",
+        "job_id": "job_e2590761e8bd458e80f1",
+        "task_id": "T03",
+        "timeout": 0.02,
+        "poll_interval": 0.01
+      },
+      "job": {
+        "project_id": "demo",
+        "operation": "synthesize",
+        "parameters": {
+          "script_asset_id": "script"
+        },
+        "state": "pending",
+        "progress": 0.0,
+        "message": "",
+        "result": null,
+        "error": null,
+        "created": 1792239849.3453531,
+        "started": null,
+        "finished": null,
+        "worker_pid": null,
+        "cancel_requested": 0,
+        "attempts": 0,
+        "input_revision": 4,
+        "invalidated": 0,
+        "job_id": "job_e2590761e8bd458e80f1"
+      },
+      "stages": [],
+      "diagnostics": [
+        {
+          "job_id": "job_e2590761e8bd458e80f1",
+          "operation": "synthesize",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [],
+          "reports": {}
+        }
+      ],
+      "code_revision_files": [
+        "app/__init__.py",
+        "app/contracts.py",
+        "app/registry.py",
+        "app/jobs.py",
+        "app/worker.py",
+        "app/operations.py",
+        "app/exchange.py",
+        "app/production_profile.py",
+        "app/timeline.py",
+        "app/media.py",
+        "app/tts.py",
+        "app/speech_review.py",
+        "scripts/render_project.py",
+        "scripts/synthesize_script.py",
+        "scripts/transcribe_audio.py",
+        "scripts/speech_model_identity.py"
+      ],
+      "metrics": {
+        "operation_id": "exchange_c787da05927d443ab6e7aa0b19a92f70",
+        "operation": "wait",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_e2590761e8bd458e80f1",
+        "elapsed_seconds": 0.032,
+        "job_elapsed_seconds": null,
+        "repeat": false,
+        "attempts": 0,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "wait_status": "timeout",
+      "errors": [],
+      "warnings": [],
+      "artifacts": [],
+      "exception_trace": null,
+      "response": {
+        "task_id": "T03",
+        "job_id": "job_e2590761e8bd458e80f1",
+        "state": "pending",
+        "quality_status": "not_checked",
+        "artifacts": [],
+        "warnings": [],
+        "errors": [],
+        "log_ref": "exchange_logs/exchange_c787da05927d443ab6e7aa0b19a92f70.json",
+        "next_action": "wait_for_same_job",
+        "wait_status": "timeout",
+        "metrics": {
+          "operation_id": "exchange_c787da05927d443ab6e7aa0b19a92f70",
+          "operation": "wait",
+          "version": "0.1.0",
+          "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+          "task_id": "T03",
+          "job_id": "job_e2590761e8bd458e80f1",
+          "elapsed_seconds": 0.032,
+          "job_elapsed_seconds": null,
+          "repeat": false,
+          "attempts": 0,
+          "cache_hits": null,
+          "speech_cache": null,
+          "repair_reason": null,
+          "model": null,
+          "tokens": {
+            "input": null,
+            "cached_input": null,
+            "output": null,
+            "reasoning": null,
+            "total": null
+          }
+        },
+        "truncated": false,
+        "counts": {
+          "errors": 0,
+          "warnings": 0,
+          "artifacts": 0
+        }
+      }
+    },
+    "source": "temporary registry; mocked worker/execute; original log_ref is workspace-relative"
+  },
+  "error": {
+    "response": {
+      "task_id": "T03",
+      "job_id": "job_6fcc3eb9dfe640668f81",
+      "state": "failed",
+      "quality_status": "not_checked",
+      "artifacts": [],
+      "warnings": [],
+      "errors": [
+        {
+          "code": "SIMULATED_ERROR",
+          "message": "Deliberate local test error"
+        }
+      ],
+      "log_ref": "exchange_logs/exchange_1131a626deff495ea448067945d38161.json",
+      "next_action": "inspect_error_and_saved_log",
+      "wait_status": "completed",
+      "metrics": {
+        "operation_id": "exchange_1131a626deff495ea448067945d38161",
+        "operation": "chain",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_6fcc3eb9dfe640668f81",
+        "elapsed_seconds": 0.046,
+        "job_elapsed_seconds": 0.0060460567474365234,
+        "repeat": false,
+        "attempts": 1,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "truncated": false,
+      "counts": {
+        "errors": 1,
+        "warnings": 0,
+        "artifacts": 0
+      }
+    },
+    "saved_log": {
+      "request": {
+        "action": "chain",
+        "project_id": "demo",
+        "script_asset_id": "script",
+        "base_revision": 3,
+        "key": "chain-one",
+        "task_id": "T03",
+        "mode": "development",
+        "timeout": 60,
+        "poll_interval": 0.25,
+        "repair_reason": null
+      },
+      "job": {
+        "project_id": "demo",
+        "operation": "synthesize",
+        "parameters": {
+          "script_asset_id": "script"
+        },
+        "state": "failed",
+        "progress": 0.0,
+        "message": "Deliberate local test error",
+        "result": null,
+        "error": {
+          "code": "SIMULATED_ERROR",
+          "message": "Deliberate local test error"
+        },
+        "created": 1792239849.4490263,
+        "started": 1792239849.4567955,
+        "finished": 1792239849.4628415,
+        "worker_pid": 30276,
+        "cancel_requested": 0,
+        "attempts": 1,
+        "input_revision": 4,
+        "invalidated": 0,
+        "job_id": "job_6fcc3eb9dfe640668f81"
+      },
+      "stages": [
+        {
+          "operation": "synthesize",
+          "receipt": {
+            "project_id": "demo",
+            "revision": 4,
+            "job_id": "job_6fcc3eb9dfe640668f81",
+            "state": "pending"
+          },
+          "repeat": false,
+          "job": {
+            "project_id": "demo",
+            "operation": "synthesize",
+            "parameters": {
+              "script_asset_id": "script"
+            },
+            "state": "failed",
+            "progress": 0.0,
+            "message": "Deliberate local test error",
+            "result": null,
+            "error": {
+              "code": "SIMULATED_ERROR",
+              "message": "Deliberate local test error"
+            },
+            "created": 1792239849.4490263,
+            "started": 1792239849.4567955,
+            "finished": 1792239849.4628415,
+            "worker_pid": 30276,
+            "cancel_requested": 0,
+            "attempts": 1,
+            "input_revision": 4,
+            "invalidated": 0,
+            "job_id": "job_6fcc3eb9dfe640668f81"
+          },
+          "wait_status": "completed",
+          "diagnostics": {
+            "quality_status": "not_checked",
+            "warnings": [],
+            "errors": [
+              {
+                "code": "SIMULATED_ERROR",
+                "message": "Deliberate local test error"
+              }
+            ],
+            "reports": {}
+          },
+          "elapsed_seconds": 0.031,
+          "cache_hits": null,
+          "attempts": 1
+        }
+      ],
+      "diagnostics": [
+        {
+          "job_id": "job_6fcc3eb9dfe640668f81",
+          "operation": "synthesize",
+          "quality_status": "not_checked",
+          "warnings": [],
+          "errors": [
+            {
+              "code": "SIMULATED_ERROR",
+              "message": "Deliberate local test error"
+            }
+          ],
+          "reports": {}
+        }
+      ],
+      "code_revision_files": [
+        "app/__init__.py",
+        "app/contracts.py",
+        "app/registry.py",
+        "app/jobs.py",
+        "app/worker.py",
+        "app/operations.py",
+        "app/exchange.py",
+        "app/production_profile.py",
+        "app/timeline.py",
+        "app/media.py",
+        "app/tts.py",
+        "app/speech_review.py",
+        "scripts/render_project.py",
+        "scripts/synthesize_script.py",
+        "scripts/transcribe_audio.py",
+        "scripts/speech_model_identity.py"
+      ],
+      "metrics": {
+        "operation_id": "exchange_1131a626deff495ea448067945d38161",
+        "operation": "chain",
+        "version": "0.1.0",
+        "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+        "task_id": "T03",
+        "job_id": "job_6fcc3eb9dfe640668f81",
+        "elapsed_seconds": 0.046,
+        "job_elapsed_seconds": 0.0060460567474365234,
+        "repeat": false,
+        "attempts": 1,
+        "cache_hits": null,
+        "speech_cache": null,
+        "repair_reason": null,
+        "model": null,
+        "tokens": {
+          "input": null,
+          "cached_input": null,
+          "output": null,
+          "reasoning": null,
+          "total": null
+        }
+      },
+      "wait_status": "completed",
+      "errors": [
+        {
+          "code": "SIMULATED_ERROR",
+          "message": "Deliberate local test error"
+        }
+      ],
+      "warnings": [],
+      "artifacts": [],
+      "exception_trace": null,
+      "response": {
+        "task_id": "T03",
+        "job_id": "job_6fcc3eb9dfe640668f81",
+        "state": "failed",
+        "quality_status": "not_checked",
+        "artifacts": [],
+        "warnings": [],
+        "errors": [
+          {
+            "code": "SIMULATED_ERROR",
+            "message": "Deliberate local test error"
+          }
+        ],
+        "log_ref": "exchange_logs/exchange_1131a626deff495ea448067945d38161.json",
+        "next_action": "inspect_error_and_saved_log",
+        "wait_status": "completed",
+        "metrics": {
+          "operation_id": "exchange_1131a626deff495ea448067945d38161",
+          "operation": "chain",
+          "version": "0.1.0",
+          "code_revision": "1c4c1b15b4bccba2b0a228617aa7d7c6c3e8bc073cdcb6b771defee98eebbd3a",
+          "task_id": "T03",
+          "job_id": "job_6fcc3eb9dfe640668f81",
+          "elapsed_seconds": 0.046,
+          "job_elapsed_seconds": 0.0060460567474365234,
+          "repeat": false,
+          "attempts": 1,
+          "cache_hits": null,
+          "speech_cache": null,
+          "repair_reason": null,
+          "model": null,
+          "tokens": {
+            "input": null,
+            "cached_input": null,
+            "output": null,
+            "reasoning": null,
+            "total": null
+          }
+        },
+        "truncated": false,
+        "counts": {
+          "errors": 1,
+          "warnings": 0,
+          "artifacts": 0
+        }
+      }
+    },
+    "source": "temporary registry; mocked worker/execute; original log_ref is workspace-relative"
+  }
+}

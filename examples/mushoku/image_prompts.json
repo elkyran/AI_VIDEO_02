@@ -1,0 +1,13 @@
+{
+  "generator": "built-in image_gen",
+  "assets": [
+    "landscape.png",
+    "study.png",
+    "doorway.png"
+  ],
+  "prompts": [
+    "Use case: illustration-story. Create a cinematic anime-fantasy background for a Russian analytical video about Mushoku Tensei, Rudeus and second chances. 16:9 wide 1920x1080 composition. A small sandy-brown haired boy mage wearing a cream linen tunic and brown boots, seen from behind in the right third, stands on a hill overlooking a tranquil medieval farming village, winding dirt path, wind moving long grasses, hazy distant mountains. Luminous late-afternoon honey light and deep teal shadows, exquisitely painted environment, restrained traditional anime linework, cinematic storytelling, subtle fine grain, depth and atmosphere. Original illustration, not a screenshot or recreation of an existing scene. The left third has a simpler darker sky and foliage so an editor can place text there. No text, no logos, no watermarks, no panels. A single full-bleed illustration.",
+    "Use case: illustration-story. Cinematic original anime-fantasy background for an analytical video about Mushoku Tensei and a second life. A close side view of a sandy-brown haired young boy mage, in a cream linen tunic, concentrating over a worn open spellbook at a wooden desk inside a rustic medieval cottage, small floating sphere of luminous blue water above his fingers. Window casts golden rays through dust, shelves and dark teal room in background. 16:9 wide cinematic composition, subject and book toward the right two-thirds with left quarter dark clear space for editor typography. High quality hand-painted anime background, delicately drawn character, warm ochre versus blue magic, contemplative, sophisticated, no comic panels. Original visual interpretation and not a copied anime shot. No text or legible writing, no logo, no watermark.",
+    "Use case: illustration-story. Create a poetic cinematic anime illustration for an essay about Mushoku Tensei, memory and choosing a second chance. Wide 16:9 composition. The open wooden doorway of a rustic cottage viewed from a quiet dark interior, beyond the door a sunlit country path and flowering meadow. A small sandy-brown haired boy mage in cream linen and brown boots seen from behind stands at the threshold slightly right of center. His long shadow falls into the foreground, deliberately symbolic. Golden outside light, deep blue-green interior, gentle painterly atmosphere, delicate anime linework, richly detailed wood and foliage. Strong depth and wide negative space on the left for editor text. Original conceptual scene, not a screenshot, not a canonical reenactment. No text, no logos, no watermarks."
+  ]
+}

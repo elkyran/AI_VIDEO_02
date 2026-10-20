@@ -1,0 +1,15 @@
+{
+  "project_id": "pilot",
+  "revision": 1,
+  "music": "media/music.wav",
+  "segments": [
+    {
+      "id": "s01",
+      "text": "Текст",
+      "title": "Вопрос",
+      "visual": "media/01.mp4",
+      "audio": "audio/01.wav",
+      "duration": 5.0
+    }
+  ]
+}

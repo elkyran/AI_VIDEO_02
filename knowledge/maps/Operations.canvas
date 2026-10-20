@@ -1,0 +1,130 @@
+{
+  "nodes": [
+    {
+      "id": "AREA-OPS",
+      "type": "file",
+      "file": "areas/AREA-OPS.md",
+      "x": 0,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#a0a9b9"
+    },
+    {
+      "id": "home",
+      "type": "file",
+      "file": "START.md",
+      "x": 520,
+      "y": 0,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко"
+    },
+    {
+      "id": "OPS-CODEMAP",
+      "type": "file",
+      "file": "capabilities/OPS-CODEMAP.md",
+      "x": 0,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#a0a9b9"
+    },
+    {
+      "id": "OPS-CONTEXT",
+      "type": "file",
+      "file": "capabilities/OPS-CONTEXT.md",
+      "x": 520,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#a0a9b9"
+    },
+    {
+      "id": "OPS-JOBS",
+      "type": "file",
+      "file": "capabilities/OPS-JOBS.md",
+      "x": 1040,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#a0a9b9"
+    },
+    {
+      "id": "OPS-OBSIDIAN",
+      "type": "file",
+      "file": "capabilities/OPS-OBSIDIAN.md",
+      "x": 1560,
+      "y": 420,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#a0a9b9"
+    },
+    {
+      "id": "OPS-PROFILE",
+      "type": "file",
+      "file": "capabilities/OPS-PROFILE.md",
+      "x": 0,
+      "y": 820,
+      "width": 440,
+      "height": 300,
+      "subpath": "#Кратко",
+      "color": "#a0a9b9"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:AREA-OPS:home",
+      "fromNode": "AREA-OPS",
+      "fromSide": "bottom",
+      "toNode": "home",
+      "toSide": "top",
+      "label": "связано"
+    },
+    {
+      "id": "edge:AREA-OPS:OPS-CODEMAP",
+      "fromNode": "AREA-OPS",
+      "fromSide": "bottom",
+      "toNode": "OPS-CODEMAP",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-OPS:OPS-CONTEXT",
+      "fromNode": "AREA-OPS",
+      "fromSide": "bottom",
+      "toNode": "OPS-CONTEXT",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-OPS:OPS-JOBS",
+      "fromNode": "AREA-OPS",
+      "fromSide": "bottom",
+      "toNode": "OPS-JOBS",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-OPS:OPS-OBSIDIAN",
+      "fromNode": "AREA-OPS",
+      "fromSide": "bottom",
+      "toNode": "OPS-OBSIDIAN",
+      "toSide": "top",
+      "label": "содержит"
+    },
+    {
+      "id": "edge:AREA-OPS:OPS-PROFILE",
+      "fromNode": "AREA-OPS",
+      "fromSide": "bottom",
+      "toNode": "OPS-PROFILE",
+      "toSide": "top",
+      "label": "содержит"
+    }
+  ]
+}

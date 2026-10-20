@@ -1,0 +1,54 @@
+{
+  "changed_block": "s01",
+  "old_script": "script_v1",
+  "new_script": "script_1bbfbf581241c75eed89",
+  "old_audio_job": "job_1541269291b54cbf8125",
+  "new_audio_job": "job_3676981d28d34ee88464",
+  "old_script_preserved": true,
+  "old_render_preserved": true,
+  "cache_hits": 6,
+  "blocks": {
+    "s01": {
+      "same_wav_hash": false,
+      "old_duration": 6.548798185941043,
+      "new_duration": 6.3165986394557825,
+      "file_hash_verified": true
+    },
+    "s02": {
+      "same_wav_hash": true,
+      "old_duration": 9.717732426303854,
+      "new_duration": 9.717732426303854,
+      "file_hash_verified": true
+    },
+    "s03": {
+      "same_wav_hash": true,
+      "old_duration": 11.145759637188208,
+      "new_duration": 11.145759637188208,
+      "file_hash_verified": true
+    },
+    "s04": {
+      "same_wav_hash": true,
+      "old_duration": 10.053832199546486,
+      "new_duration": 10.053832199546486,
+      "file_hash_verified": true
+    },
+    "s05": {
+      "same_wav_hash": true,
+      "old_duration": 10.518820861678005,
+      "new_duration": 10.518820861678005,
+      "file_hash_verified": true
+    },
+    "s06": {
+      "same_wav_hash": true,
+      "old_duration": 11.053469387755102,
+      "new_duration": 11.053469387755102,
+      "file_hash_verified": true
+    },
+    "s07": {
+      "same_wav_hash": true,
+      "old_duration": 12.445487528344671,
+      "new_duration": 12.445487528344671,
+      "file_hash_verified": true
+    }
+  }
+}

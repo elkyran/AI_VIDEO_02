@@ -1,0 +1,18 @@
+---
+source_file: "app/ai_adapters.py"
+type: "code"
+community: "Community 3"
+location: "L224"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/Community_3
+---
+
+# .poll()
+
+## Connections
+- [[generated/code/nodes/app_ai_adapters_provideradapter_event.md|dot-_event()_1]] - `calls` [EXTRACTED]
+- [[generated/code/nodes/app_ai_adapters_provideradapter.md|ProviderAdapter]] - `method` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/Community_3

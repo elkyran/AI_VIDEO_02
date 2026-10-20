@@ -1,0 +1,12 @@
+{
+  "project_id": "pilot",
+  "build_id": "build01",
+  "build_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "checks": [
+    {
+      "name": "listening",
+      "status": "not_checked"
+    }
+  ],
+  "schema_version": "unsupported"
+}

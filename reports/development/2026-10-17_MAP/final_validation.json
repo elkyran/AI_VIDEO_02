@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "checked_at": "2026-10-17T14:11:27.199926+00:00",
+  "vault": {
+    "status": "passed",
+    "notes": 43,
+    "canvases": 9,
+    "errors": [],
+    "truncated": false
+  },
+  "graph_status": {
+    "state": "current",
+    "indexed_at": "2026-10-17T14:05:46.528718+00:00",
+    "graphify_version": "0.9.92",
+    "schema_version": 1,
+    "corpus_sha256": "8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+    "changed_count": 0,
+    "changed_refs": [],
+    "truncated": false,
+    "graph_changed": false,
+    "manifest_ref": "graphify-out/corpus.json",
+    "warnings": [
+      "warning: 1 code file(s) yielded no symbols (0.00 MB) — a data file, or source this extractor models no symbols for: app/__main__.py"
+    ]
+  },
+  "journal_generation": 21,
+  "notes": 43,
+  "native_notes_including_retained": 865,
+  "next_action": "stop after T07–T10"
+}

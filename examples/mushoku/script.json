@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "project_id": "mushoku_pilot",
+  "title": "Рудеус — второй шанс не стирает прошлое",
+  "language": "ru",
+  "scope": "Авторский аналитический пилот по завязке. Полный текст новеллы не анализировался.",
+  "segments": [
+    {
+      "id": "s01",
+      "title": "Второй шанс\nне стирает прошлое",
+      "text": "Можно получить новую жизнь и остаться прежним. В этом для меня главный вопрос «Реинкарнации безработного».",
+      "image": "landscape.png",
+      "claim_type": "interpretation"
+    },
+    {
+      "id": "s02",
+      "title": "Новый мир.\nПрежняя память.",
+      "text": "В завязке взрослый затворник погибает и рождается в мире меча и магии. Теперь он Рудеус Грейрат. Но память о первой жизни остаётся с ним.",
+      "image": "doorway.png",
+      "claim_type": "fact",
+      "source_id": "seven_seas_vol1"
+    },
+    {
+      "id": "s03",
+      "title": "Помнить ошибку —\nещё не исправить её",
+      "text": "Он решает не повторять прежних ошибок. Однако намерение измениться ещё не доказывает, что человек изменился. Между обещанием и поступком лежит самая интересная часть истории.",
+      "image": "study.png",
+      "claim_type": "fact_and_interpretation",
+      "source_id": "seven_seas_vol1"
+    },
+    {
+      "id": "s04",
+      "title": "Сила и зрелость —\nразные вещи",
+      "text": "Я предлагаю смотреть на эту завязку через два вопроса. Что герой теперь умеет? И как он обращается с другими? Эти вопросы нельзя подменять друг другом.",
+      "image": "study.png",
+      "claim_type": "interpretation"
+    },
+    {
+      "id": "s05",
+      "title": "Объяснить\nне значит оправдать",
+      "text": "Тяжёлое прошлое может объяснять страх и замкнутость. Но объяснение не даёт права причинять боль. Сочувствие к герою вполне совместимо с критикой его выбора.",
+      "image": "doorway.png",
+      "claim_type": "interpretation"
+    },
+    {
+      "id": "s06",
+      "title": "Изменение видно\nв поступках",
+      "text": "Для меня убедительное взросление начинается там, где другой человек перестаёт быть удобной ролью в твоей истории. Его желания и границы тоже имеют значение.",
+      "image": "landscape.png",
+      "claim_type": "interpretation"
+    },
+    {
+      "id": "s07",
+      "title": "Как распорядиться\nвторым шансом?",
+      "text": "Поэтому главный интерес здесь — не само перерождение. А то, сумеет ли Рудеус распорядиться вторым шансом. Новая жизнь даёт возможность. Нового человека создают решения.",
+      "image": "doorway.png",
+      "claim_type": "interpretation"
+    }
+  ],
+  "sources": [
+    {
+      "id": "seven_seas_vol1",
+      "title": "Seven Seas Entertainment — Mushoku Tensei Light Novel Vol. 1",
+      "url": "https://sevenseasentertainment.com/books/mushoku-tensei-jobless-reincarnation-light-novel-vol-1/",
+      "used_for": "Only the premise: adult recluse, death, rebirth as Rudeus, retained memories and intention not to repeat mistakes.",
+      "checked_on": "2026-10-16"
+    },
+    {
+      "id": "author_webnovel",
+      "title": "Авторская публикация веб-новеллы на Shosetsuka ni Naro",
+      "url": "https://ncode.syosetu.com/n9669bk/",
+      "used_for": "Confirmed existence of author's public web-novel; chapters were not read. Distinct edition from light novel.",
+      "checked_on": "2026-10-16"
+    }
+  ]
+}

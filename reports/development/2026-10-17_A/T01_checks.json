@@ -1,0 +1,17 @@
+{
+  "task_id": "T01",
+  "status": "passed",
+  "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+  "test_count": 5,
+  "combined_regression_count": 93,
+  "exit_code": 0,
+  "test_result_ref": "reports/development/2026-10-17_A/final_tests.json",
+  "log_ref": "reports/development/2026-10-17_A/final_tests.log",
+  "source_manifest_ref": "reports/development/2026-10-17_A/implementation_manifest.json",
+  "actual_runtime_validation": {
+    "valid": true,
+    "profile_id": "ruslan-local-narration",
+    "profile_version": 1,
+    "models_loaded": false
+  }
+}

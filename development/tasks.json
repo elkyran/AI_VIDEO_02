@@ -1,0 +1,485 @@
+{
+  "schema_version": 1,
+  "generation": 21,
+  "plan_ref": "development/01_DEVELOPMENT_PLAN.md",
+  "plan_sha256": "3868b43be1ca26694ec8d5708c8d3f55025df1b525bdca88e4e1176dcbc4f271",
+  "profile_ref": "config/production_profile.json",
+  "run_ref": "reports/development/2026-10-17_MAP",
+  "authorized_phase": "C+T10",
+  "operations": {
+    "A-T00-complete": "c6e85643f71c7949a82bbece687e7b26579244f9c42cb041f154cdb60f0a8a67",
+    "A-T01-start": "aaecc073ec63f2409020e4db308e940f960dd49e868e765777dac50aa13e2905",
+    "A-T01-complete": "50d918c51c66ebf123e097695720700a4015e901c128709936d87b3c9308cdd1",
+    "A-T02-start": "215a526aa9a1ce31bb7b6188afa9d3cc5a19ffbcb423087a0ebdbe229ab5bba5",
+    "A-T02-complete": "857ae80fcc76c805dc734033e7092fb52ed11b5d135173deec5343a98436e742",
+    "A-T03-start": "a22353c0108eb7158cd9fff92956d18f713a702cbfa12f33401eaa823fdc233f",
+    "A-T01-final-f84022320ea0": "f0df9c187679e0b5dad796e4d499e8dfbe5ea5d21a814ed40331c43c7b27963e",
+    "A-T02-final-f84022320ea0": "106ac3a614e6d0080d48cfdfa4d471f168cc480653caff47a68ab9c0d3a0d276",
+    "A-T03-final-f84022320ea0": "75727eb266e382b7b7a79f46140f255cd9fbac2e6e8eace32c202c40881a3f1d",
+    "MAP-owner-order-2026-10-17": "2ba65b1acb75d5613c85eacd914789ffc1c3f698ca0d0466b4c3229272344040",
+    "MAP-T07-start": "93bee8abb3f8646a02eca9f736c1505d88e945314de5721f79e551d2a3aca59e",
+    "MAP-T07-notes-complete": "f625c45edffcd29a273734d51a9a90900a7663fcc5d17711a534ec8273846b7e",
+    "MAP-T08-start": "bb7cfb88f206e8a55573f78273a8e4afde1b53f32d2510cb15d743f001b19197",
+    "MAP-T08-canvas-complete": "b956cc920ca23d73273f7ae6c083aed32b06077569e0f2110963b0bdddc3c7e0",
+    "MAP-T09-start": "e136cbb242766e7c44f5a155ba51ae118d7b63a0814199064de70e99e42be39b",
+    "MAP-T09-graph-complete": "630183e3ae31c0a104e01bdd1b9e8cea45b5ee69090fedb7a03cb0184c2025e1",
+    "MAP-T10-start": "c1148b0b067fbdda73d027891a7f5329c92d4663d60f62b73820ef2eaf8befc1",
+    "MAP-T07-final-5cc2172c4a97b1fa": "27ed519ea40785fff12982a896b8c7574d370fb7172a45c3568e47f28b7ef52e",
+    "MAP-T08-final-5fe0029d13b2aa96": "a8cdbe5c3593bc7346c27b74ab692ab4999abe3b7453d56828112b3bbf6f0570",
+    "MAP-T09-final-8797ecc536cd33c5": "66ae74292906ff5b85c13cd729527057f85cdcfea18dcd37fb61da5546a22637",
+    "MAP-T10-final-8797ecc536cd33c5": "6688c5d16446787e2a0bc3c217d40dfd71a13057ad2971e11c4a959a6466a67e"
+  },
+  "tasks": [
+    {
+      "id": "T00",
+      "phase": "A",
+      "status": "done",
+      "depends_on": [],
+      "result_refs": [
+        "development/INTERFACES.md",
+        "reports/development/2026-10-17_A/baseline.json",
+        "reports/development/2026-10-17_A/production_baseline.json"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_A/T00_checks.json"
+      ],
+      "revision": "snapshot-sha256:25d00c16968772058b9076e5f59313068ee917d524731fa253e7f61210dc8aee",
+      "blocker": null,
+      "updated_at": "2026-10-17T12:20:17.608047+00:00"
+    },
+    {
+      "id": "T01",
+      "phase": "A",
+      "status": "done",
+      "depends_on": [
+        "T00"
+      ],
+      "result_refs": [
+        "AGENTS.md",
+        "config/production_profile.json",
+        "development/INTERFACES.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_A/T01_checks.json"
+      ],
+      "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+      "blocker": null,
+      "updated_at": "2026-10-17T12:25:02.091179+00:00"
+    },
+    {
+      "id": "T02",
+      "phase": "A",
+      "status": "done",
+      "depends_on": [
+        "T01"
+      ],
+      "result_refs": [
+        "app/development.py",
+        "development/HANDOFF.md",
+        "development/STATUS.md",
+        "development/tasks.json"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_A/T02_checks.json"
+      ],
+      "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+      "blocker": null,
+      "updated_at": "2026-10-17T12:25:02.123442+00:00"
+    },
+    {
+      "id": "T03",
+      "phase": "A",
+      "status": "done",
+      "depends_on": [
+        "T02"
+      ],
+      "result_refs": [
+        "app/exchange.py",
+        "development/INTERFACES.md",
+        "reports/development/2026-10-17_A/exchange_smoke.json"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_A/T03_checks.json"
+      ],
+      "revision": "source-sha256:bae04391fa6b8a39d144e93e0730d8b042cf9447ea814152decdf84022320ea0",
+      "blocker": null,
+      "updated_at": "2026-10-17T12:25:02.152089+00:00"
+    },
+    {
+      "id": "T04",
+      "phase": "B",
+      "status": "pending",
+      "depends_on": [
+        "T03"
+      ],
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null,
+      "updated_at": "2026-10-17T12:20:17.565418+00:00"
+    },
+    {
+      "id": "T05",
+      "phase": "B",
+      "status": "pending",
+      "depends_on": [
+        "T03",
+        "T04"
+      ],
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null,
+      "updated_at": "2026-10-17T12:20:17.565418+00:00"
+    },
+    {
+      "id": "T06",
+      "phase": "B",
+      "status": "pending",
+      "depends_on": [
+        "T05"
+      ],
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null,
+      "updated_at": "2026-10-17T12:20:17.565418+00:00"
+    },
+    {
+      "id": "T07",
+      "phase": "C",
+      "status": "done",
+      "depends_on": [
+        "T02"
+      ],
+      "result_refs": [
+        "knowledge/START.md",
+        "knowledge/capabilities/AUD-ASR.md",
+        "knowledge/decisions/DEC-MAP-ORDER.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T07_checks.json"
+      ],
+      "revision": "vault-sha256:5cc2172c4a97b1fa78629ded43304ff855842f1c51f76a51a6f30efe46c1b93b",
+      "blocker": null,
+      "updated_at": "2026-10-17T14:11:25.362692+00:00"
+    },
+    {
+      "id": "T08",
+      "phase": "C",
+      "status": "done",
+      "depends_on": [
+        "T07"
+      ],
+      "result_refs": [
+        "app/project_memory.py",
+        "knowledge/Studio_Map.canvas",
+        "knowledge/maps/Audio.canvas",
+        "knowledge/maps/Video_Process.canvas"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T08_checks.json"
+      ],
+      "revision": "canvas-sha256:5fe0029d13b2aa965d93192fa5f4cf3df412ccbcfae5d77de5d04f1f1fb0400b",
+      "blocker": null,
+      "updated_at": "2026-10-17T14:11:25.395364+00:00"
+    },
+    {
+      "id": "T09",
+      "phase": "C",
+      "status": "done",
+      "depends_on": [
+        "T00",
+        "T07"
+      ],
+      "result_refs": [
+        "app/code_map.py",
+        "development/tooling.lock.json",
+        "graphify-out/corpus.json",
+        "graphify-out/graph.html",
+        "graphify-out/graph.json",
+        "knowledge/generated/code/graph.canvas"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T09_checks.json"
+      ],
+      "revision": "corpus-sha256:8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+      "blocker": null,
+      "updated_at": "2026-10-17T14:11:25.423833+00:00"
+    },
+    {
+      "id": "T10",
+      "phase": "D",
+      "status": "done",
+      "depends_on": [
+        "T03",
+        "T07",
+        "T08"
+      ],
+      "result_refs": [
+        "app/project_memory.py",
+        "development/INTERFACES.md",
+        "knowledge/HOW_TO_USE.md",
+        "reports/development/2026-10-17_MAP/MAP_REPORT.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T10_checks.json"
+      ],
+      "revision": "corpus-sha256:8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+      "blocker": null,
+      "updated_at": "2026-10-17T14:11:25.448896+00:00"
+    },
+    {
+      "id": "T11",
+      "phase": "D",
+      "status": "pending",
+      "depends_on": [
+        "T10"
+      ],
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null,
+      "updated_at": "2026-10-17T12:20:17.565418+00:00"
+    },
+    {
+      "id": "T12",
+      "phase": "D",
+      "status": "pending",
+      "depends_on": [
+        "T00",
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11"
+      ],
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null,
+      "updated_at": "2026-10-17T12:20:17.565418+00:00"
+    }
+  ],
+  "map_authorization": {
+    "tasks": [
+      "T07",
+      "T08",
+      "T09",
+      "T10"
+    ],
+    "decision_ref": "knowledge/decisions/DEC-MAP-ORDER.md",
+    "run_ref": "reports/development/2026-10-17_MAP",
+    "T07_depends_on": [
+      "T02"
+    ],
+    "recorded_at": "2026-10-17T13:45:27.396041+00:00",
+    "previous_T07_depends_on": [
+      "T02",
+      "T06"
+    ],
+    "basis": "Owner request: T06 was a sequencing constraint; T02 is the technical prerequisite"
+  },
+  "authorized_task_ids": [
+    "T07",
+    "T08",
+    "T09",
+    "T10"
+  ],
+  "history": [
+    {
+      "at": "2026-10-17T13:45:27.396041+00:00",
+      "operation_key": "MAP-owner-order-2026-10-17",
+      "kind": "owner_authorization",
+      "tasks": [
+        "T07",
+        "T08",
+        "T09",
+        "T10"
+      ],
+      "decision_ref": "knowledge/decisions/DEC-MAP-ORDER.md",
+      "run_ref": "reports/development/2026-10-17_MAP",
+      "T07_depends_on": [
+        "T02"
+      ]
+    },
+    {
+      "at": "2026-10-17T13:45:27.414819+00:00",
+      "operation_key": "MAP-T07-start",
+      "kind": "task_update",
+      "task_id": "T07",
+      "status": "in_progress",
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T13:47:00.027189+00:00",
+      "operation_key": "MAP-T07-notes-complete",
+      "kind": "task_update",
+      "task_id": "T07",
+      "status": "done",
+      "result_refs": [
+        "knowledge/START.md",
+        "knowledge/capabilities/AUD-ASR.md",
+        "knowledge/decisions/DEC-MAP-ORDER.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T07_checks.json"
+      ],
+      "revision": "source-sha256:d7de8490bf2f19696dc3cc42c283de2e8c253bb16746f80b8f895c20471fa0c1",
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T13:47:00.044528+00:00",
+      "operation_key": "MAP-T08-start",
+      "kind": "task_update",
+      "task_id": "T08",
+      "status": "in_progress",
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T13:48:27.266708+00:00",
+      "operation_key": "MAP-T08-canvas-complete",
+      "kind": "task_update",
+      "task_id": "T08",
+      "status": "done",
+      "result_refs": [
+        "app/project_memory.py",
+        "knowledge/Studio_Map.canvas",
+        "knowledge/maps/Audio.canvas",
+        "knowledge/maps/Video_Process.canvas"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T08_checks.json"
+      ],
+      "revision": "source-sha256:af49a20568a7adb883d11adcc53b615a93dda1c178ae493550e28dace9136b65",
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T13:48:27.286422+00:00",
+      "operation_key": "MAP-T09-start",
+      "kind": "task_update",
+      "task_id": "T09",
+      "status": "in_progress",
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T13:55:30.158101+00:00",
+      "operation_key": "MAP-T09-graph-complete",
+      "kind": "task_update",
+      "task_id": "T09",
+      "status": "done",
+      "result_refs": [
+        "app/code_map.py",
+        "development/tooling.lock.json",
+        "graphify-out/corpus.json",
+        "graphify-out/graph.html",
+        "graphify-out/graph.json",
+        "knowledge/generated/code/graph.canvas"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T09_checks.json"
+      ],
+      "revision": "corpus-sha256:d9f26e457b3597e6a81f9040ea5ca30433dfbff0d02450f50d20b39aded4e627",
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T13:55:30.177039+00:00",
+      "operation_key": "MAP-T10-start",
+      "kind": "task_update",
+      "task_id": "T10",
+      "status": "in_progress",
+      "result_refs": [],
+      "test_refs": [],
+      "revision": null,
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T14:11:25.362692+00:00",
+      "operation_key": "MAP-T07-final-5cc2172c4a97b1fa",
+      "kind": "task_update",
+      "task_id": "T07",
+      "status": "done",
+      "result_refs": [
+        "knowledge/START.md",
+        "knowledge/capabilities/AUD-ASR.md",
+        "knowledge/decisions/DEC-MAP-ORDER.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T07_checks.json"
+      ],
+      "revision": "vault-sha256:5cc2172c4a97b1fa78629ded43304ff855842f1c51f76a51a6f30efe46c1b93b",
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T14:11:25.395364+00:00",
+      "operation_key": "MAP-T08-final-5fe0029d13b2aa96",
+      "kind": "task_update",
+      "task_id": "T08",
+      "status": "done",
+      "result_refs": [
+        "app/project_memory.py",
+        "knowledge/Studio_Map.canvas",
+        "knowledge/maps/Audio.canvas",
+        "knowledge/maps/Video_Process.canvas"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T08_checks.json"
+      ],
+      "revision": "canvas-sha256:5fe0029d13b2aa965d93192fa5f4cf3df412ccbcfae5d77de5d04f1f1fb0400b",
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T14:11:25.423833+00:00",
+      "operation_key": "MAP-T09-final-8797ecc536cd33c5",
+      "kind": "task_update",
+      "task_id": "T09",
+      "status": "done",
+      "result_refs": [
+        "app/code_map.py",
+        "development/tooling.lock.json",
+        "graphify-out/corpus.json",
+        "graphify-out/graph.html",
+        "graphify-out/graph.json",
+        "knowledge/generated/code/graph.canvas"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T09_checks.json"
+      ],
+      "revision": "corpus-sha256:8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+      "blocker": null
+    },
+    {
+      "at": "2026-10-17T14:11:25.448896+00:00",
+      "operation_key": "MAP-T10-final-8797ecc536cd33c5",
+      "kind": "task_update",
+      "task_id": "T10",
+      "status": "done",
+      "result_refs": [
+        "app/project_memory.py",
+        "development/INTERFACES.md",
+        "knowledge/HOW_TO_USE.md",
+        "reports/development/2026-10-17_MAP/MAP_REPORT.md"
+      ],
+      "test_refs": [
+        "reports/development/2026-10-17_MAP/T10_checks.json"
+      ],
+      "revision": "corpus-sha256:8797ecc536cd33c58959ae502770252995bafacb0f6dcefbad4e83da22fcb82b",
+      "blocker": null
+    }
+  ]
+}
