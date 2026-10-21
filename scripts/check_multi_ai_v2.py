@@ -14,7 +14,7 @@ from app.v2_storage import EvidenceRun, source_binding
 
 
 DEFAULT_GROUP_TIMEOUT_SECONDS = 180
-GROUP_TIMEOUT_SECONDS = {'v2': 420}
+GROUP_TIMEOUT_SECONDS = {'v2': 420, 'contracts': 420}
 
 
 def audit_export():

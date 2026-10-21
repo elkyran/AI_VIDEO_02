@@ -62,8 +62,8 @@ class CheckerTimeoutTests(unittest.TestCase):
                     'compileall', 'check_git_export', 'diff_check']
         self.assertEqual([c[0] for c in calls], expected)
         self.assertEqual(calls[0][1][-2:], ['tests.test_multi_ai_v2', 'tests.test_multi_ai_v2_checker'])
-        self.assertEqual([c[2] for c in calls], [420] + [180] * 9)
-        self.assertEqual([c['timeout_seconds'] for c in checks['checks']], [420] + [180] * 9)
+        self.assertEqual([c[2] for c in calls], [420, 420] + [180] * 8)
+        self.assertEqual([c['timeout_seconds'] for c in checks['checks']], [420, 420] + [180] * 8)
         self.assertEqual(code, 0)
         self.assertEqual(checks['status'], 'passed')
         self.assertEqual(manifest['status'], 'passed')
@@ -97,6 +97,16 @@ class CheckerTimeoutTests(unittest.TestCase):
         self.assertEqual(checks['checks'][0]['exit_code'], 124)
         self.assertEqual(manifest['status'], 'failed')
         self.assertIn('Timeout 180s; not passed.', logs['adapters'])
+
+    def test_contracts_timeout_remains_failed_with_exit_124(self):
+        code, calls, checks, manifest, logs = self.run_checker(['contracts'], timeout_group='contracts')
+        self.assertEqual(calls[0][2], 420)
+        self.assertEqual(code, 1)
+        self.assertEqual(checks['status'], 'failed')
+        self.assertEqual(checks['checks'][0]['exit_code'], 124)
+        self.assertEqual(manifest['commands'][0]['exit_code'], 124)
+        self.assertEqual(manifest['status'], 'failed')
+        self.assertIn('Timeout 420s; not passed.', logs['contracts'])
 
     def test_test_failure_is_never_reported_as_passed(self):
         code, _, checks, manifest, logs = self.run_checker(['v2'], failed_group='v2')
