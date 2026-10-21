@@ -1,5 +1,7 @@
 """Explicit host visual mapping; metadata never establishes artistic observation."""
 from typing import Literal
+import json
+from pathlib import Path
 
 from pydantic import Field, model_validator
 
@@ -7,6 +9,8 @@ from .contracts import Identifier
 from .v2_contracts import Contract
 from .production_bridge import _ReadOnlyRegistry
 from .registry import StudioError
+from .editorial import EditPlan, Placement, Shot, SubtitleEvent
+from .production_profile import Profile
 
 
 class ShotCandidate(Contract):
@@ -72,3 +76,45 @@ def verify_mapping(root, project_id, scene, values):
                 used.append(shot)
                 assets[shot.asset_id] = asset
     return [by_segment[s.segment_id] for s in scene.narration_segments], assets
+
+
+def prepare_edit_plan(root, project_id, scene, mappings, *, voice_version='not_synthesized', voice_assets=None):
+    """Deterministic placement preparation; duration inputs remain estimates until audio exists."""
+    visuals, assets = verify_mapping(root, project_id, scene, mappings)
+    picture, voice, subtitles, cursor = [], [], [], 0
+    voice_assets = voice_assets or {}
+    if voice_assets and set(voice_assets) != {s.segment_id for s in scene.narration_segments}:
+        raise StudioError('AUDIO_REQUIRED', 'Measured voice must cover every narration segment')
+    with _ReadOnlyRegistry(root) as registry:
+        for segment, mapping in zip(scene.narration_segments, visuals):
+            start = cursor
+            for row in mapping.shots:
+                end = cursor + row.source_out_ms - row.source_in_ms
+                shot = Shot(shot_id=row.shot_id, scene_id=scene.scene_id, beat_id=segment.segment_id,
+                    visual_function=row.visual_purpose + ': ' + row.emotional_task, asset_id=row.asset_id,
+                    source_in_ms=row.source_in_ms, source_out_ms=row.source_out_ms,
+                    observed_content='Metadata only; no frame or video observation claimed.',
+                    continuity_notes=row.continuity, reuse_reason=row.reuse_reason, simulated=scene.simulated)
+                picture.append(Placement(placement_id=row.shot_id, asset_id=row.asset_id,
+                    timeline_start_ms=cursor, timeline_end_ms=end, source_in_ms=row.source_in_ms,
+                    source_out_ms=row.source_out_ms, track='video', shot=shot, simulated=scene.simulated))
+                cursor = end
+            subtitles.append(SubtitleEvent(start_ms=start, end_ms=cursor, text=segment.text, simulated=scene.simulated))
+            if segment.segment_id in voice_assets:
+                asset = registry.asset(project_id, voice_assets[segment.segment_id], verify=True)
+                if asset['kind'] != 'audio' or asset['rights'] not in {'owned', 'permission', 'public_domain'}:
+                    raise StudioError('AUDIO_REQUIRED', 'Voice must be a permitted registered audio asset')
+                if asset['duration_ms'] != mapping.duration_ms:
+                    raise StudioError('SHOT_TIMING_INVALID', 'Measured voice duration differs from planned segment')
+                assets[asset['id']] = asset
+                voice.append(Placement(placement_id='audio_'+segment.segment_id, asset_id=asset['id'],
+                    timeline_start_ms=start, timeline_end_ms=cursor, source_in_ms=0,
+                    source_out_ms=mapping.duration_ms, track='voice', simulated=scene.simulated))
+    profile = Profile.model_validate_json((Path(__file__).resolve().parents[1]/'config/production_profile.json').read_text(encoding='utf-8'))
+    plan = EditPlan(project_id=project_id, plan_id='edit_'+scene.scene_id, scene_id=scene.scene_id,
+        version=scene.version, scene_version=scene.version, voice_version=voice_version, duration_ms=cursor,
+        shot_placements=picture, voice_placements=voice, subtitle_events=subtitles, simulated=scene.simulated,
+        width=profile.video.width, height=profile.video.height, fps=profile.video.fps,
+        important_decisions=['Explicit host mapping; static shots only; no artistic suitability inferred.',
+                             'Timing is estimated until measured narration assets are supplied.'])
+    return plan, [assets[key] for key in sorted(assets)]
