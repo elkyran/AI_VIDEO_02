@@ -1,41 +1,93 @@
-# MULTI-AI-V2: архитектура и границы первого среза
+# MULTI-AI-V2: целевая архитектура владельца
 
-Новый режим — `python -m app.multi_ai_v2`. Старые studio.cmd и multi_ai.cmd
-сохранены. Production TTS, Timeline, Ruslan и рабочие базы не мигрируются.
+Единственная целевая схема задана PHASE A FINAL CI GATE. Это направление
+существующего проекта; схема не означает, что все соединения уже реализованы.
 
-Поток: brief → RunCoordinator → существующий app.multi_ai.Coordinator →
-ai_tasks/ai_attempts → FakeAdapter/существующие адаптеры → строгий editorial
-validator → ai_artifacts + ai_events → ArtifactStore → result manifest.
-Новая таблица ai_v2_runs хранит только brief и ключ run, а не вторую очередь.
-Run связан с ai_tasks по project_id=run_id. Сбой при создании run исправляется
-повтором того же create: недостающие задачи добавляются идемпотентно.
+```text
+USER: one video brief
+        |
+        v
+PRIVATE GITHUB REPOSITORY
+  code / manifests / prompts / schemas
+  Issues / Actions
+        |
+        v
+SELF-HOSTED WINDOWS RUNNER
+  RTX 4050 — local execution
+        |
+        +-------------------------+
+        |                         |
+        v                         v
+PYTHON COORDINATOR          EXISTING AI_VIDEO_02
+  SQLite                     Piper
+  task queue                 WAV/cache
+  versions                   Timeline
+  checkpoints                MLT
+  quotas                     FFmpeg
+  recovery                   render
+  status                     technical QA
+        |
+        +----------+-------------+
+        |                        |
+        v                        v
+OFFICIAL CODEX          OFFICIAL ANTIGRAVITY
+ subscription           AGE-GATED / DISABLED
+        |                        |
+        +-----------+------------+
+                    |
+              accepted artifacts
+                    |
+                    v
+             GOOGLE DRIVE
+   sources / scripts / WAV / previews
+   MLT / final MP4 / backups
+```
 
-Существующий Registry и CAS acceptance — источник состояний. V2 нормализует
-pending/completed/waiting_access/interrupted/stale в PENDING/READY/SUCCEEDED/
-WAITING_AUTH/WAITING_QUOTA/FAILED_RETRYABLE/STALE. Это представление, не копия БД.
-Полная approval/cancellation/cache state machine пока PARTIAL: отдельные
-WAITING_APPROVAL, CANCELLED и SKIPPED_CACHED не объявлены реализованными.
+Python Coordinator — единственный управляющий процесс. Официальные клиенты
+исполняют назначенные задачи; собственного scheduler для них не создаётся.
+Существующий AI_VIDEO_02 остаётся производственным движком. GitHub хранит код,
+metadata, prompts, schemas и небольшие manifests; тяжёлые медиа, модели, SQLite
+и credentials туда не отправляются. Google Drive — хранилище, не вычислительный
+сервер. Тяжёлые операции предназначены локальному Windows runner с RTX 4050;
+проверка GPU и запуск runner этим документом не подтверждаются.
 
-Фиксированные роли: Gemini Story — writer, Gemini Visual — critic, Codex —
-director. В симуляции локальные этапы также возвращают FakeAdapter note;
-никакие TTS, рендер, QA или upload от этих note не выполняются. Симулируются
-19 зависимых этапов, включая Scene/EditPlan/Review через существующие контракты.
-Fake Story и Fake Visual не являются доказательством двух живых аккаунтов.
+Один запуск начинается с одного brief. Gemini Story (writer) и Gemini Visual
+(critic) — логические роли одного будущего Antigravity integration. Они не
+означают два автоматически независимых аккаунта. Codex выполняет роль director.
+Автоматической ротации аккаунтов нет; недоступные квоты остаются null.
+Платные API требуют отдельного решения владельца.
 
-Context Pack содержит восемь ограниченных файлов; копии репозитория и истории
-нет. Задача и brief ограничены схемой, данные не интерполируются в shell.
-Live production намеренно возвращает BLOCKED_UNSUPPORTED без attempts:
-нужны Story, Visual, принятие Scene в существующий script, runner и его доступ к Drive.
-Connector upload/readback проверен отдельно из Codex; это не авторизация runner.
-Один успешный Codex smoke доказывает только конкретный JSON worker.
+## Реализованный срез и незавершённые соединения
 
-Расширять по порядку: подтвердить официальный agy → реализовать/проверить
-Antigravity adapter без credential hacks → доказать Visual isolation либо manual
-→ принять Scene через существующий реестр → подключить существующие production
-jobs с исходной revision/key → реальный QA → Drive → 60–90-секундный пилот.
-ProductionBridge.compile и prepare_production_request уже существуют;
-descriptor не выдаётся за запущенный synthesize/build/render/qa/package.
+| Соединение | Состояние и конкретная граница |
+|---|---|
+| Brief → Python Coordinator | IMPLEMENTED для fake: `app.multi_ai_v2.RunCoordinator`, один Brief и идемпотентный run key |
+| Coordinator → queue/SQLite | IMPLEMENTED: существующие `app.multi_ai.Coordinator`, Registry, ai_tasks/ai_attempts, CAS, checkpoints/recovery; ai_v2_runs хранит metadata, не вторую очередь |
+| Queue → accepted artifacts | IMPLEMENTED: общий V2ResultGate для manual/poll/recovery, проверенные immutable dependencies, request account binding, insert-only delivery ledger, ArtifactStore |
+| Coordinator → официальные live workers | NOT_IMPLEMENTED для сквозного v2 production; исторический Codex JSON smoke подтверждает только конкретный worker |
+| Story/Visual → Antigravity | BLOCKED / AGE-GATED / DISABLED; до отдельного подтверждения официальных возрастных и других требований нет login, model smoke, auth migration или обходных маршрутов |
+| Coordinator → existing production engine | PARTIAL: ProductionBridge.compile/prepare_production_request существуют; Scene import и запуск production jobs из v2 NOT_IMPLEMENTED |
+| Private GitHub → credentialed Windows runner | BLOCKED: регистрация runner запрещена на текущем этапе; безопасный fake-only workflow проверяется в отдельном security lane |
+| Accepted artifacts → Google Drive | PARTIAL: ArtifactStore поддерживает проверенную копию в локальную sync-папку; это не cloud upload proof. Unattended runner auth/root, cloud readback и автоматический upload pipeline NOT_IMPLEMENTED |
+| Production → final MP4 / technical и creative QA | Existing engine существует; сквозной live v2 pilot BLOCKED, video_qa=NOT_RUN для fake |
 
-Новые схемы: config/multi_ai_v2_schemas; Scene и EditPlan экспортированы из
-app.editorial, дополнительные run/task/result/artifact/review — app.v2_contracts.
-Результат и изменения: reports/multi_ai_v2/REPORT.md.
+Реальный fake-поток: brief → RunCoordinator → существующая очередь → FakeAdapter
+→ editorial validator / V2ResultGate → ai_artifacts + ai_events → ArtifactStore
+→ manifest. 19 зависимых этапов используют Scene/EditPlan/Review контракты.
+Fake notes не запускают Piper, FFmpeg, render, QA или Drive upload и не доказывают
+просмотр видео. Production возвращает BLOCKED_UNSUPPORTED без запуска attempts.
+
+Context Pack ограничен восемью файлами; в нём нет полной копии истории/репозитория.
+Нормализация состояния является представлением Registry. Approval/cancellation/
+cache state machine остаётся PARTIAL; WAITING_APPROVAL, CANCELLED и SKIPPED_CACHED
+не объявлены полностью реализованными.
+
+Новые run/task/result/artifact контракты — app/v2_contracts.py; Scene/EditPlan/
+Review используют app.editorial; экспорт схем — config/multi_ai_v2_schemas.
+Старые studio.cmd и multi_ai.cmd, Ruslan, отдельные WAV/cache, Timeline/MLT,
+оригиналы, ручные правки и production registry сохраняются. Рабочие базы не мигрируются.
+
+Следующий разрешённый шаг — независимый CI/review текущего пакета. Реализация
+недостающих соединений, регистрация runner и live pilot требуют отдельного
+поручения. [Runbook](REMOTE_RUNBOOK.md), [возможности](PROVIDER_CAPABILITY_MATRIX.md),
+[план](../development/multi_ai_v2/PLAN.md).

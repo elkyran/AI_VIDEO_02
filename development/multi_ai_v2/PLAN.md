@@ -1,32 +1,41 @@
-# MULTI-AI-V2 — замена целевой схемы Multi-AI
+# MULTI-AI-V2 — план по целевой схеме владельца
 
-Поручение владельца от 20.10.2026 задаёт Gemini Story + независимый Gemini Visual
-+ Codex Production + Python Coordinator. Прежняя схема 4 GPT + 4 Gemini остаётся
-историческим доступным режимом; её документы и свидетельства не удаляются.
-T00–T12 и MAI-01…12 не меняются. Статус нового пакета хранится отдельно в STATUS.json;
-это статус разработки, не новая производственная очередь.
+PHASE A FINAL CI GATE уточняет решение владельца: один video brief → приватный
+GitHub → self-hosted Windows runner / RTX 4050 → единственный Python Coordinator
+и существующий AI_VIDEO_02 → официальные Codex / Antigravity → accepted artifacts
+→ Google Drive. Полная схема и фактические границы:
+[docs/MULTI_AI_V2_ARCHITECTURE.md](../../docs/MULTI_AI_V2_ARCHITECTURE.md).
 
-| Phase | Действие | Проверка первого среза |
+Gemini Story и Gemini Visual — логические роли одного будущего Antigravity
+integration, а не требование двух автоматически независимых аккаунтов.
+Antigravity AGE-GATED / DISABLED до подтверждения официальных возрастных и других
+требований: login, smoke, auth migration и обходные маршруты запрещены.
+Автоматической ротации нет; платные API требуют отдельного решения владельца.
+
+T00–T12 и MAI-01…12 не меняются. STATUS.json сохраняет существующие состояния
+разработки; документация не повышает readiness production. Исторические схемы и
+свидетельства не удаляются, но не задают вторую целевую архитектуру.
+
+| Phase | Реализовано / состояние | Оставшаяся граница |
 |---|---|---|
-| 0 | Адресный аудит кода/состояния/клиентов | reports/multi_ai_v2/AUDIT.md; read-only базы |
-| 1 | Baseline, branch, backup | baseline-before-multi-ai-v2; feature/multi-ai-coordinator-v2; ZIP и SQLite backup API локально |
-| 2 | Contracts/Run metadata | app/v2_contracts.py; схемы; ai_v2_runs рядом с existing ai_tasks; нормализация состояния, approval/cache пока partial |
-| 3 | Fake workflow | app/multi_ai_v2.py; 19 этапов, существующие validators/queue; restart, no duplicates, quota tests |
-| 4 | Codex | scripts/probe_multi_ai_v2.py: официальный account diagnostic + один real schema smoke; live production wiring не завершён |
-| 5 | Story | BLOCKED: установленный agy CLI, официальный вход, model/JSON smoke; Gemini CLI Free API не подставлять |
-| 6 | Visual | BLOCKED: Cursor Agent CLI/billing/media/identity и второй официальный Antigravity boundary не подтверждены |
-| 7 | Production bridge | Повторно проверен существующий bridge; реальный Scene import и запуск jobs из v2 ещё не реализованы |
-| 8 | QA | Existing технические validators переиспользованы; control video/editorial live review заблокированы Visual |
-| 9 | GitHub/Drive | Workflow/scripts подготовлены; runners=0; connector upload/readback manifest VERIFIED; unattended auth/root не подтверждены |
-| 10 | Пилот | BLOCKED; не запускать полный выпуск и не выдавать Fake notes за TTS/MP4/upload |
+| 0 | Адресные evidence существующего кода и клиентов | Не повторять полный исторический аудит |
+| 1 | Baseline/feature branch/локальные SQLite backups | Не изменять production БД и originals |
+| 2 | Contracts/Run metadata/Registry | Approval/cache state machine PARTIAL; второй очереди нет |
+| 3 | Fake workflow, 19 этапов, queue/recovery/accepted artifacts | Fake не равен TTS/MP4/upload |
+| 4 | Официальный Codex: исторический JSON smoke | Сквозной live production wiring NOT_IMPLEMENTED |
+| 5–6 | Story/Visual — логические роли Antigravity | BLOCKED / AGE-GATED / DISABLED; не устанавливать/авторизовывать/тестировать модель |
+| 7 | Existing ProductionBridge compile/descriptor | Scene import и запуск existing jobs из v2 NOT_IMPLEMENTED |
+| 8 | Existing technical validators и trusted acceptance | Реальный technical/creative QA pilot BLOCKED |
+| 9 | Offline GitHub CI и отдельный security lane workflow | Регистрация runner запрещена; unattended Drive auth/root/upload NOT_IMPLEMENTED |
+| 10 | Live pilot | BLOCKED; отдельное поручение после подтверждения соединений |
 
-Следующее действие: официальный agy CLI и вход основного Google-аккаунта, без
-credential копирования и без смены первого входа ради второго. После help/auth
-и безопасного smoke связать adapter с существующим Coordinator. Отдельно доказать
-Visual или выбрать explicit manual; отсутствие независимого Visual не скрывать.
-Для удалённого fake dispatch зарегистрировать current-user Windows runner с label
-ai-video-02. Настроить Drive root/официальную авторизацию и проверку cloud объекта.
-Производственный Scene import требует реализации до живого 60–90-секундного пилота.
+Текущий Phase A: bounded checker timeout v2=420 секунд, остальные группы=180;
+исходные 407 тестов сохраняются, добавлены быстрые mock-based timeout/evidence
+проверки. Настоящий timeout даёт exit 124 и failed status. Полный checker
+использует новый внешний evidence directory, commit/tree/source binding и хеши.
+Независимый GitHub job имеет предел 30 минут; нормальный прогон проверяется по
+elapsed evidence, а не считается гарантированным из суммы per-group лимитов.
 
-У каждого этапа — конкретные файлы, test JSON и версия; статус частичного этапа
-не повышается из-за документации. Не повторять весь исторический аудит.
+Следующее действие после push: остановиться для независимого GitHub review/CI.
+Не merge PR #1/main; не регистрировать runner; не запускать production или модели.
+Решение о реализации недостающих соединений — отдельная задача владельца.
