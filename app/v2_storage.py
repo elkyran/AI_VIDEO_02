@@ -109,6 +109,29 @@ class ArtifactStore:
             write_generated_json(self.root, relative, value)
         return artifact
 
+    def put_file(self, run_id, source, *, category, source_root=None, version=1, simulated):
+        """Explicit offline file import; no database, credential or directory mirroring."""
+        categories={'sources','canon','story','voice','visuals','edit','previews','reviews','final','manifests','backups'}
+        if category not in categories:
+            raise ValueError('Unknown release category')
+        source=Path(source).resolve()
+        allowed=Path(source_root or self.root).resolve()
+        if not source.is_relative_to(allowed) or not source.is_file():
+            raise ValueError('Release file must be under its explicit host source root')
+        if source.suffix.lower() not in {'.json','.txt','.md','.srt','.mlt','.png','.jpg','.jpeg','.wav','.mp4'}:
+            raise ValueError('This file type is not part of an offline media release')
+        if source.stat().st_size>250_000_000:
+            raise ValueError('Offline release file exceeds the bounded media limit')
+        sha=content_hash(source)
+        artifact=Artifact(artifact_id=f'file_{category}_v{version}_{sha[:32]}',run_id=run_id,version=version,
+            path=f'runs/{run_id}/{category}/{sha}{source.suffix.lower()}',sha256=sha,
+            size=source.stat().st_size,simulated=simulated)
+        destination=self._owned_path(self.root,artifact,for_write=True)
+        destination.parent.mkdir(parents=True,exist_ok=True)
+        self._fallback_copy(source,destination,artifact)
+        self.verify(artifact)
+        return artifact
+
     @staticmethod
     def _owned_path(root, artifact, *, for_write=False):
         artifact = Artifact.model_validate(artifact.model_dump() if isinstance(artifact, Artifact) else artifact)
