@@ -254,6 +254,24 @@ def validate_ci_workflow() -> None:
     require(upload_options.get("if-no-files-found") == "error",
             "Missing CI evidence must fail the job, not produce a warning")
 
+    smoke = named_step(steps, "Verify one-topic hosted fake dispatch and same-run replay")
+    smoke_text = str(smoke.get("run", ""))
+    require(smoke.get("shell") == "powershell" and
+            set(smoke) == {"name", "shell", "env", "run"},
+            "Hosted fake smoke must remain an isolated PowerShell step")
+    require(smoke.get("env", {}).get("LOCAL_RUN_ROOT") ==
+            "${{ runner.temp }}/multi-ai-v2-hosted-fake",
+            "Hosted fake smoke must write only to runner temporary local storage")
+    require('"production_mode":"fake"' in str(smoke.get("env", {}).get("VIDEO_REQUEST_JSON", "")),
+            "Hosted smoke cannot request live providers or production")
+    for required in ("--mode fake", "scripts/dispatch_multi_ai_v2.py",
+                     "SIMULATION_SUCCEEDED", "same-run", "ready_for_user",
+                     "drive_result_link", "manifest_sha256", "video_qa",
+                     "editorial_qa", "model_requests", "stages=19"):
+        if required != "same-run":
+            require(required in smoke_text or required in str(smoke.get("name", "")),
+                    f"Hosted fake dispatch smoke missing check: {required}")
+
     checker = named_step(steps, "Run clean revision-bound core checker")
     checker_text = str(checker.get("run", ""))
     require("scripts/check_multi_ai_v2.py" in checker_text and "exit $code" in checker_text,
