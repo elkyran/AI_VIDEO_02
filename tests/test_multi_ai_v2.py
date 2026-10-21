@@ -959,4 +959,54 @@ class UnifiedAcceptanceTests(unittest.TestCase):
                 self.assert_poll_rejected(q,attempt);q.close()
 
 
+class Pack4Tests(unittest.TestCase):
+    setUp = V2Tests.setUp
+    coordinator = V2Tests.coordinator
+    live_fixture = UnifiedAcceptanceTests.live_fixture
+    sign_delivery = UnifiedAcceptanceTests.sign_delivery
+    assert_poll_rejected = UnifiedAcceptanceTests.assert_poll_rejected
+
+    def test_cached_dependency_payload_tamper_fails_before_fixture_and_dispatch(self):
+        q,value=ReviewFixTests.result_fixture(self);q.accept_result(value)
+        with Registry(self.root) as registry:
+            raw=registry.db.execute('SELECT result FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0]
+            stored=json.loads(raw);completion=self.root/stored['path'];before=completion.read_bytes()
+            stored['payload']['text']='tampered cached content'
+            registry.db.execute('UPDATE ai_tasks SET result=? WHERE id=?',(json.dumps(stored),value['task_id']))
+        child=value['run_id']+'_canon_build'
+        with patch('app.editorial.demo_result') as fixture,patch.object(q.queue.adapters['gemini'],'start') as start:
+            q.queue.tick()
+            fixture.assert_not_called();start.assert_not_called()
+        with Registry(self.root) as registry:
+            row=registry.db.execute('SELECT status,attempts,error FROM ai_tasks WHERE id=?',(child,)).fetchone()
+            self.assertEqual(row['status'],'failed');self.assertEqual(row['attempts'],0)
+            self.assertEqual(json.loads(row['error'])['code'],'ARTIFACT_INVALID')
+            self.assertEqual(registry.db.execute("SELECT COUNT(*) FROM ai_events WHERE kind='dependency_rejected' AND task_id=?",(child,)).fetchone()[0],1)
+        self.assertEqual(completion.read_bytes(),before)
+        self.assertEqual(q.store.verify(Artifact.model_validate(value['artifacts'][0])).stat().st_size,value['artifacts'][0]['size'])
+
+    def test_accepted_dependency_rejects_identity_inputs_provenance_and_fingerprint_tamper(self):
+        base=self.root
+        for field in ('attempt','inputs','provenance','fingerprint','completion_payload'):
+            with self.subTest(field=field):
+                self.root=base/field;q,value=ReviewFixTests.result_fixture(self);q.accept_result(value)
+                with Registry(self.root) as registry:
+                    row=registry.db.execute('SELECT * FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+                    if field=='attempt':registry.db.execute('UPDATE ai_tasks SET current_attempt=? WHERE id=?',('other',value['task_id']))
+                    elif field=='inputs':
+                        spec=json.loads(row['payload']);spec['input_versions']['brief']='0'*64
+                        registry.db.execute('UPDATE ai_tasks SET payload=? WHERE id=?',(json.dumps(spec),value['task_id']))
+                    else:
+                        stored=json.loads(row['result'])
+                        if field=='provenance':stored['simulated']=False
+                        elif field=='fingerprint':stored['v2_acceptance']['result_sha256']='0'*64
+                        else:
+                            path=self.root/stored['path'];completion=json.loads(path.read_text())
+                            completion['payload']['text']='changed completion payload'
+                            path.write_text(json.dumps(completion));stored['sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
+                        registry.db.execute('UPDATE ai_tasks SET result=? WHERE id=?',(json.dumps(stored),value['task_id']))
+                with self.assertRaises(StudioError):q.accepted_artifacts(value['task_id'])
+                q.close()
+
+
 if __name__ == '__main__': unittest.main()

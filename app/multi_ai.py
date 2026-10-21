@@ -663,7 +663,18 @@ class Coordinator:
                                                 (canonical_json({"kind": "route_model_conflict", "code": exc.code, "message": str(exc)}), row["id"]))
                             continue
                     context = dict(task["context"])
-                    context["dependency_results"] = {dep["id"]: json.loads(dep["result"])["payload"] for dep in dependencies}
+                    if self.result_gate and hasattr(self.result_gate, 'dependency_context'):
+                        try:
+                            context.update(self.result_gate.dependency_context(registry, task))
+                        except (ValueError, TypeError, KeyError, OSError, StudioError) as exc:
+                            failure = {'kind': 'invalid_input', 'code': getattr(exc, 'code', type(exc).__name__),
+                                       'message': str(exc), 'retryable': False}
+                            registry.db.execute("UPDATE ai_tasks SET status='failed',error=? WHERE id=?",
+                                                (canonical_json(failure), row['id']))
+                            self._event(registry, 'dependency_rejected', failure, row['id'])
+                            continue
+                    else:
+                        context["dependency_results"] = {dep["id"]: json.loads(dep["result"])["payload"] for dep in dependencies}
                     context.setdefault("project_id", task["project_id"])
                     context.setdefault("input_versions", task["input_versions"])
                     context["provided_evidence_mode"] = "metadata_only"
@@ -690,10 +701,10 @@ class Coordinator:
         registry.db.execute("UPDATE ai_tasks SET status='running',current_attempt=?,attempts=attempts+1,updated=?,error=NULL WHERE id=? AND status='pending'",
                             (attempt_id, now, task["task_id"]))
         try:
-            if simulated:
-                task["context"].setdefault("fixture_result", demo_result(task["expected_output"], task["context"]))
             if self.result_gate and hasattr(self.result_gate, 'prepare_context'):
                 task['context'].update(self.result_gate.prepare_context(registry, task, attempt_id))
+            if simulated:
+                task["context"].setdefault("fixture_result", demo_result(task["expected_output"], task["context"]))
             # The exact bounded context is durable and independent of clients' chats.
             self._atomic_json(attempt_dir / "request.json", task)
             handle = adapter.start(task, profile, attempt_dir)

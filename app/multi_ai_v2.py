@@ -314,7 +314,7 @@ class RunCoordinator:
     def accepted_artifacts(self, task_id):
         with Registry(self.root) as registry:
             row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (task_id,)).fetchone()
-            return self.result_gate.accepted_artifacts(row)
+            return self.result_gate.accepted_artifacts(registry, row)
 
     def revoke_video_probe(self, evidence_id, reason):
         """Append-only host revocation; the original evidence stays immutable."""

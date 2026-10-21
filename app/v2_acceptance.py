@@ -34,6 +34,7 @@ class V2ResultGate:
             raise StudioError('TASK_NOT_FOUND', 'Result task is not registered')
         contract = Task.model_validate(task['context']['v2_contract'])
         context, requested = self._context(task, attempt)
+        context.update(self.dependency_context(registry, task))
         run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (contract.run_id,)).fetchone()
         if (not run or row['project_id'] != contract.run_id or task['project_id'] != contract.run_id
                 or row['id'] != contract.task_id):
@@ -108,42 +109,79 @@ class V2ResultGate:
                     'v2_artifacts': [a.model_dump() for a in result.artifacts],
                     'v2_host_delivery': result.host_review_delivery.model_dump() if result.host_review_delivery else None}}
 
-    def accepted_artifacts(self, row):
+    def accepted_dependency(self, registry, row):
+        """Read canonical content only after validating the complete accepted binding."""
         if not row or row['status'] != 'completed' or not row['result']:
             raise StudioError('RESULT_NOT_ACCEPTED', 'Dependency has no accepted result')
         result = json.loads(row['result'])
-        if not result.get('v2_acceptance') or 'v2_artifacts' not in result:
+        if not isinstance(result, dict) or not result.get('v2_acceptance') or 'v2_artifacts' not in result:
             raise StudioError('RESULT_NOT_ACCEPTED', 'Dependency has no trusted v2 artifact metadata')
         path = workspace_path(self.root, result['path'])
         if content_hash(path) != result['sha256']:
             raise StudioError('ARTIFACT_INVALID', 'Accepted dependency completion changed')
         completion = json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(completion, dict):
+            raise StudioError('ARTIFACT_INVALID', 'Accepted completion must be an object')
         host = Result.model_validate(completion['host_metadata'])
-        if (host.task_id != row['id'] or host.run_id != row['project_id']
-                or fingerprint(host.model_dump()) != result['v2_acceptance']['result_sha256']
-                or result['v2_artifacts'] != [a.model_dump() for a in host.artifacts]
-                or result.get('v2_host_delivery') != (host.host_review_delivery.model_dump() if host.host_review_delivery else None)):
+        spec = json.loads(row['payload'])
+        contract = Task.model_validate(spec['context']['v2_contract'])
+        attempt = registry.db.execute('SELECT * FROM ai_attempts WHERE id=?', (host.acceptance_key,)).fetchone()
+        request = json.loads(path.with_name('request.json').read_text(encoding='utf-8'))
+        run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (host.run_id,)).fetchone()
+        accepted = {'status': 'ACCEPTED', 'acceptance_key': host.acceptance_key,
+                    'result_sha256': fingerprint(host.model_dump())}
+        if (not attempt or attempt['status'] != 'completed' or attempt['task_id'] != row['id']
+                or row['current_attempt'] != host.acceptance_key or attempt['result_path'] != result['path']
+                or host.task_id != row['id'] or host.run_id != row['project_id']
+                or contract.task_id != host.task_id or contract.run_id != host.run_id
+                or spec['project_id'] != host.run_id or request['task_id'] != host.task_id
+                or request['project_id'] != host.run_id or request['attempt_id'] != host.acceptance_key
+                or completion.get('task_id') != host.task_id or completion.get('attempt_id') != host.acceptance_key
+                or host.input_version != contract.input_version or host.input_hashes != contract.input_hashes
+                or any(value != host.input_hashes for value in (spec['input_versions'], request['input_versions'],
+                    json.loads(attempt['input_versions']), completion.get('input_versions')))
+                or request['context']['v2_contract'] != contract.model_dump()
+                or host.expected_output_schema != contract.expected_output_schema
+                or host.expected_output_schema != spec['expected_output']
+                or not run or host.simulated != (run['mode'] == 'fake')
+                or host.simulated != (spec['execution_mode'] == 'simulated')
+                or request['execution_mode'] != spec['execution_mode']
+                or result.get('simulated') is not host.simulated or completion.get('simulated') is not host.simulated
+                or host.payload.get('simulated') is not host.simulated
+                or completion.get('payload_sha256') != fingerprint(host.payload)
+                or canonical_json(result.get('payload')) != canonical_json(host.payload)
+                or canonical_json(completion.get('payload')) != canonical_json(host.payload)
+                or canonical_json(result['v2_acceptance']) != canonical_json(accepted)
+                or canonical_json(result['v2_artifacts']) != canonical_json([a.model_dump() for a in host.artifacts])
+                or canonical_json(result.get('v2_host_delivery')) != canonical_json(
+                    host.host_review_delivery.model_dump() if host.host_review_delivery else None)):
             raise StudioError('ARTIFACT_INVALID', 'Accepted dependency metadata differs from immutable completion')
-        artifacts = [Artifact.model_validate(a) for a in result['v2_artifacts']]
-        for artifact in artifacts:
-            if artifact.run_id != row['project_id'] or artifact.simulated is not result['simulated']:
-                raise StudioError('ARTIFACT_INVALID', 'Accepted dependency provenance changed')
+        for artifact in host.artifacts:
             self.store.verify(artifact)
-        return [a.model_dump() for a in artifacts]
+        return {'payload': host.payload, 'artifacts': [a.model_dump() for a in host.artifacts], 'acceptance': accepted}
 
-    def prepare_context(self, registry, task, attempt_id):
-        """Per-attempt Context Pack reads only accepted immutable file metadata."""
-        artifacts, accepted_state = [], {}
+    def accepted_artifacts(self, registry, row):
+        return self.accepted_dependency(registry, row)['artifacts']
+
+    def dependency_context(self, registry, task):
+        artifacts, accepted_state, payloads = [], {}, {}
         for dependency in task['depends_on']:
             row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (dependency,)).fetchone()
             if row is None or row['project_id'] != task['project_id']:
                 raise StudioError('RESULT_RUN_MISMATCH', 'Context dependency belongs to another run')
-            artifacts.extend(self.accepted_artifacts(row))
-            accepted_state[dependency] = json.loads(row['result'])['v2_acceptance']
+            accepted = self.accepted_dependency(registry, row)
+            artifacts.extend(accepted['artifacts'])
+            accepted_state[dependency] = accepted['acceptance']
+            payloads[dependency] = accepted['payload']
+        return {'dependency_results': payloads, 'input_artifacts': artifacts, 'accepted_state': accepted_state}
+
+    def prepare_context(self, registry, task, attempt_id):
+        """Per-attempt Context Pack reads only verified immutable completions."""
+        context = self.dependency_context(registry, task)
         base = f"runs/{task['project_id']}/context/{task['task_id']}/attempts/{attempt_id}"
-        for name, value in [('input_artifacts.json', artifacts), ('accepted_state.json', accepted_state)]:
+        for name, value in [('input_artifacts.json', context['input_artifacts']), ('accepted_state.json', context['accepted_state'])]:
             write_generated_json(self.root, base+'/'+name, value)
-        return {'input_artifacts': artifacts, 'accepted_state': accepted_state, 'context_pack': base}
+        return {**context, 'context_pack': base}
 
     def _review_context(self, registry, result, contract, task, attempt, context):
         review = Review.model_validate(result.payload)
