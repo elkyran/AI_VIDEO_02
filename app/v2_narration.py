@@ -4,6 +4,35 @@ from pathlib import Path
 from .production_profile import Profile
 from .registry import content_hash, workspace_path
 from .v2_acceptance import fingerprint
+from .v2_contracts import Contract
+from .contracts import Identifier, Sha256
+from .registry import StudioError
+from typing import Literal
+
+
+class NarrationAsset(Contract):
+    asset_id: Identifier
+    cache_key: Sha256
+    simulated: bool
+    origin: Literal['synthetic_fixture', 'existing_cache']
+
+
+def voice_asset_ids(candidate, recipe, bindings):
+    if not bindings:
+        return {}
+    expected={mapping['segment_id']:segment for mapping,segment in zip(candidate['scene_block_mapping'],recipe['segments'])}
+    if set(bindings)!=set(expected):
+        raise StudioError('AUDIO_REQUIRED','Every segment needs an exact voice binding')
+    result={}
+    for segment_id,raw in bindings.items():
+        binding=NarrationAsset.model_validate(raw)
+        if binding.cache_key!=expected[segment_id]['cache_key'] or binding.simulated is not candidate['simulated']:
+            raise StudioError('STALE_INPUTS','Audio belongs to another text/voice generation')
+        if not candidate['simulated'] or binding.origin!='synthetic_fixture':
+            # Production cache import needs a future host generation receipt, not a caller assertion.
+            raise StudioError('LIVE_AUDIO_NOT_IMPLEMENTED','Live audio import requires separate verified host integration')
+        result[segment_id]=binding.asset_id
+    return result
 
 
 def profile_spec():
@@ -43,3 +72,9 @@ def narration_descriptors(candidate, engine_root):
             'profile_sha256': fingerprint(profile), 'segments': segments,
             'execution_interface': 'app.jobs.JobManager / app.operations.synthesize',
             'required_registered_parameter': 'script_asset_id', 'production_started': False}
+
+
+def narration_identity(recipe):
+    # Observing a newly available cached WAV must not invalidate an unchanged plan.
+    return fingerprint({'profile':recipe['profile_sha256'],
+                        'segments':[(s['block_id'],s['cache_key']) for s in recipe['segments']]})

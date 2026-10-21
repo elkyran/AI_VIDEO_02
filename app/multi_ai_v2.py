@@ -219,7 +219,8 @@ class RunCoordinator:
         normalized = [{'task_id': t['task_id'], 'status': task_status(t, tasks),
                        'attempt': t['attempt'], 'error': t.get('error'), 'simulated': True,
                        'result_ref': t['result']['path'] if t.get('result') else None} for t in tasks.values()]
-        done = len(tasks) == len(STAGES) and all(t['status'] == 'SUCCEEDED' for t in normalized)
+        stage_ids = {run_id+'_'+stage.lower() for stage,_ in STAGES}
+        done = stage_ids.issubset(tasks) and all(t['status'] == 'SUCCEEDED' for t in normalized)
         failure = any(t['status'] in {'FAILED_FINAL', 'STALE'} for t in normalized)
         return {'run_id': run_id, 'mode': row['mode'], 'status': 'SIMULATION_SUCCEEDED' if done else
                 'BLOCKED_UNSUPPORTED' if row['mode'] == 'production' else

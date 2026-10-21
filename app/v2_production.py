@@ -10,7 +10,7 @@ from .v2_acceptance import fingerprint
 from .v2_contracts import Artifact
 from .v2_visuals import verify_mapping, prepare_edit_plan
 from .production_bridge import ProductionBridge, _ReadOnlyRegistry
-from .v2_narration import narration_descriptors
+from .v2_narration import narration_descriptors, narration_identity, voice_asset_ids
 
 
 class OfflineProductionBridge:
@@ -118,16 +118,15 @@ class OfflineProductionBridge:
             scene, _ = self.accepted_scene(artifact['run_id'],value['binding']['task_id'],value['version'])
             narration = narration_descriptors(value,self.engine_root)
             plan, assets = prepare_edit_plan(self.engine_root,artifact['run_id'],scene,value['visual_mapping'],
-                voice_version=fingerprint(narration),voice_assets=voice_assets)
-            key = fingerprint({'candidate':artifact, 'plan':plan.model_dump(),'narration':narration})
+                voice_version=narration_identity(narration),voice_assets=voice_asset_ids(value,narration,voice_assets))
+            key = fingerprint({'candidate':artifact, 'plan':plan.model_dump(),'narration':narration_identity(narration)})
             with Registry(self.root) as registry:
                 for row in registry.db.execute("SELECT payload FROM ai_events WHERE kind='offline_mlt_prepared' AND task_id=?",
                                                 (value['binding']['task_id'],)):
                     prior = json.loads(row[0])
                     if prior['key'] == key:
                         receipt = Artifact.model_validate(prior['artifact'])
-                        saved = json.loads(self.coordinator.store.verify(receipt).read_text(encoding='utf-8'))
-                        self.verify_compiled(saved['compiled'])
+                        self.read_mlt(receipt.model_dump())
                         return receipt.model_dump()
             with _ReadOnlyRegistry(self.engine_root) as registry:
                 if registry.db.execute("SELECT 1 FROM sqlite_master WHERE name='jobs'").fetchone():
@@ -139,12 +138,89 @@ class OfflineProductionBridge:
                 scene_version=scene.version,voice_version=plan.voice_version)
             receipt = self.coordinator.store.put_json(artifact['run_id'],{
                 'candidate':artifact,'edit_plan':plan.model_dump(),'compiled':compiled,'narration':narration,
+                'voice_assets':voice_assets or {},
                 'simulated':scene.simulated,'production_started':False,'render_status':'NOT_RUN',
                 'audio_status':'SYNTHETIC_FIXTURE_ONLY' if voice_assets and scene.simulated else 'NOT_RUN'},simulated=scene.simulated)
             with Registry(self.root) as registry, registry.transaction():
                 self.coordinator.queue._event(registry,'offline_mlt_prepared',
                     {'key':key,'artifact':receipt.model_dump()},value['binding']['task_id'])
             return receipt.model_dump()
+
+    def read_mlt(self, artifact):
+        receipt=Artifact.model_validate(artifact)
+        saved=json.loads(self.coordinator.store.verify(receipt).read_text(encoding='utf-8'))
+        candidate=self.read_candidate(saved['candidate'])
+        if receipt.run_id!=saved['candidate']['run_id'] or receipt.simulated is not candidate['simulated']:
+            raise StudioError('ARTIFACT_INVALID','MLT receipt provenance mismatch')
+        with Registry(self.root) as registry:
+            events=registry.db.execute("SELECT payload FROM ai_events WHERE kind='offline_mlt_prepared' AND task_id=?",
+                                      (candidate['binding']['task_id'],)).fetchall()
+            if not any(json.loads(row[0])['artifact']==receipt.model_dump() for row in events):
+                raise StudioError('RESULT_NOT_ACCEPTED','Build is not bound to a host preparation checkpoint')
+        scene,_=self.accepted_scene(receipt.run_id,candidate['binding']['task_id'],candidate['version'])
+        recipe=narration_descriptors(candidate,self.engine_root)
+        plan,_=prepare_edit_plan(self.engine_root,receipt.run_id,scene,candidate['visual_mapping'],
+            voice_version=narration_identity(recipe),voice_assets=voice_asset_ids(candidate,recipe,saved['voice_assets']))
+        if saved['edit_plan']!=plan.model_dump() or saved['simulated'] is not scene.simulated:
+            raise StudioError('STALE_INPUTS','Prepared plan differs from current accepted inputs')
+        self.verify_compiled(saved['compiled'])
+        return saved
+
+    def propose_revision(self, artifact, segment_id, text):
+        value=self.read_candidate(artifact)
+        scene,_=self.accepted_scene(artifact['run_id'],value['binding']['task_id'],value['version'])
+        raw=scene.model_dump();found=False
+        for segment in raw['narration_segments']:
+            if segment['segment_id']==segment_id:
+                segment['text']=text;found=True
+        if not found:
+            raise StudioError('SEGMENT_NOT_FOUND','Unknown narration segment')
+        raw['version']+=1
+        updated=Scene.model_validate(raw)
+        return self.coordinator.store.put_json(artifact['run_id'],{
+            'state':'requires_trusted_acceptance','prior_candidate':artifact,
+            'scene':updated.model_dump(),'simulated':scene.simulated},simulated=scene.simulated).model_dump()
+
+    def enqueue_fixture_revision(self, proposal, key):
+        """Explicit offline fake revision through the SAME existing gate/queue."""
+        from .v2_contracts import Task
+        with self.coordinator.queue._lock:
+            value=json.loads(self.coordinator.store.verify(Artifact.model_validate(proposal)).read_text(encoding='utf-8'))
+            from pydantic import TypeAdapter
+            from .contracts import Identifier
+            TypeAdapter(Identifier).validate_python(key)
+            task_id=proposal['run_id']+'_revision_'+key
+            with Registry(self.root) as registry:
+                existing=registry.db.execute('SELECT * FROM ai_tasks WHERE id=?',(task_id,)).fetchone()
+                if existing:
+                    task=self.coordinator.queue._task(existing)
+                    if (task['context'].get('fixture_result')!=value['scene']
+                            or task['input_versions']!={'prior_candidate':value['prior_candidate']['sha256']}):
+                        raise StudioError('IDEMPOTENCY_CONFLICT','Revision key already binds different input')
+                    return {'task_id':task_id,'status':task['status'].upper(),'simulated':True,'production_started':False}
+            prior=self.read_candidate(value['prior_candidate'])
+            scene=Scene.model_validate(value['scene'])
+            if (not scene.simulated or not prior['simulated'] or proposal['simulated'] is not True
+                    or scene.project_id!=proposal['run_id'] or scene.scene_id!=prior['binding']['scene_id']
+                    or scene.version!=prior['version']+1
+                    or not all(getattr(a,'is_simulated',False) for a in self.coordinator.queue.adapters.values())):
+                raise StudioError('PRODUCTION_DISABLED','Only explicit fake revisions are supported offline')
+            with Registry(self.root) as registry:
+                current=registry.db.execute('SELECT pinned FROM ai_scenes WHERE project_id=? AND scene_id=? ORDER BY version DESC LIMIT 1',
+                    (scene.project_id,scene.scene_id)).fetchone()
+                if current['pinned']:
+                    raise StudioError('PINNED_CONFLICT','Pinned/manual scene needs separate owner approval')
+            inputs={'prior_candidate':value['prior_candidate']['sha256']}
+            contract=Task(task_id=task_id,run_id=scene.project_id,scene_id=scene.scene_id,role='python',
+                capability='offline_revision',input_version=scene.version,input_hashes=inputs,depends_on=[],
+                assigned_worker='fake_python',provider_profile_id='simulation',expected_output_schema='scene',idempotency_key=key)
+            # A revision is a new version, not an editorial check of the old version.
+            # The pinned prior hash is host-authored; old Scene payload is not a worker instruction.
+            self.coordinator.queue.enqueue({'task_id':task_id,'project_id':scene.project_id,'role':'director',
+                'expected_output':'scene','input_versions':inputs,'context':{'project_id':scene.project_id,
+                'scene_id':scene.scene_id,'scene_version':scene.version,'v2_contract':contract.model_dump(),
+                'fixture_result':scene.model_dump()},'depends_on':[]})
+            return {'task_id':task_id,'status':'PENDING','simulated':True,'production_started':False}
 
     def verify_compiled(self, compiled):
         root = Path(self.engine_root).resolve()
