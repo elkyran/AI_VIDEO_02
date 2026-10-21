@@ -108,9 +108,26 @@ def validate_reviewed_runner_steps(steps: list[dict]) -> None:
                 f"Reviewed runner PowerShell command changed: {name}")
 
 
+def validate_reviewed_runner_workflow_root(workflow: dict) -> None:
+    """Reject top-level env/defaults/extra triggers that bypass step-body pinning."""
+    require(set(workflow) == {"name", "on", "permissions", "concurrency", "jobs"},
+            "Runner workflow cannot add top-level env, defaults, hooks or extra keys")
+    require(workflow.get("name") == "AI_VIDEO_02 request",
+            "Reviewed runner workflow identity changed")
+
+
 def validate_self_hosted_workflow() -> None:
     path = ROOT / ".github/workflows/new-video.yml"
     workflow = load_workflow(path)
+    validate_reviewed_runner_workflow_root(workflow)
+    # Guard against a workflow-level env payload overriding safe step behavior.
+    altered_workflow = {**workflow, "env": {"PYTHONPATH": "unreviewed"}}
+    try:
+        validate_reviewed_runner_workflow_root(altered_workflow)
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("Unreviewed workflow-level environment was not rejected")
     triggers = workflow.get("on")
     require(isinstance(triggers, dict) and set(triggers) == {"workflow_dispatch"},
             "Self-hosted workflow must be manual-only")
