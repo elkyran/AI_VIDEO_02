@@ -16,6 +16,9 @@ class V2ResultGate:
     def __init__(self, root, store, video_evidence):
         self.root, self.store, self.video = root, store, video_evidence
 
+    def initialize(self, registry):
+        self.video.initialize(registry)
+
     def _context(self, task, attempt):
         path = workspace_path(self.root, Path(attempt['result_path']).with_name('request.json').as_posix())
         requested = json.loads(path.read_text(encoding='utf-8'))
@@ -80,12 +83,16 @@ class V2ResultGate:
                 raise StudioError('IDEMPOTENCY_CONFLICT', 'Accepted result is immutable')
         for artifact in result.artifacts:
             self.store.verify(artifact)
+        full_review = False
         if result.expected_output_schema == 'review':
             review = Review.model_validate(result.payload)
             if not result.simulated and any(c.simulated for c in review.provided_coverage + review.reviewed_coverage):
                 raise StudioError('ARTIFACT_INVALID', 'Live review cannot use simulated coverage')
             if review.subject_type == 'render' and (review.evidence_mode == 'video_audio' or review.verdict == 'ready_for_review'):
+                full_review = True
                 context = self._review_context(registry, result, contract, task, attempt, context, requested)
+        if result.host_review_delivery is not None and not full_review:
+            raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Host video delivery requires a full render review')
         normalized = validate_result(result.expected_output_schema, result.payload, context)
         if validate_result(result.expected_output_schema, payload, context) != normalized:
             raise StudioError('ARTIFACT_INVALID', 'Host envelope does not bind this creative payload')
@@ -104,6 +111,8 @@ class V2ResultGate:
             completion = json.loads(workspace_path(self.root, stored['path']).read_text(encoding='utf-8'))
             if completion.get('host_metadata') != result.model_dump():
                 raise StudioError('IDEMPOTENCY_CONFLICT', 'Replay differs from immutable completion metadata')
+        if full_review:
+            self.video.bind_delivery(registry, result.host_review_delivery)
         return {'payload': normalized, 'context': context, 'host_metadata': result.model_dump(),
                 'result_metadata': {'v2_acceptance': accepted,
                     'v2_artifacts': [a.model_dump() for a in result.artifacts],

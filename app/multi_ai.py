@@ -7,6 +7,7 @@ an existing configuration directory is not evidence of real authentication.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import hashlib
 import json
 import math
@@ -135,6 +136,8 @@ class Coordinator:
                                        "quota_limit": None, "quota_reset_at": None, "quota_source": None}
                             registry.db.execute("INSERT OR IGNORE INTO ai_profiles VALUES (?,?)",
                                                 (profile["profile_id"], canonical_json(profile)))
+                if self.result_gate and hasattr(self.result_gate, 'initialize'):
+                    self.result_gate.initialize(registry)
             self._recover()
             self._flush_profile_reports()
         except BaseException:
@@ -775,9 +778,31 @@ class Coordinator:
 
     def _complete(self, registry, attempt, payload, host_metadata=None):
         """One completion path; a configured host gate runs before any publication."""
+        if self.result_gate:
+            with self._completion_savepoint(registry):
+                gated = self._gate_result(registry, attempt, payload, host_metadata)
+                self._write_completion(registry, attempt, gated['payload'], gated=gated)
+                if not self._accept(registry, attempt['id']):
+                    raise StudioError('RESULT_NOT_CURRENT', 'Queue acceptance CAS rejected completion')
+                return True
         gated = self._gate_result(registry, attempt, payload, host_metadata) if self.result_gate else None
         self._write_completion(registry, attempt, gated['payload'] if gated else payload, gated=gated)
         return self._accept(registry, attempt['id'])
+
+    @contextmanager
+    def _completion_savepoint(self, registry):
+        # The poll loop catches completion failures inside its outer transaction.
+        # Roll back all completion SQL before that loop persists failure status.
+        name = 'completion_' + uuid.uuid4().hex
+        registry.db.execute('SAVEPOINT ' + name)
+        try:
+            yield
+        except BaseException:
+            registry.db.execute('ROLLBACK TO ' + name)
+            registry.db.execute('RELEASE ' + name)
+            raise
+        else:
+            registry.db.execute('RELEASE ' + name)
 
     def _write_completion(self, registry, attempt, result, *, gated=None):
         from .editorial import validate_result
@@ -804,6 +829,14 @@ class Coordinator:
         self._atomic_json(workspace_path(self.workspace, attempt["result_path"], for_write=True), envelope)
 
     def _accept(self, registry, attempt_id):
+        if self.result_gate:
+            with self._completion_savepoint(registry):
+                if not self._accept_completion(registry, attempt_id):
+                    raise StudioError('RESULT_NOT_CURRENT', 'Queue acceptance CAS rejected completion')
+                return True
+        return self._accept_completion(registry, attempt_id)
+
+    def _accept_completion(self, registry, attempt_id):
         from .editorial import validate_result
         attempt = registry.db.execute("SELECT * FROM ai_attempts WHERE id=?", (attempt_id,)).fetchone()
         task_row = registry.db.execute("SELECT * FROM ai_tasks WHERE id=?", (attempt["task_id"],)).fetchone()

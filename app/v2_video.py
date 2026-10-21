@@ -23,6 +23,21 @@ class VideoEvidence:
         self.store = store
         self.clock = clock or (lambda: datetime.now(timezone.utc))
 
+    def initialize(self, registry):
+        registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_deliveries (
+            delivery_id TEXT PRIMARY KEY, content TEXT NOT NULL)''')
+
+    def bind_delivery(self, registry, value):
+        """Reserve immutable content in the same SQL transaction as queue CAS."""
+        delivery = HostReviewDelivery.model_validate(value)
+        encoded = canonical_json(delivery.model_dump())
+        row = registry.db.execute('SELECT content FROM ai_v2_deliveries WHERE delivery_id=?', (delivery.delivery_id,)).fetchone()
+        if row:
+            if row[0] != encoded:
+                raise StudioError('DELIVERY_CONFLICT', 'Delivery ID already binds different immutable content')
+        else:
+            registry.db.execute('INSERT INTO ai_v2_deliveries VALUES(?,?)', (delivery.delivery_id, encoded))
+
     def validate(self, value):
         probe = TrustedVideoProbe.model_validate(value)
         now = self.clock()

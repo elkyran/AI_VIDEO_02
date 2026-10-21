@@ -604,14 +604,14 @@ class UnifiedAcceptanceTests(unittest.TestCase):
     setUp = V2Tests.setUp
     coordinator = V2Tests.coordinator
 
-    def live_fixture(self):
+    def live_fixture(self, key='delivery'):
         from app.editorial import Coverage
         from app.v2_acceptance import fingerprint
         from app.v2_video import CONTROL_FEATURES
         self.now=datetime(2026,10,20,12,tzinfo=timezone.utc)
         self.host=Path(self.temp.name)/'host';self.host.mkdir(exist_ok=True)
         q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
-        run=q.create({'topic':'offline delivery fixture'},'delivery')['run_id']
+        run=q.create({'topic':'offline delivery fixture'},key)['run_id']
         q.advance(run,1)
         task_id=run+'_source_index'
         with Registry(self.root) as registry:
@@ -648,7 +648,7 @@ class UnifiedAcceptanceTests(unittest.TestCase):
             video_artifact_size=artifact.size,input_version=contract['input_version'],input_hashes=contract['input_hashes'],
             edit_plan_version=1,delivered_coverage=[coverage],review_payload_sha256=fingerprint(Review.model_validate(review).model_dump()),
             requested_at=(self.now-timedelta(seconds=10)).isoformat(),completed_at=self.now.isoformat(),
-            expires_at=(self.now+timedelta(minutes=30)).isoformat(),receipt_ref='delivery.json',receipt_sha256='0'*64)
+            expires_at=(self.now+timedelta(minutes=30)).isoformat(),receipt_ref=key+'_delivery.json',receipt_sha256='0'*64)
         self.sign_delivery(delivery)
         envelope=Result(task_id=task_id,run_id=run,acceptance_key=attempt['id'],expected_output_schema='review',
             payload=review,input_version=contract['input_version'],input_hashes=contract['input_hashes'],
@@ -1039,6 +1039,69 @@ class Pack4Tests(unittest.TestCase):
             q.queue._poll();source.assert_not_called()
         with Registry(self.root) as registry:
             self.assertEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'completed')
+
+    def test_delivery_ledger_exact_replay_after_restart(self):
+        from app.registry import canonical_json
+        q,value,adapter,attempt=self.live_fixture();q.queue._poll();q.close()
+        q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+        q.accept_result(value);q.accept_result(value)
+        with Registry(self.root) as registry:
+            rows=registry.db.execute('SELECT * FROM ai_v2_deliveries').fetchall()
+            self.assertEqual(len(rows),1)
+            self.assertEqual(rows[0]['content'],canonical_json(value['host_review_delivery']))
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],1)
+
+    def test_delivery_id_conflict_across_runs_preserves_original_ledger(self):
+        q,first,adapter,attempt=self.live_fixture('first');q.queue._poll();q.close()
+        with Registry(self.root) as registry:original=registry.db.execute('SELECT content FROM ai_v2_deliveries').fetchone()[0]
+        q,second,adapter,attempt=self.live_fixture('second');q.queue._poll()
+        with Registry(self.root) as registry:
+            row=registry.db.execute('SELECT status,result,error FROM ai_tasks WHERE id=?',(second['task_id'],)).fetchone()
+            self.assertEqual(row['status'],'failed');self.assertIsNone(row['result'])
+            self.assertIn('Delivery ID',json.loads(row['error'])['message'])
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],1)
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],1)
+            self.assertEqual(registry.db.execute('SELECT content FROM ai_v2_deliveries').fetchone()[0],original)
+        self.assertFalse((self.root/attempt['result_path']).exists())
+        self.assertTrue((self.host/first['host_review_delivery']['receipt_ref']).is_file())
+
+    def test_delivery_ledger_rolls_back_output_cas_and_post_cas_failures(self):
+        base=self.root
+        for phase in ('output','cas','after_cas'):
+            with self.subTest(phase=phase):
+                self.root=base/phase;q,value,adapter,attempt=self.live_fixture(phase)
+                path=self.root/attempt['result_path']
+                if phase=='output':path.write_text('preserved existing evidence')
+                original=q.queue._event
+                def event(registry,kind,*args,**kwargs):
+                    if kind=='result_accepted':raise StudioError('FIXTURE_FAILURE','Fail after queue CAS')
+                    return original(registry,kind,*args,**kwargs)
+                target='_accept' if phase=='cas' else '_event'
+                kwargs={'return_value':False} if phase=='cas' else {'side_effect':event if phase=='after_cas' else original}
+                with patch.object(q.queue,target,**kwargs):q.queue._poll()
+                with Registry(self.root) as registry:
+                    row=registry.db.execute('SELECT status,result FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+                    self.assertEqual(row['status'],'failed');self.assertIsNone(row['result'])
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],0)
+                if phase=='output':self.assertEqual(path.read_text(),'preserved existing evidence')
+                elif phase=='after_cas':self.assertTrue(path.is_file())
+                q.close()
+
+    def test_delivery_ledger_initializes_before_recovery(self):
+        from app.v2_acceptance import fingerprint
+        q,value,adapter,attempt=self.live_fixture();path=self.root/attempt['result_path']
+        path.write_text(json.dumps({'task_id':value['task_id'],'attempt_id':attempt['id'],
+            'payload':value['payload'],'payload_sha256':fingerprint(value['payload']),
+            'input_versions':value['input_hashes'],'simulated':False,'host_metadata':value}),encoding='utf-8')
+        q.close()
+        with Registry(self.root) as registry:
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],0)
+            registry.db.execute('DROP TABLE ai_v2_deliveries')  # Empty fixture represents an older workspace.
+        q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+        with Registry(self.root) as registry:
+            self.assertEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'completed')
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],1)
 
 
 if __name__ == '__main__': unittest.main()
