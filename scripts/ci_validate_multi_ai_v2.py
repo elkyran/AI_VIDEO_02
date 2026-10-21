@@ -25,6 +25,16 @@ SETUP_PYTHON_SHA = "ece7cb06caefa5fff74198d8649806c4678c61a1"
 UPLOAD_ARTIFACT_SHA = "ea165f8d65b6e75b540449e92b4886f43607fa02"
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
+# Exact, reviewed PowerShell step bodies. Names alone are not a security boundary.
+# Any change to an executable runner command needs explicit security-lane review.
+EXPECTED_SELF_HOSTED_RUN_BODIES = {
+    "Verify trusted workflow source": "if ('${{ github.ref }}' -ne 'refs/heads/main') {\n  throw 'Self-hosted execution is allowed only from refs/heads/main'\n}\nif ('${{ github.event.repository.private }}' -ne 'true') {\n  throw 'Self-hosted execution requires a private repository'\n}\n",
+    "Verify clean exact checkout": "$head = (git rev-parse HEAD).Trim()\nif ($head -ne '${{ github.sha }}') {\n  throw \"Unexpected checkout SHA: $head\"\n}\n$dirty = git status --porcelain --untracked-files=all\nif ($dirty) {\n  throw \"Runner checkout is not clean:`n$dirty\"\n}\n",
+    "Validate dedicated fake environment": "if (-not $env:STUDIO_PYTHON) { throw 'STUDIO_PYTHON is required on the runner' }\nif (-not $env:LOCAL_RUN_ROOT) { throw 'LOCAL_RUN_ROOT is required on the runner' }\nif (-not (Test-Path -LiteralPath $env:STUDIO_PYTHON -PathType Leaf)) {\n  throw 'STUDIO_PYTHON does not point to an existing executable'\n}\n& $env:STUDIO_PYTHON -X utf8 scripts/healthcheck_multi_ai_v2.py `\n  --mode fake `\n  --root $env:LOCAL_RUN_ROOT\nif ($LASTEXITCODE -ne 0) { throw 'Multi-AI v2 fake healthcheck failed' }\n",
+    "Submit and advance bounded fake run": "& $env:STUDIO_PYTHON -X utf8 scripts/dispatch_multi_ai_v2.py\nexit $LASTEXITCODE\n",
+    "Verify repository stayed clean": "git diff --check\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n$dirty = git status --porcelain --untracked-files=all\nif ($dirty) {\n  Write-Host $dirty\n  throw 'Fake run modified the checked-out repository'\n}\n",
+}
+
 
 class ValidationError(RuntimeError):
     pass
@@ -61,6 +71,43 @@ def named_step(steps: list[dict], name: str) -> dict:
     return matches[0]
 
 
+def validate_reviewed_runner_steps(steps: list[dict]) -> None:
+    """Fail closed on extra actions, modified PowerShell or extra step capabilities."""
+    names = [
+        "Verify trusted workflow source",
+        "Checkout exact trusted revision",
+        "Verify clean exact checkout",
+        "Validate dedicated fake environment",
+        "Submit and advance bounded fake run",
+        "Verify repository stayed clean",
+    ]
+    require([step.get("name") for step in steps] == names,
+            "Self-hosted workflow must retain the exact reviewed step sequence")
+    for step in steps:
+        name = step["name"]
+        if name == "Checkout exact trusted revision":
+            require(set(step) == {"name", "uses", "with"},
+                    "Checkout cannot gain unreviewed options or shell commands")
+            require(step["uses"] == f"actions/checkout@{CHECKOUT_SHA}",
+                    "Self-hosted checkout must remain pinned")
+            require(step["with"] == {
+                "clean": "true",
+                "fetch-depth": "1",
+                "persist-credentials": "false",
+                "ref": "${{ github.sha }}",
+            }, "Self-hosted checkout configuration was changed")
+            continue
+        permitted = {"name", "shell", "run"}
+        if name == "Verify repository stayed clean":
+            permitted.add("if")
+            require(step.get("if") == "${{ always() }}",
+                    "Post-run cleanliness check must run even on failure")
+        require(set(step) == permitted and step.get("shell") == "powershell",
+                f"Unreviewed runner step keys, shell or settings: {name}")
+        require(step.get("run") == EXPECTED_SELF_HOSTED_RUN_BODIES[name],
+                f"Reviewed runner PowerShell command changed: {name}")
+
+
 def validate_self_hosted_workflow() -> None:
     path = ROOT / ".github/workflows/new-video.yml"
     workflow = load_workflow(path)
@@ -68,13 +115,21 @@ def validate_self_hosted_workflow() -> None:
     require(isinstance(triggers, dict) and set(triggers) == {"workflow_dispatch"},
             "Self-hosted workflow must be manual-only")
     inputs = triggers["workflow_dispatch"].get("inputs", {})
-    require("production_mode" not in inputs,
-            "Self-hosted workflow must not expose production mode before live review")
+    require(set(inputs) == {"topic", "language", "target_minutes", "style",
+                             "source_profile", "auto_fix_cycles", "output_profile"},
+            "Self-hosted inputs must be the reviewed fake-only brief fields")
+    require(workflow.get("concurrency") == {"group": "ai-video-02-local-production",
+                                              "cancel-in-progress": "false", "queue": "max"},
+            "Self-hosted concurrency behavior cannot change without review")
     require(workflow.get("permissions") == {"contents": "read"},
             "Self-hosted workflow permissions must be contents: read only")
     require(set(workflow["jobs"]) == {"request"},
             "Credentialed self-hosted workflow must contain exactly one guarded request job")
     job = workflow["jobs"]["request"]
+    require(set(job) == {"if", "runs-on", "timeout-minutes", "env", "steps"},
+            "Credentialed job cannot gain unreviewed permissions, containers or hooks")
+    require(job.get("timeout-minutes") == "30",
+            "Credentialed runner must preserve the bounded 30-minute job timeout")
     runs_on = job.get("runs-on")
     require(isinstance(runs_on, list) and len(runs_on) == 3
             and set(runs_on) == {"self-hosted", "Windows", "ai-video-02"},
@@ -95,8 +150,24 @@ def validate_self_hosted_workflow() -> None:
     ]
     require([step.get("name") for step in steps] == expected_names,
             "Self-hosted workflow must retain the reviewed, ordered fake-only steps")
-    require([step.get("uses") for step in steps if "uses" in step] == [f"actions/checkout@{CHECKOUT_SHA}"],
-            "Self-hosted workflow must not add new executable actions")
+    validate_reviewed_runner_steps(steps)
+    # Regression proof: appended shell code and added step environment must be rejected.
+    altered = [dict(step) for step in steps]
+    altered[0] = {**altered[0], "run": altered[0]["run"] + "Write-Host 'unexpected'\\n"}
+    try:
+        validate_reviewed_runner_steps(altered)
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("Unreviewed appended shell commands were not rejected")
+    altered = [dict(step) for step in steps]
+    altered[3] = {**altered[3], "env": {"UNREVIEWED": "1"}}
+    try:
+        validate_reviewed_runner_steps(altered)
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("Unreviewed step-level environment was not rejected")
     checkout = action_step(steps, "actions/checkout@")
     action_ref = checkout["uses"].split("@", 1)[1]
     require(action_ref == CHECKOUT_SHA and HEX40.fullmatch(action_ref) is not None,

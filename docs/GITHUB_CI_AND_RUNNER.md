@@ -62,6 +62,10 @@ runner на Windows-ноутбуке владельца. В будущем эт�
 4. Feature-ветки и Pull Request не исполняются на credentialed runner.
    Policy validator запрещает дополнительные jobs/actions, непроверенные
    шаги и любые ослабления точного `private && main` условия.
+   Теперь проверяются **точные PowerShell-команды**, последовательность и
+   параметры каждого шага: одной проверки имени недостаточно. Добавленные
+   команды, step env, hooks, изменение checkout/ref или таймаута отвергаются.
+   Два негативных теста валидатора проверяют эти отказы без доступа к runner.
 5. Checkout использует точный `${{ github.sha }}`.
 6. Checkout выполняется с `clean: true` и `persist-credentials: false`.
 7. После checkout проверяются `HEAD` и все tracked/untracked изменения.
