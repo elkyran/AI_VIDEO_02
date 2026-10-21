@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "WorkerSlot": {
+      "additionalProperties": false,
+      "properties": {
+        "worker_id": {
+          "enum": [
+            "antigravity_story",
+            "antigravity_visual"
+          ],
+          "title": "Worker Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "gemini_story",
+            "gemini_visual"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "provider": {
+          "const": "antigravity",
+          "default": "antigravity",
+          "title": "Provider",
+          "type": "string"
+        },
+        "profile_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "identity_binding_ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Identity Binding Ref",
+          "type": "string"
+        },
+        "identity_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Identity Hash",
+          "type": "string"
+        },
+        "auth_generation": {
+          "minimum": 1,
+          "title": "Auth Generation",
+          "type": "integer"
+        },
+        "auth_namespace": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Auth Namespace",
+          "type": "string"
+        },
+        "session_namespace": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Session Namespace",
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "default": true,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "quota_remaining": {
+          "default": null,
+          "title": "Quota Remaining",
+          "type": "null"
+        }
+      },
+      "required": [
+        "worker_id",
+        "role",
+        "profile_id",
+        "identity_binding_ref",
+        "identity_hash",
+        "auth_generation",
+        "auth_namespace",
+        "session_namespace"
+      ],
+      "title": "WorkerSlot",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "story": {
+      "$ref": "#/$defs/WorkerSlot"
+    },
+    "visual": {
+      "$ref": "#/$defs/WorkerSlot"
+    }
+  },
+  "required": [
+    "story",
+    "visual"
+  ],
+  "title": "DualWorkerConfig",
+  "type": "object"
+}
