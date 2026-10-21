@@ -181,7 +181,8 @@ def validate_ci_workflow() -> None:
     for required in ("git_tree_sha", "Get-FileHash", "source_unchanged_during_checks",
                      "model_requests", "paid_api_requests", "production_started",
                      "$value.status -ne 'passed'", "$checks.status -ne 'passed'",
-                     "$checks.test_count"):
+                     "$checks.test_count", "$expectedGroups", "$observedGroups",
+                     "$expectedTimeout", "$testsRecorded -lt 411", "$skipsRecorded -gt 2"):
         require(required in envelope_text, f"Evidence envelope check is missing {required}")
 
     clean = named_step(steps, "Verify clean, whitespace-safe checkout")

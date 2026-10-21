@@ -17,6 +17,9 @@ CI проверяет:
 - отсутствие drift у JSON Schema;
 - canonical `scripts/check_multi_ai_v2.py`;
 - Multi-AI v2 unit tests и старые regression-группы;
+- точный список обязательных групп, минимум 411 тестов текущего baseline,
+  не более двух известных окруженческих skips, сохранённые лимиты v2=420
+  секунд / остальные=180 и отсутствие группы с неуспешным exit code;
 - Git/secret export scan;
 - `git diff --check` и отсутствие tracked/untracked изменений после тестов;
 - immutable evidence на чистом commit;

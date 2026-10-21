@@ -163,6 +163,34 @@ jobs:
             throw 'checks.json is not bound to the checked-out revision'
           }
 
+          # Passing status is insufficient if a checker accidentally omits groups
+          # or marks new tests as skipped. Keep the approved baseline intact.
+          $expectedGroups = @('v2', 'contracts', 'queue', 'adapters', 'mai05',
+                              'panel', 'legacy', 'compileall', 'check_git_export', 'diff_check')
+          $observedGroups = @($checks.checks | ForEach-Object { $_.group })
+          if (($expectedGroups -join ',') -ne ($observedGroups -join ',')) {
+            throw "Core checker group mismatch: $($observedGroups -join ',')"
+          }
+          $testsRecorded = 0
+          $skipsRecorded = 0
+          foreach ($check in $checks.checks) {
+            if ($check.status -ne 'passed' -or [int]$check.exit_code -ne 0) {
+              throw "Required checker group failed: $($check.group)"
+            }
+            $expectedTimeout = if ($check.group -eq 'v2') { 420 } else { 180 }
+            if ([int]$check.timeout_seconds -ne $expectedTimeout) {
+              throw "Unexpected bounded timeout for group $($check.group)"
+            }
+            $testsRecorded += [int]$check.test_count
+            $skipsRecorded += [int]$check.skipped_count
+          }
+          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 411) {
+            throw "Test count mismatch or regression below 411: $testsRecorded"
+          }
+          if ([int]$checks.skipped_count -ne $skipsRecorded -or $skipsRecorded -gt 2) {
+            throw "Unexpected skipped tests: $skipsRecorded"
+          }
+
           $manifestHash = (Get-FileHash -LiteralPath $manifest.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           @(
             '## Multi-AI V2 offline CI',

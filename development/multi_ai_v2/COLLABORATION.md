@@ -37,10 +37,13 @@ ChatGPT владеет только следующими файлами в эт�
 Codex владеет функциональными Python-границами Multi-AI v2, связанными тестами и
 документацией, кроме файлов дорожки A.
 
-Review Fix Pack 2 (`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`) уже
-прошёл независимый GitHub-hosted Windows CI. После него опубликован Fix Pack 3
-на feature HEAD `c4e69d0556169cdc394c97b5f75560d00947df61`.
-Это текущая проверяемая база, а не разрешение merge.
+Review Fix Pack 2 (`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`) и Fix Pack 3
+прошли адресные независимые PR CI на своих временных объединениях.
+После Review Fix Pack 4 Codex опубликовал ограниченный Phase A пакет:
+feature HEAD `3cfd455b640ca36c9840a76778810ae721583d67`.
+Локальный отчёт Phase A заявляет 411 тестов (410 passed, 1 skip), но это
+не clean proof текущего PR merge commit. Следующая проверка — новый точный
+temporary merge двух дорожек и Windows CI evidence до любого merge.
 
 По новому поручению владельца Codex может выполнять только ограниченные
 адресные исправления из отдельного точного промпта с проверкой exact HEAD.
@@ -64,10 +67,12 @@ Review Fix Pack 2 (`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`) уже
 
 ## Текущий review gate
 
-Draft PR №1 ранее проверил temporary merge
-`370ff860960dce96e632a3f2d010760fdb84bda4`, который содержит Fix Pack 2,
-но не Fix Pack 3. До нового запуска требуется обновлённый temporary merge
-с актуальным feature HEAD и ChatGPT lane HEAD, затем clean CI evidence на этот SHA.
+Draft PR №1 направлен из ChatGPT security lane в Codex feature, не в main.
+Предыдущие CI на отдельных temporary merges не доказывают текущий Phase A HEAD.
+Для нового gate требуется temporary merge, чей первый parent равен текущему
+feature HEAD, а второй — текущему ChatGPT lane HEAD. Проверить оба SHA, tree,
+точный test set, manifest hashes и независимый GitHub-hosted Windows CI.
+До owner sign-off PR остаётся Draft, merge запрещён.
 
 Пока этот merge-state CI не завершён успешно:
 
