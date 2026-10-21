@@ -24,6 +24,7 @@ from .v2_contracts import Artifact, Result, Task
 from .v2_ids import derived_id
 from .v2_production import MeasuredEngine, OfflineProductionBridge, verify_audio, verify_portable
 from .v2_run_config import HostRunConfig, graph, isolated_root, no_links, plan, storage, verify_inputs
+from .v2_provider_bridge import provider_readiness
 
 REQUIRED_OPERATION = {'wav': 'synthesize', 'compile': 'compile', 'render': 'render',
                       'qa': 'qa', 'portable': 'portable'}
@@ -580,7 +581,7 @@ class SystemPipeline(MeasuredEngine):
             'creative_review': 'OWNER_REVIEW_RECORDED' if owner_review else 'PENDING_OWNER',
             'owner_review': owner_review, 'model_video_review': 'NOT_RUN', 'uploaded': bool(delivery and delivery['uploaded']), 'delivery': delivery,
             'model_requests': 0, 'paid_api_requests': 0, 'production_started': self.production_started(),
-            'system_ready_for_autonomous_episode': False, 'truncated': False}
+            'system_ready_for_autonomous_episode': False, 'providers': provider_readiness(), 'truncated': False}
 
     def production_started(self):
         import sqlite3
@@ -682,6 +683,7 @@ def system_main(argv):
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'CLI root differs from pinned host configuration')
         if args.command in {'plan', 'doctor'}:
             result = plan(config)
+            result['providers'] = provider_readiness()
             if args.command == 'doctor':
                 result['storage'] = storage(config)
                 result['write_probe'] = 'NOT_REQUESTED'
