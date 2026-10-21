@@ -184,8 +184,8 @@ jobs:
             $testsRecorded += [int]$check.test_count
             $skipsRecorded += [int]$check.skipped_count
           }
-          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 411) {
-            throw "Test count mismatch or regression below 411: $testsRecorded"
+          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 449) {
+            throw "Test count mismatch or regression below 449: $testsRecorded"
           }
           if ([int]$checks.skipped_count -ne $skipsRecorded -or $skipsRecorded -gt 2) {
             throw "Unexpected skipped tests: $skipsRecorded"
@@ -247,6 +247,54 @@ jobs:
             throw 'Hosted fake graph is incomplete or claims real QA'
           }
           Write-Host "HOSTED_FAKE_DISPATCH_VERIFIED run=$($first.run_id) stages=19 manifest=$($first.manifest_sha256)"
+
+      - name: Verify offline Scene to editable MLT and release replay
+        shell: powershell
+        env:
+          LOCAL_RUN_ROOT: ${{ runner.temp }}/multi-ai-v2-bridge-fixture
+        run: |
+          if (Test-Path -LiteralPath $env:LOCAL_RUN_ROOT) {
+            throw 'Offline bridge smoke requires a fresh local fixture root'
+          }
+          $oneText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT prepare --brief examples/bulk_01/brief.json --key hosted_bulk_01 --fixture-demo
+          if ($LASTEXITCODE -ne 0) { throw 'One-brief offline bridge preparation failed' }
+          $one = $oneText | ConvertFrom-Json
+          if ($one.status -ne 'SIMULATION_SUCCEEDED' -or $one.offline_status -ne 'VERIFIED' -or
+              $one.simulated -ne $true -or $one.ready_for_user -ne $false -or
+              $one.production_started -ne $false -or $one.uploaded -ne $false -or
+              $one.remote_sync -ne 'UNVERIFIED' -or $one.model_requests -ne 0 -or
+              $one.paid_api_requests -ne 0 -or
+              $one.technical_qa.full_video_creative_qa -ne 'NOT_RUN' -or
+              $one.technical_qa.scope -ne 'prepared_files_and_declared_timeline_only' -or
+              $one.delivery.uploaded -ne $false -or $one.delivery.cloud_receipt -ne $null) {
+            throw 'Offline bridge claimed unproven production, model, creative QA or cloud delivery'
+          }
+          if ([string]$one.release.sha256 -notmatch '^[0-9a-f]{64}$' -or
+              [string]$one.manifest_artifact.sha256 -notmatch '^[0-9a-f]{64}$' -or
+              [string]$one.mlt.sha256 -notmatch '^[0-9a-f]{64}$') {
+            throw 'Offline bridge did not produce immutable manifest hashes'
+          }
+          $twoText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT resume --run-id $one.run_id
+          if ($LASTEXITCODE -ne 0) { throw 'Offline bridge restart/resume failed' }
+          $two = $twoText | ConvertFrom-Json
+          if ($two.run_id -ne $one.run_id -or
+              $two.manifest_artifact.sha256 -ne $one.manifest_artifact.sha256 -or
+              $two.release.sha256 -ne $one.release.sha256 -or
+              $two.mlt.sha256 -ne $one.mlt.sha256 -or
+              $two.offline_status -ne 'VERIFIED') {
+            throw 'Offline bridge changed accepted artifacts after process restart'
+          }
+          $inspectText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT inspect-artifacts --run-id $one.run_id
+          if ($LASTEXITCODE -ne 0) { throw 'Offline bridge artifact inspection failed' }
+          $inspect = $inspectText | ConvertFrom-Json
+          if ($inspect.manifest_artifact.sha256 -ne $one.manifest_artifact.sha256) {
+            throw 'Offline bridge inspection lost its accepted manifest'
+          }
+          $attemptCount = & python -X utf8 -c "import os,sqlite3;from pathlib import Path;p=Path(os.environ['LOCAL_RUN_ROOT'])/'registry.sqlite';db=sqlite3.connect(p);print(db.execute('SELECT COUNT(*) FROM ai_attempts').fetchone()[0]);db.close()"
+          if ($LASTEXITCODE -ne 0 -or [int]$attemptCount -ne 19) {
+            throw "Offline fixture replay created duplicate attempts: $attemptCount"
+          }
+          Write-Host "HOSTED_BULK_OFFLINE_BRIDGE_VERIFIED run=$($one.run_id) stages=19 release=$($one.release.sha256)"
 
       - name: Upload immutable CI evidence
         if: ${{ always() }}

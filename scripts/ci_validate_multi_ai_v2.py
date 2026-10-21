@@ -272,6 +272,21 @@ def validate_ci_workflow() -> None:
             require(required in smoke_text or required in str(smoke.get("name", "")),
                     f"Hosted fake dispatch smoke missing check: {required}")
 
+    bridge = named_step(steps, "Verify offline Scene to editable MLT and release replay")
+    bridge_text = str(bridge.get("run", ""))
+    require(bridge.get("shell") == "powershell" and
+            set(bridge) == {"name", "shell", "env", "run"},
+            "Bulk offline integration smoke must be an isolated PowerShell step")
+    require(bridge.get("env") == {
+                "LOCAL_RUN_ROOT": "${{ runner.temp }}/multi-ai-v2-bridge-fixture"
+            }, "Offline bridge smoke cannot inherit user storage or credentials")
+    for required in ("examples/bulk_01/brief.json", "--fixture-demo", "resume --run-id",
+                     "inspect-artifacts", "SIMULATION_SUCCEEDED", "ready_for_user",
+                     "offline_status", "production_started", "uploaded", "remote_sync",
+                     "full_video_creative_qa", "manifest_artifact.sha256", "release.sha256",
+                     "mlt.sha256", "COUNT(*) FROM ai_attempts", "stages=19"):
+        require(required in bridge_text, f"Hosted bridge smoke missing: {required}")
+
     checker = named_step(steps, "Run clean revision-bound core checker")
     checker_text = str(checker.get("run", ""))
     require("scripts/check_multi_ai_v2.py" in checker_text and "exit $code" in checker_text,
@@ -288,7 +303,7 @@ def validate_ci_workflow() -> None:
                      "model_requests", "paid_api_requests", "production_started",
                      "$value.status -ne 'passed'", "$checks.status -ne 'passed'",
                      "$checks.test_count", "$expectedGroups", "$observedGroups",
-                     "$expectedTimeout", "$testsRecorded -lt 411", "$skipsRecorded -gt 2"):
+                     "$expectedTimeout", "$testsRecorded -lt 449", "$skipsRecorded -gt 2"):
         require(required in envelope_text, f"Evidence envelope check is missing {required}")
 
     clean = named_step(steps, "Verify clean, whitespace-safe checkout")

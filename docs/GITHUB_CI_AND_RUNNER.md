@@ -17,7 +17,7 @@ CI проверяет:
 - отсутствие drift у JSON Schema;
 - canonical `scripts/check_multi_ai_v2.py`;
 - Multi-AI v2 unit tests и старые regression-группы;
-- точный список обязательных групп, минимум 411 тестов текущего baseline,
+- точный список обязательных групп, минимум 449 тестов после BULK-01,
   не более двух известных окруженческих skips, сохранённые лимиты v2=420
   секунд / остальные=180 и отсутствие группы с неуспешным exit code;
 - Git/secret export scan;
@@ -44,6 +44,14 @@ safety-ветка сама по себе намеренно не запуска�
 Полная совместимость проверяется PR temporary-merge, а не status отдельной lane.
 Это не отключение регрессионных тестов: PR checker продолжает запускать их полностью
 и блокирует интеграцию при любой ошибке.
+
+После BULK-01 GitHub-hosted CI также проверяет настоящую новую offline
+интеграцию на синтетическом brief: accepted Scene → ProductionScript candidate
+→ existing MLT compile → release inventory → restart/resume. Проводится
+проверка совпадения SHA манифестов и ровно 19 attempts, без TTS/render/
+самостоятельного провайдера/Drive; результат `HOSTED_BULK_OFFLINE_BRIDGE_VERIFIED`
+не означает готовый ролик. За пределами временного runner root ничего
+не создаётся.
 
 Дополнительно GitHub-hosted CI на изолированном Windows запускает **один тестовый
 brief** через `healthcheck_multi_ai_v2.py --mode fake` и официальный
