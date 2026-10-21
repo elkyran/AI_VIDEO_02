@@ -91,3 +91,11 @@ Review используют app.editorial; экспорт схем — config/mu
 недостающих соединений, регистрация runner и live pilot требуют отдельного
 поручения. [Runbook](REMOTE_RUNBOOK.md), [возможности](PROVIDER_CAPABILITY_MATRIX.md),
 [план](../development/multi_ai_v2/PLAN.md).
+
+BULK-01 добавляет [offline bridge](OFFLINE_PRODUCTION_BRIDGE.md): accepted Scene
+→ validated_not_registered ProductionScript → отдельные narration/cache recipes
+→ existing MLT compiler → структурное QA → immutable release. Одна prepare-команда
+проходит fixture-этапы; resume использует existing queue/events. Targeted revision
+создаёт новую принятую Scene версию, не заменяет старые файлы и не затрагивает
+чужие cache keys. Live registration/jobs/TTS/render/creative QA/Drive остаются
+BLOCKED или NOT_IMPLEMENTED; это не production-ready pilot.

@@ -37,8 +37,8 @@ class CanonFact(Contract):
     kind: Literal['fact', 'relationship', 'world_rule', 'assumption', 'divergence'] = 'fact'
     text: str = Field(min_length=1, max_length=4000)
     status: Literal['unconfirmed', 'owner_verified'] = 'unconfirmed'
-    citations: list[Citation] = Field(default_factory=list)
-    depends_on: list[Identifier] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list, max_length=64)
+    depends_on: list[Identifier] = Field(default_factory=list, max_length=64)
 
     @model_validator(mode='after')
     def traced(self):
@@ -59,9 +59,9 @@ class CanonBible(Contract):
     version: int = Field(ge=1)
     work_id: Identifier
     simulated: bool = True
-    sources: list[Source] = Field(min_length=1)
-    facts: list[CanonFact] = Field(default_factory=list)
-    chronology: list[CanonEvent] = Field(default_factory=list)
+    sources: list[Source] = Field(min_length=1, max_length=128)
+    facts: list[CanonFact] = Field(default_factory=list, max_length=2000)
+    chronology: list[CanonEvent] = Field(default_factory=list, max_length=2000)
     content_role: Literal['untrusted_source_data_not_instructions'] = 'untrusted_source_data_not_instructions'
 
     @model_validator(mode='after')
@@ -80,11 +80,14 @@ class CanonBible(Contract):
             for dep in fact.depends_on:
                 if (dep, fact.edition) not in facts:
                     raise ValueError('Causal dependency missing from this edition')
+        visited=set()
         def visit(key, trail):
-            if key in trail:
+            if key in trail or len(trail)>128:
                 raise ValueError('Causal cycle')
+            if key in visited:return
             for dep in facts[key].depends_on:
                 visit((dep, key[1]), trail | {key})
+            visited.add(key)
         for key in facts:
             visit(key, set())
         for event in self.chronology:
