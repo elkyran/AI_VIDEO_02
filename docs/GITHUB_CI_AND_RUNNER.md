@@ -34,8 +34,13 @@ Evidence загружается отдельным GitHub Artifact даже пр
 проверка не делает checkout dirty. Job Summary показывает проверенный commit/tree,
 статус evidence, число тестов и SHA-256 manifest.
 
-CI разрешён для Pull Request и рабочих веток, потому что выполняется на изолированной
-машине GitHub без пользовательских provider credentials.
+CI выполняется для Pull Request в `main` и `feature/multi-ai-coordinator-v2`,
+а также для push уже объединённого кода в `main`/feature. Изолированная ChatGPT
+safety-ветка сама по себе намеренно не запускает полный core checker: в ней нет
+новых коммитов Codex, поэтому такой push-run тестирует заведомо устаревший core.
+Полная совместимость проверяется PR temporary-merge, а не status отдельной lane.
+Это не отключение регрессионных тестов: PR checker продолжает запускать их полностью
+и блокирует интеграцию при любой ошибке.
 
 Зелёный CI не доказывает вход моделей, просмотр MP4, TTS, рендер, удалённую
 синхронизацию Drive или художественное качество.
@@ -52,6 +57,8 @@ runner на Windows-ноутбуке владельца. В будущем эт�
 2. Запуск только вручную через `workflow_dispatch`.
 3. Исполнение только из `refs/heads/main`.
 4. Feature-ветки и Pull Request не исполняются на credentialed runner.
+   Policy validator запрещает дополнительные jobs/actions, непроверенные
+   шаги и любые ослабления точного `private && main` условия.
 5. Checkout использует точный `${{ github.sha }}`.
 6. Checkout выполняется с `clean: true` и `persist-credentials: false`.
 7. После checkout проверяются `HEAD` и все tracked/untracked изменения.

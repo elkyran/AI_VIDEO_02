@@ -55,6 +55,9 @@ Review Fix Pack 2 (`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`) уже
 5. После каждого пакета — отдельный commit и короткий отчёт.
 6. ChatGPT PR направляется в `feature/multi-ai-coordinator-v2`, не в `main`.
 7. PR-CI проверяет временный merge обеих дорожек; красный статус блокирует merge.
+   Изолированная ChatGPT ветка не запускает core push-CI: core assertions
+   проверяются на temporary merge PR и в объединённых `main`/feature.
+   Это не разрешает пропускать, ослаблять или скрывать красный PR-CI.
 8. Владелец файла исправляет найденный дефект в своей ветке.
 9. CI evidence хранится GitHub Artifact, а не коммитится как самоссылочный release-proof.
 10. Финальный merge в `main` возможен только после зелёного CI и повторного review.

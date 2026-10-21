@@ -17,8 +17,8 @@ on:
       - '.env.example'
   push:
     branches:
+      - main
       - 'feature/multi-ai-coordinator-v2'
-      - 'assistant/review-fix-ci-runner-safety'
     paths:
       - 'app/**'
       - 'scripts/**'

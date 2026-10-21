@@ -72,16 +72,31 @@ def validate_self_hosted_workflow() -> None:
             "Self-hosted workflow must not expose production mode before live review")
     require(workflow.get("permissions") == {"contents": "read"},
             "Self-hosted workflow permissions must be contents: read only")
+    require(set(workflow["jobs"]) == {"request"},
+            "Credentialed self-hosted workflow must contain exactly one guarded request job")
     job = workflow["jobs"]["request"]
     runs_on = job.get("runs-on")
-    require(isinstance(runs_on, list) and {"self-hosted", "Windows", "ai-video-02"} <= set(runs_on),
-            "Self-hosted workflow must use dedicated Windows runner labels")
-    condition = str(job.get("if", ""))
-    require("github.event.repository.private == true" in condition and "github.ref == 'refs/heads/main'" in condition,
-            "Self-hosted workflow must require a private repository and refs/heads/main")
-    require(job.get("env", {}).get("VIDEO_REQUEST_JSON") == "${{ toJSON(inputs) }}",
-            "Workflow inputs must enter Python as JSON data, not interpolated shell text")
+    require(isinstance(runs_on, list) and len(runs_on) == 3
+            and set(runs_on) == {"self-hosted", "Windows", "ai-video-02"},
+            "Self-hosted workflow must use exactly the dedicated Windows runner labels")
+    condition = str(job.get("if", "")).strip()
+    require(condition == "github.event.repository.private == true && github.ref == 'refs/heads/main'",
+            "Self-hosted workflow must require the exact private + main condition without bypasses")
+    require(job.get("env") == {"VIDEO_REQUEST_JSON": "${{ toJSON(inputs) }}"},
+            "Workflow must carry only JSON task data, not injected shell text or credentials")
     steps = steps_for(workflow, "request")
+    expected_names = [
+        "Verify trusted workflow source",
+        "Checkout exact trusted revision",
+        "Verify clean exact checkout",
+        "Validate dedicated fake environment",
+        "Submit and advance bounded fake run",
+        "Verify repository stayed clean",
+    ]
+    require([step.get("name") for step in steps] == expected_names,
+            "Self-hosted workflow must retain the reviewed, ordered fake-only steps")
+    require([step.get("uses") for step in steps if "uses" in step] == [f"actions/checkout@{CHECKOUT_SHA}"],
+            "Self-hosted workflow must not add new executable actions")
     checkout = action_step(steps, "actions/checkout@")
     action_ref = checkout["uses"].split("@", 1)[1]
     require(action_ref == CHECKOUT_SHA and HEX40.fullmatch(action_ref) is not None,
@@ -107,8 +122,16 @@ def validate_ci_workflow() -> None:
     path = ROOT / ".github/workflows/ci-multi-ai-v2.yml"
     workflow = load_workflow(path)
     triggers = workflow.get("on")
-    require(isinstance(triggers, dict) and "pull_request" in triggers and "push" in triggers,
-            "Independent CI must run for pull requests and reviewed branch pushes")
+    require(isinstance(triggers, dict) and set(triggers) == {"pull_request", "push"},
+            "Independent CI must run for pull requests and reviewed branch pushes only")
+    pr_branches = triggers["pull_request"].get("branches", [])
+    push_branches = triggers["push"].get("branches", [])
+    require(set(pr_branches) == {"main", "feature/multi-ai-coordinator-v2"}
+            and len(pr_branches) == 2,
+            "Independent CI must check pull requests to main and feature")
+    require(set(push_branches) == {"main", "feature/multi-ai-coordinator-v2"}
+            and len(push_branches) == 2,
+            "CI push runs must target integrated core branches, not isolated ChatGPT lane")
     require(workflow.get("permissions") == {"contents": "read"},
             "CI permissions must be contents: read only")
     job_name = next(iter(workflow["jobs"]))
