@@ -1,5 +1,7 @@
 from copy import deepcopy
+import ctypes
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -31,14 +33,36 @@ class EngineBridgeTests(unittest.TestCase):
             r.register_asset(self.run_id,'script','script.json',kind='text',rights='owned',base_revision=3,idempotency_key='script')
 
     def test_cache_prediction_matches_existing_synthesize_requests_without_running_tts(self):
+        self.assert_cache_prediction(self.engine)
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows short/long path aliases')
+    def test_cache_prediction_matches_windows_short_and_long_path_aliases(self):
+        # Ask Windows for the actual alias; never assume a runner/user directory name.
+        get_short_path = ctypes.windll.kernel32.GetShortPathNameW
+        get_short_path.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+        get_short_path.restype = ctypes.c_uint32
+        long_root = self.engine.resolve()
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = get_short_path(str(long_root), buffer, len(buffer))
+        self.assertGreater(length, 0)
+        self.assertLess(length, len(buffer))
+        short_root = Path(buffer.value)
+        if str(short_root).casefold() == str(long_root).casefold():
+            self.skipTest('Windows has no distinct 8.3 alias for this temporary directory')
+        self.assertEqual(short_root.resolve(), long_root)
+        self.assert_cache_prediction(short_root)
+
+    def assert_cache_prediction(self, root):
         value=self.bridge.read_candidate(self.artifact)
-        recipe=narration_descriptors(value,self.engine)
+        recipe=narration_descriptors(value,root)
         self.register_script()
         profile=profile_spec(); voice=profile['voice']
         config={'tts_engine':'piper','pronunciation_lexicon':profile['pronunciation_lexicon'],
                 'tts_normalization_scope':voice['normalization_scope']}
         config.update({'tts_'+k:v for k,v in voice['settings'].items()})
-        directory=self.engine/'dry_test';directory.mkdir()
+        # Match operations.Context, including root and relative-path normalization.
+        resolved_root=Path(root).resolve()
+        directory=resolved_root/'dry_test';directory.mkdir()
         captured=[]
         def run(command,**kwargs):
             request=json.loads(Path(command[-1]).read_text(encoding='utf-8'));captured.append(request)
@@ -46,11 +70,12 @@ class EngineBridgeTests(unittest.TestCase):
             log.write_text(json.dumps({'duration_seconds':0.0,'cache_hit':False}),encoding='utf-8')
             return log
         model=recipe['segments'][0]['settings']['model_path']
-        ctx=SimpleNamespace(root=self.engine,job={'project_id':self.run_id},directory=directory,config=config,
+        ctx=SimpleNamespace(root=resolved_root,job={'project_id':self.run_id},directory=directory,config=config,
             tool=lambda name:model if name=='tts_model' else 'not_executed',progress=lambda *args:None,
-            relative=lambda p:Path(p).relative_to(self.engine).as_posix(),run=run)
+            relative=lambda p:Path(p).resolve().relative_to(resolved_root).as_posix(),run=run)
         with patch.object(operations,'content_hash',return_value=voice['model_sha256']):
             operations.synthesize(ctx,{'script_asset_id':'script'})
+        self.assertEqual(len(captured),len(recipe['segments']))
         for segment,request in zip(recipe['segments'],captured):
             self.assertEqual(request['config'],segment['settings'])
             self.assertEqual(Path(request['output']).stem,segment['cache_key'])
