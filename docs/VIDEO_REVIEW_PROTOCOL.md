@@ -89,3 +89,29 @@ artifact metadata, receipt и каждый файл; изменённый/исч
 Локальные проверки сохраняют pre-commit/dirty evidence отдельно. Clean-final proof
 создаёт GitHub CI после push и хранит внешним immutable artifact. Production,
 provider login, TTS/render, реальный video review и Drive delivery этим пакетом не запускаются.
+
+
+REVIEW FIX PACK 4 уточняет четыре инварианта без изменения Pydantic/JSON Schema:
+
+- Перед fixture generation и worker dispatch dependency_results строится из
+  immutable completion, после сверки cached SQLite payload с payload в completion
+  и host_metadata. Проверяются task/run/attempt, входы, provenance, fingerprint,
+  accepted metadata и физические artifacts. Подмена кеша — hard failure с событием
+  dependency_rejected; родительские файлы и кеш автоматически не переписываются.
+- Для live full-video account_fingerprint равен SHA-256 canonical_json сохранённого
+  request.json.account_binding: identity_hash (64 lowercase hex) и положительная
+  integer auth_generation. Другой login generation, null/malformed binding или
+  null fingerprint отклоняются. Delivery и capability должны иметь этот же hash;
+  текущее состояние AccountManager не заменяет immutable request.
+- Host-owned ai_v2_deliveries хранит delivery_id PRIMARY KEY и canonical content.
+  Точный повтор идемпотентен; любое изменение content конфликтует. Инициализация
+  выполняется под существующим Coordinator lock до recovery. Completion savepoints
+  откатывают ledger и queue CAS вместе, прежде чем poll/recovery сохранит failure.
+  Исторические ledger records не удаляются и не заменяются. Файловые evidence при
+  ошибках сохраняются, даже если SQL acceptance откатился.
+- Persisted completion должен быть JSON object с обязательными envelope fields и
+  v2 host metadata. Array/null/string, отсутствие metadata и non-object adapter
+  recovery не завершают инициализацию аварийно: attempt/task получают failure,
+  recovery_rejected записывает причину и evidence_preserved. Accepted artifact не
+  создаётся; исходные файлы остаются. Legacy Coordinator без gate сохраняет
+  прежнее успешное поведение, а повреждённые данные также отклоняет безопасно.
