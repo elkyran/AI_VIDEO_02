@@ -10,6 +10,7 @@ from .contracts import relative_path
 from .registry import Registry, StudioError, content_hash, workspace_path, canonical_json
 from .v2_acceptance import fingerprint
 from .v2_contracts import Artifact, Contract
+from .v2_ids import derived_id
 from .v2_sources import CanonBible, source_manifest, verify_sources
 from .v2_visuals import SegmentVisuals
 from .v2_production import OfflineProductionBridge
@@ -78,7 +79,7 @@ def _demo_inputs(coordinator,run_id,scene):
         'facts':[dict(fact_id='route',edition='v1',text='The fixture names a traveler and a guide.',
             status='owner_verified',citations=[dict(source_id='fixture',edition='v1',start_byte=0,end_byte=65)])]})
     mappings=[dict(scene_id=scene.scene_id,scene_version=scene.version,segment_id=s.segment_id,duration_ms=3000,
-        shots=[dict(shot_id='shot_'+s.segment_id,asset_id='fixture_image',source_out_ms=3000,
+        shots=[dict(shot_id=derived_id('shot',s.segment_id),asset_id='fixture_image',source_out_ms=3000,
             emotional_task='Synthetic metadata mapping, not an artistic choice.',
             reuse_reason='Single original fixture reused only to exercise integration.')]) for s in scene.narration_segments]
     return OfflineInputs(engine_relative=engine_relative,source_root_relative=source_relative,canon=bible,

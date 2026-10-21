@@ -5,6 +5,9 @@ import unittest
 
 import tests.test_v2_production as fixtures
 from app.registry import Registry, StudioError
+from app.multi_ai_v2 import RunCoordinator
+from app.v2_production import OfflineProductionBridge
+from app.v2_ids import derived_id
 from app.v2_contracts import Artifact
 from app.v2_sources import verify_sources
 
@@ -57,6 +60,30 @@ class BulkBoundaryTests(unittest.TestCase):
         data=json.loads(self.q.store.verify(Artifact.model_validate(proposal)).read_text(encoding='utf-8'))
         forged=self.q.store.put_json(self.run_id,data,simulated=False)
         with self.assertRaises(StudioError):self.bridge.enqueue_fixture_revision(forged.model_dump(),'live')
+
+    def test_maximum_revision_key_survives_restart_pending_and_completed_replay(self):
+        key='k'+'a'*94+'x'
+        proposal=self.bridge.propose_revision(self.candidate,'voice_002','Bounded revision')
+        conflict=self.bridge.propose_revision(self.candidate,'voice_002','Conflicting revision')
+        task=self.bridge.enqueue_fixture_revision(proposal,key)
+        self.assertEqual(task['task_id'],derived_id(self.run_id,'revision',key))
+        self.assertEqual(len(task['task_id']),96)
+        self.assertNotEqual(task['task_id'],derived_id(self.run_id,'revision',key[:-1]+'y'))
+        self.q.close()
+        self.q=RunCoordinator(self.root/'queue');self.addCleanup(self.q.close)
+        self.bridge=OfflineProductionBridge(self.q,self.engine)
+        self.assertEqual(task,self.bridge.enqueue_fixture_revision(proposal,key))
+        with self.assertRaises(StudioError) as caught:self.bridge.enqueue_fixture_revision(conflict,key)
+        self.assertEqual(caught.exception.code,'IDEMPOTENCY_CONFLICT')
+        self.q.advance(self.run_id,5)
+        replay=self.bridge.enqueue_fixture_revision(proposal,key)
+        self.assertEqual(replay['task_id'],task['task_id']);self.assertEqual(replay['status'],'COMPLETED')
+        with Registry(self.q.root) as r:
+            payload=json.loads(r.db.execute('SELECT payload FROM ai_tasks WHERE id=?',(task['task_id'],)).fetchone()[0])
+            contract=payload['context']['v2_contract']
+            self.assertEqual((contract['run_id'],contract['idempotency_key'],contract['task_id']),
+                             (self.run_id,key,task['task_id']))
+            self.assertEqual(r.db.execute('SELECT count(*) FROM ai_attempts WHERE task_id=?',(task['task_id'],)).fetchone()[0],1)
 
     def test_reference_canon_fixture_is_hash_pinned(self):
         root=Path(__file__).resolve().parents[1]/'examples/bulk_01'

@@ -8,6 +8,7 @@ from .operations import ProductionScript, ProductionBlock, ProductionVisualShot
 from .registry import Registry, StudioError, content_hash, workspace_path
 from .v2_acceptance import fingerprint
 from .v2_contracts import Artifact
+from .v2_ids import derived_id
 from .v2_visuals import verify_mapping, prepare_edit_plan
 from .production_bridge import ProductionBridge, _ReadOnlyRegistry
 from .v2_narration import narration_descriptors, narration_identity, voice_asset_ids
@@ -86,7 +87,7 @@ class OfflineProductionBridge:
             visuals, assets = verify_mapping(self.engine_root, run_id, scene, mappings)
             blocks, mapping = [], []
             for segment, visual in zip(scene.narration_segments, visuals):
-                block_id = scene.scene_id + '_' + segment.segment_id
+                block_id = derived_id(scene.scene_id, segment.segment_id)
                 blocks.append(ProductionBlock(id=block_id, text=segment.text, title=scene.scene_id,
                     visual_purpose=visual.shots[0].visual_purpose,
                     visual_shots=[ProductionVisualShot(asset_id=s.asset_id, motion='static',
@@ -95,6 +96,13 @@ class OfflineProductionBridge:
                     'segment_id': segment.segment_id, 'block_id': block_id, 'text_sha256': fingerprint({'text': segment.text}),
                     'fact_refs': scene.fact_refs, 'assumption_refs': scene.assumption_refs,
                     'source_dependencies': scene.dependencies, 'emotional_intent': scene.emotional_intent})
+                # Preserve old short-ID artifacts byte-for-byte. Record bounded
+                # plan/voice IDs beside their complete originals only when needed.
+                for field, prefix, original in (('edit_plan_id', 'edit', scene.scene_id),
+                                                ('voice_placement_id', 'audio', segment.segment_id)):
+                    identifier = derived_id(prefix, original)
+                    if identifier != prefix + '_' + original:
+                        mapping[-1][field] = identifier
             script = ProductionScript(project_id=run_id, title=scene.scene_id, scope='Offline accepted Scene candidate',
                                       segments=blocks, overlays_enabled=False)
             body = {'state': 'validated_not_registered', 'version': scene.version, 'binding': binding,
@@ -210,7 +218,7 @@ class OfflineProductionBridge:
             from pydantic import TypeAdapter
             from .contracts import Identifier
             TypeAdapter(Identifier).validate_python(key)
-            task_id=proposal['run_id']+'_revision_'+key
+            task_id=derived_id(proposal['run_id'],'revision',key)
             with Registry(self.root) as registry:
                 existing=registry.db.execute('SELECT * FROM ai_tasks WHERE id=?',(task_id,)).fetchone()
                 if existing:
@@ -218,6 +226,7 @@ class OfflineProductionBridge:
                     if (task['context'].get('fixture_result')!=value['scene']
                             or task['input_versions'].get('prior_candidate')!=value['prior_candidate']['sha256']
                             or task['context']['v2_contract']['capability']!='offline_revision'
+                            or task['context']['v2_contract']['idempotency_key']!=key
                             or task['project_id']!=proposal['run_id']):
                         raise StudioError('IDEMPOTENCY_CONFLICT','Revision key already binds different input')
                     if task['status']=='completed':

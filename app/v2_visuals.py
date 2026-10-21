@@ -7,6 +7,7 @@ from pydantic import Field, model_validator
 
 from .contracts import Identifier
 from .v2_contracts import Contract
+from .v2_ids import derived_id
 from .production_bridge import _ReadOnlyRegistry
 from .registry import StudioError
 from .editorial import EditPlan, Placement, Shot, SubtitleEvent
@@ -107,11 +108,11 @@ def prepare_edit_plan(root, project_id, scene, mappings, *, voice_version='not_s
                 if asset['duration_ms'] != mapping.duration_ms:
                     raise StudioError('SHOT_TIMING_INVALID', 'Measured voice duration differs from planned segment')
                 assets[asset['id']] = asset
-                voice.append(Placement(placement_id='audio_'+segment.segment_id, asset_id=asset['id'],
+                voice.append(Placement(placement_id=derived_id('audio',segment.segment_id), asset_id=asset['id'],
                     timeline_start_ms=start, timeline_end_ms=cursor, source_in_ms=0,
                     source_out_ms=mapping.duration_ms, track='voice', simulated=scene.simulated))
     profile = Profile.model_validate_json((Path(__file__).resolve().parents[1]/'config/production_profile.json').read_text(encoding='utf-8'))
-    plan = EditPlan(project_id=project_id, plan_id='edit_'+scene.scene_id, scene_id=scene.scene_id,
+    plan = EditPlan(project_id=project_id, plan_id=derived_id('edit',scene.scene_id), scene_id=scene.scene_id,
         version=scene.version, scene_version=scene.version, voice_version=voice_version, duration_ms=cursor,
         shot_placements=picture, voice_placements=voice, subtitle_events=subtitles, simulated=scene.simulated,
         width=profile.video.width, height=profile.video.height, fps=profile.video.fps,

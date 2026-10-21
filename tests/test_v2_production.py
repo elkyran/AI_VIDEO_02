@@ -4,13 +4,48 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from app.contracts import ProjectBrief
+from pydantic import TypeAdapter
+
+from app.contracts import Identifier, ProjectBrief
 from app.editorial import Scene, demo_result
 from app.multi_ai_v2 import RunCoordinator
 from app.registry import Registry, StudioError, content_hash
 from app.v2_acceptance import fingerprint
 from app.v2_production import OfflineProductionBridge
 from app.v2_contracts import Artifact
+from app.v2_ids import derived_id
+
+
+class BoundedIdentifierTests(unittest.TestCase):
+    def test_short_ids_and_exact_length_boundary_keep_legacy_values(self):
+        for parts in (('scene_001','voice_001'),('edit','scene_001'),('audio','voice_001'),
+                      ('run_one','revision','fix_one'),('s'*47,'v'*48)):
+            with self.subTest(parts=parts):
+                self.assertEqual(derived_id(*parts),'_'.join(parts))
+                TypeAdapter(Identifier).validate_python(derived_id(*parts))
+
+    def test_maximum_ids_keep_full_digest_and_distinguish_shared_prefixes_and_part_boundaries(self):
+        import hashlib
+        scene='s'+'a'*95
+        one='v'+'b'*94+'x';two=one[:-1]+'y'
+        cases=[(scene,one),(scene,two),('edit',scene),('audio',one),('audio',two),
+               ('r'*96,'revision',one),('r'*96,'revision',two),
+               ('a'*94+'_b','c'),('a'*94,'b_c')]
+        results=[]
+        for parts in cases:
+            with self.subTest(parts=parts):
+                identifier=derived_id(*parts)
+                self.assertEqual(len(identifier),96)
+                self.assertEqual(identifier,derived_id(*parts))
+                self.assertEqual(identifier[-64:],hashlib.sha256(
+                    json.dumps(parts,separators=(',',':')).encode('utf-8')).hexdigest())
+                TypeAdapter(Identifier).validate_python(identifier)
+                results.append(identifier)
+        self.assertEqual(len(results),len(set(results)))
+
+    def test_invalid_original_identifiers_are_not_hidden_by_hashing(self):
+        for parts in ((),('s'*97,'voice'),('scene','invalid/key'),('scene',7)):
+            with self.subTest(parts=parts),self.assertRaises(ValueError):derived_id(*parts)
 
 
 class ProductionCandidateTests(unittest.TestCase):

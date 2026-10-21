@@ -7,11 +7,14 @@ from unittest.mock import patch
 
 import tests.test_v2_production as fixtures
 from app.editorial import Review
+from app.multi_ai_v2 import RunCoordinator
 from app.registry import Registry, StudioError, content_hash
 from app.v2_acceptance import fingerprint
 from app.v2_contracts import Artifact, Task
 from app.v2_offline_qa import technical_qa, route_review, scene_graph, invalidation_plan
 from app.v2_narration import narration_descriptors
+from app.v2_ids import derived_id
+from app.v2_production import OfflineProductionBridge
 
 
 class OfflineQATests(unittest.TestCase):
@@ -34,10 +37,12 @@ class OfflineQATests(unittest.TestCase):
         self.assertEqual(routed['creative_qa'],'NOT_RUN')
         with self.assertRaises(StudioError):route_review(review,project_id=self.run_id,subject_id='other',subject_version=1,subject_hash='a'*64)
 
-    def add_scene(self, identifier):
+    def add_scene(self, identifier, segment_ids=None):
         scene,_=self.bridge.accepted_scene(self.run_id,self.task_id,1)
         raw=scene.model_dump();raw['scene_id']=identifier
-        task_id=self.run_id+'_'+identifier
+        if segment_ids:
+            for segment,segment_id in zip(raw['narration_segments'],segment_ids):segment['segment_id']=segment_id
+        task_id=derived_id(self.run_id,identifier)
         inputs={'fixture':fingerprint(raw)}
         contract=Task(task_id=task_id,run_id=self.run_id,scene_id=identifier,role='python',capability='scene_fixture',
             input_version=1,input_hashes=inputs,depends_on=[],assigned_worker='fake_python',provider_profile_id='simulation',
@@ -47,8 +52,54 @@ class OfflineQATests(unittest.TestCase):
             'v2_contract':contract.model_dump(),'fixture_result':raw}})
         self.q.advance(self.run_id,5)
         mapping=deepcopy(self.mapping)
-        for m in mapping:m['scene_id']=identifier
+        for m,segment in zip(mapping,raw['narration_segments']):
+            m['scene_id']=identifier;m['segment_id']=segment['segment_id']
         return self.bridge.candidate(self.run_id,task_id,1,mapping),mapping
+
+    def test_maximum_scene_and_segment_ids_preserve_mapping_voice_graph_and_restart_replay(self):
+        self.q.advance(self.run_id,30)
+        scene_id='s'+'a'*95
+        segment_ids=['v'+'b'*94+ending for ending in ('x','y')]
+        candidate,mapping=self.add_scene(scene_id,segment_ids)
+        value=self.bridge.read_candidate(candidate)
+        rows=value['scene_block_mapping']
+        self.assertEqual([r['scene_id'] for r in rows],[scene_id]*2)
+        self.assertEqual([r['segment_id'] for r in rows],segment_ids)
+        self.assertEqual([r['block_id'] for r in rows],[derived_id(scene_id,s) for s in segment_ids])
+        self.assertEqual([b['id'] for b in value['script']['segments']],[r['block_id'] for r in rows])
+        self.assertNotEqual(rows[0]['block_id'],rows[1]['block_id'])
+        recipe=narration_descriptors(value,self.engine)
+        voices={}
+        for index,segment_id in enumerate(segment_ids):
+            asset_id=f'bounded_voice_{index}'
+            path=self.engine/(asset_id+'.wav')
+            with wave.open(str(path),'wb') as wav:
+                wav.setnchannels(1);wav.setsampwidth(2);wav.setframerate(8000)
+                wav.writeframes(bytes([index+1,0])*12000)
+            with Registry(self.engine) as r:
+                r.register_asset(self.run_id,asset_id,path.name,kind='audio',rights='owned',duration_ms=1500,
+                    base_revision=r._project(self.run_id)['revision'],idempotency_key=asset_id)
+            voices[segment_id]={'asset_id':asset_id,'cache_key':recipe['segments'][index]['cache_key'],
+                                'simulated':True,'origin':'synthetic_fixture'}
+        prepared=self.bridge.prepare_mlt(candidate,voice_assets=voices)
+        receipt=self.bridge.read_mlt(prepared)
+        self.assertEqual(receipt['edit_plan']['plan_id'],derived_id('edit',scene_id))
+        self.assertEqual([r['edit_plan_id'] for r in rows],[receipt['edit_plan']['plan_id']]*2)
+        self.assertEqual([p['placement_id'] for p in receipt['edit_plan']['voice_placements']],
+                         [r['voice_placement_id'] for r in rows])
+        self.assertEqual(receipt['voice_assets'],voices)
+        before=scene_graph(self.bridge,[prepared])
+        self.assertEqual(sum(n.get('wav_sha256') is not None for n in before['nodes'].values()),2)
+        self.q.close()
+        self.q=RunCoordinator(self.root/'queue');self.addCleanup(self.q.close)
+        self.bridge=OfflineProductionBridge(self.q,self.engine)
+        self.assertEqual(candidate,self.bridge.candidate(self.run_id,value['binding']['task_id'],1,mapping))
+        self.assertEqual(prepared,self.bridge.prepare_mlt(candidate,voice_assets=voices))
+        self.assertEqual(receipt,self.bridge.read_mlt(prepared))
+        self.assertEqual(before,scene_graph(self.bridge,[prepared]))
+        self.assertEqual(technical_qa(self.bridge,prepared)['status'],'VERIFIED')
+        with Registry(self.q.root) as r:
+            self.assertEqual(r.db.execute("SELECT count(*) FROM ai_events WHERE kind='offline_mlt_prepared'").fetchone()[0],1)
 
     def test_revision_invalidates_only_scene_two_and_preserves_other_wave_files(self):
         self.q.advance(self.run_id,30)

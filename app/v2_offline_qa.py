@@ -6,6 +6,7 @@ from .editorial import Review
 from .operations import subtitle_timing_issues
 from .registry import StudioError
 from .v2_acceptance import fingerprint
+from .v2_ids import derived_id
 from .production_bridge import _ReadOnlyRegistry
 
 
@@ -58,13 +59,15 @@ def scene_graph(bridge, artifacts):
         if scene_key in nodes:raise StudioError('REVISION_CONFLICT','Only one current version per scene in a graph')
         nodes[scene_key]={'sha256':data['candidate']['sha256'],'depends_on':[],'scene_id':scene}
         voices=[]
+        voice_by_placement={derived_id('audio',segment_id):binding
+                            for segment_id,binding in data['voice_assets'].items()}
         for index,segment in enumerate(data['narration']['segments']):
             key=prefix+':voice:'+segment['block_id'];voices.append(key)
             wav_hash=None
             if data['voice_assets']:
-                segment_id=data['edit_plan']['voice_placements'][index]['placement_id'].removeprefix('audio_')
+                placement_id=data['edit_plan']['voice_placements'][index]['placement_id']
                 with _ReadOnlyRegistry(bridge.engine_root) as registry:
-                    wav_hash=registry.asset(artifact['run_id'],data['voice_assets'][segment_id]['asset_id'],verify=True)['sha256']
+                    wav_hash=registry.asset(artifact['run_id'],voice_by_placement[placement_id]['asset_id'],verify=True)['sha256']
             nodes[key]={'sha256':segment['cache_key'],'depends_on':[],'scene_id':scene,
                         'wav_sha256':wav_hash or (segment['cache_evidence'] or {}).get('sha256')}
         nodes[edit_key]={'sha256':fingerprint(data['edit_plan']),'depends_on':[scene_key,*voices],'scene_id':scene}
