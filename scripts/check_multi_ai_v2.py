@@ -47,15 +47,16 @@ def audit_export():
 
 
 def main(argv=None):
-    groups = {'v2': ['tests.test_multi_ai_v2', 'tests.test_multi_ai_v2_checker'],
+    groups = {'v2': ['tests.test_v2_system', 'tests.test_multi_ai_v2', 'tests.test_multi_ai_v2_checker'],
               **{k: GROUPS[k] for k in ['contracts','queue','adapters','mai05','panel','legacy']}}
     groups['contracts'] = [*groups['contracts'], 'tests.test_v2_sources', 'tests.test_v2_production',
         'tests.test_v2_visuals', 'tests.test_v2_engine_bridge', 'tests.test_v2_offline_qa',
         'tests.test_v2_release', 'tests.test_v2_offline', 'tests.test_v2_bulk_boundaries',
-        'tests.test_v2_local_pilot']
+        'tests.test_v2_local_pilot', 'tests.test_v2_system_delivery']
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/multi_ai_v2/evidence', help='Parent directory only; UTC+UUID child is created exclusively')
     parser.add_argument('--groups', nargs='+', choices=list(groups), default=list(groups))
+    parser.add_argument('--task-id', default='MULTI-AI-V2-CORE-FIX')
     args = parser.parse_args(argv)
     run = EvidenceRun(args.output, root=ROOT)
     result = {'status': 'failed'}
@@ -85,7 +86,7 @@ def main(argv=None):
             checks.append(check); run.record_command(command, code, elapsed_seconds=elapsed, test_count=count, skipped_count=skipped)
             print(json.dumps(check, ensure_ascii=False), flush=True)
         unchanged = source_binding(ROOT)['source_manifest_sha256'] == run.binding['source_manifest_sha256']
-        result = {**run.binding, 'task_id': 'MULTI-AI-V2-CORE-FIX', 'checked_at': run.checked_at,
+        result = {**run.binding, 'task_id': args.task_id, 'checked_at': run.checked_at,
                   'status': 'passed' if unchanged and all(c['status']=='passed' for c in checks) else 'failed',
                   'source_unchanged_during_checks': unchanged, 'checks': checks,
                   'test_count': sum(c['test_count'] or 0 for c in checks),

@@ -82,6 +82,8 @@ class ApprovedInputs(Contract):
             raise ValueError('Duplicate scene IDs')
         if len({m.asset_id for m in self.media}) != len(self.media):
             raise ValueError('Duplicate media IDs')
+        if len({(m.sha256, m.kind) for m in self.media}) != len(self.media):
+            raise ValueError('Identical media must share one explicit asset ID, matching the existing Registry')
         keys = [(m.scene_id, m.segment_id) for m in self.visuals]
         if len(set(keys)) != len(keys):
             raise ValueError('Duplicate visual mappings')
@@ -121,7 +123,7 @@ class HostRunConfig(Contract):
     profile_sha256: Sha256
     operations: list[Literal['synthesize', 'compile', 'render', 'qa', 'portable', 'deliver']]
     budget: Budget = Field(default_factory=Budget)
-    runtime: dict[str, str | int | float | bool | dict] = Field(default_factory=dict)
+    runtime: dict = Field(default_factory=dict)
     renderer: Literal['existing_mlt_libx264_crf20_fast_4threads'] = 'existing_mlt_libx264_crf20_fast_4threads'
     review_policy: Literal['owner_required'] = 'owner_required'
     drive: DriveConfig | None = None
@@ -140,6 +142,11 @@ class HostRunConfig(Contract):
             raise ValueError('Mixed run identity or simulation provenance')
         if len(set(self.operations)) != len(self.operations):
             raise ValueError('Duplicate operations')
+        allowed_runtime = {'tts_python', 'tts_model', 'melt_path', 'ffmpeg_path', 'ffprobe_path', 'tts_engine',
+            'tts_normalization_scope', 'pronunciation_lexicon', 'pronunciation_terms', 'video_encoder', 'render_threads',
+            *('tts_'+k for k in profile_spec()['voice']['settings'] if k != 'speaker_id')}
+        if set(self.runtime)-allowed_runtime:
+            raise ValueError('Runtime accepts only existing engine locators/settings; no credentials, shell or provider configuration')
         if (self.version == 1) != (self.parent_sha256 is None):
             raise ValueError('A revision needs its exact previous configuration hash')
         return self
@@ -209,7 +216,9 @@ def graph(config):
     nodes = []
     def add(stage, value, dependencies=(), scene=None, schema='note'):
         binding = {'stage': stage, 'value': value, 'dependencies': list(dependencies),
-                   'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id}
+                   'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id,
+                   'host_execution': fingerprint({'operations': config.operations, 'budget': config.budget.model_dump(),
+                                                   'runtime': config.runtime, 'renderer': config.renderer})}
         identifier = derived_id(config.run_id, stage, 'h'+fingerprint(binding))
         nodes.append({'task_id': identifier, **binding, 'scene_id': scene.scene_id if scene else None,
                       'version': scene.version if scene else 1, 'schema': schema})

@@ -1,5 +1,14 @@
 # Google Drive как хранилище
 
+SYSTEM-01: `app.v2_drive` реализует официальный Drive v3 resumable transport и
+host receipt с exact remote identity/size/SHA-256 либо отдельным MD5. Calling
+delivery stage использует ту же Coordinator queue/V2ResultGate. Есть offline
+tests interruption/auth/quota/conflict/checksum/replay; live upload не выполнялся.
+CLI ожидает защищённый host authorization resolver (WAITING_AUTH); ни login, ни
+credentials reader не добавлены. Актуальные ограничения и owner actions:
+[SYSTEM_RUNBOOK](SYSTEM_RUNBOOK.md), [SYSTEM_READINESS](SYSTEM_READINESS.md).
+Ниже сохранён исторический storage slice; local sync copy по-прежнему не cloud proof.
+
 GOOGLE_DRIVE_ROOT — явный корень смонтированной папки AI_VIDEO_02 в Drive.
 LOCAL_RUN_ROOT и LOCAL_CACHE_ROOT должны находиться на локальном диске вне
 синхронизации. Активный registry.sqlite никогда не копируется в Drive как рабочая БД.

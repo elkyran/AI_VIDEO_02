@@ -328,14 +328,14 @@ def verify_audio(engine_root, run_id, candidate, job_id):
             'profile_sha256': recipe['profile_sha256'], 'segments': verified, 'production_started': True}
 
 
-def verify_portable(folder):
+def verify_portable(folder, *, allowed_suffixes=None):
     folder = Path(folder).resolve()
     manifest = json.loads((folder/'manifest.json').read_text(encoding='utf-8'))
     if {p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file()} != set(manifest['files']) | {'manifest.json'}:
         raise StudioError('PORTABLE_INVALID', 'Unlisted files in portable package')
     for relative, meta in manifest['files'].items():
         path = workspace_path(folder, relative)
-        if path.suffix.lower() not in {'.mp4', '.mlt', '.json', '.srt', '.png', '.wav'}:
+        if path.suffix.lower() not in (allowed_suffixes or {'.mp4', '.mlt', '.json', '.srt', '.png', '.wav'}):
             raise StudioError('PORTABLE_INVALID', 'Forbidden file in portable package')
         if not path.is_file() or content_hash(path) != meta['sha256'] or path.stat().st_size != meta['bytes']:
             raise StudioError('PORTABLE_INVALID', 'Portable file hash/size mismatch')
@@ -416,4 +416,3 @@ class MeasuredEngine:
             'probe_log':str(probe),'decode_analysis_log':str(log),'speech_sync_scope':'timeline and decoded stream starts; phoneme alignment not measured',
             'audio_levels_dbfs':levels,'silence_detection_log':str(log),
             'editorial_review':'PENDING_OWNER','full_video_creative_qa':'NOT_RUN'}
-

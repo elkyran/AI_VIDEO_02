@@ -1,5 +1,13 @@
 # Возможности исполнителей MULTI-AI-V2
 
+SYSTEM-01: [актуальная readiness matrix](SYSTEM_READINESS.md) отделяет реализацию,
+offline transport tests, live verification и owner approval. `ProviderBridge`
+использует существующий adapter protocol и не устанавливает launcher/account
+manager. Story/Visual по-прежнему AGE-GATED / DISABLED, без замены через Codex/API.
+Drive v3 resumable transport реализован и протестирован с injected transport;
+host credential_ref resolver и cloud proof не проверены. Старые свидетельства
+ниже не переносятся автоматически на новый общий pipeline.
+
 Целевая схема: [архитектура владельца](MULTI_AI_V2_ARCHITECTURE.md).
 Наличие приложения, тарифа или бинарника не подтверждает live integration.
 Python Coordinator управляет задачами; официальные клиенты исполняют роли.

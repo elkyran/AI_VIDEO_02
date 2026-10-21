@@ -1,5 +1,14 @@
 # MULTI-AI-V2: целевая архитектура владельца
 
+SYSTEM-01 update: общий config-driven путь описан в [SYSTEM_RUNBOOK](SYSTEM_RUNBOOK.md)
+и [SYSTEM_READINESS](SYSTEM_READINESS.md). Он повторно использует Coordinator,
+V2ResultGate, JobManager и ProductionBridge; approved_input не является model
+research. Прежний fake19 и ограниченный PILOT-01 сохранены. Есть handlers реального
+движка, но в SYSTEM-01 новые TTS/render/episode не запускались. Live provider,
+unattended Drive host authorization и Windows runner остаются отдельными gates;
+`system_ready_for_autonomous_episode=false`. Историческая таблица ниже относится
+к своему срезу и не является текущим утверждением о live readiness.
+
 Единственная целевая схема задана PHASE A FINAL CI GATE. Это направление
 существующего проекта; схема не означает, что все соединения уже реализованы.
 

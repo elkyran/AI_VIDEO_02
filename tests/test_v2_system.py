@@ -225,7 +225,7 @@ class SystemTests(unittest.TestCase):
 
     def test_approved_scene_reaches_existing_candidate_but_denied_wav_never_enqueues(self):
         value=self.config.model_dump();value['mode']='approved_input';value['brief']['production_mode']='production'
-        value['runtime']={'test_only_runtime':True};value['operations']=[]
+        value['runtime']={'tts_python':'test_runtime_not_executed'};value['operations']=[]
         value['inputs']['canon']['simulated']=False
         for scene in value['inputs']['scenes']:
             scene['simulated']=False
@@ -249,6 +249,47 @@ class SystemTests(unittest.TestCase):
         self.assertFalse(root.exists())
         self.assertEqual(check('fake',root,write_probe=True)['status'],'SUCCEEDED')
         self.assertTrue(root.is_dir());self.assertEqual(list(root.iterdir()),[])
+
+    def test_owner_review_exact_hash_version_and_idempotency_without_model_claim(self):
+        from app.v2_ids import derived_id
+        from app.v2_contracts import Artifact
+        p=self.pipeline()
+        render_hash='1'*64
+        package={'rendered':{'sha256':render_hash},'qa':{'duration_seconds':1.0},'portable_manifest_sha256':'2'*64}
+        p.status=lambda:{'status':'READY_FOR_OWNER_REVIEW','results':package}
+        review=dict(project_id=p.run_id,review_id='owner_review',subject_type='render',
+            subject_id=derived_id('render','h'+render_hash),subject_version=1,subject_hash=render_hash,
+            render_id=derived_id('render','h'+render_hash),render_hash=render_hash,edit_plan_version=1,
+            evidence_mode='human_review',verdict='ready_for_review',
+            provided_coverage=[dict(start_ms=0,end_ms=1000,tracks=['video','audio'])],
+            reviewed_coverage=[dict(start_ms=0,end_ms=1000,tracks=['video','audio'])])
+        first=p.owner_review(review)
+        self.assertFalse(first['model_review']);self.assertEqual(p.owner_review(review),first)
+        bad={**review,'subject_version':2}
+        with self.assertRaises(StudioError):p.owner_review(bad)
+        changed={**review,'verdict':'needs_review'}
+        with self.assertRaises(StudioError):p.owner_review(changed)
+        with Registry(p.q.root) as r:self.assertEqual(r.db.execute("SELECT count(*) FROM ai_events WHERE kind='system_owner_review'").fetchone()[0],1)
+
+    def test_invalid_runtime_keys_and_old_scene_version_do_not_expand_authority(self):
+        value=self.config.model_dump();value['runtime']={'shell_command':'forbidden'}
+        with self.assertRaises(ValueError):HostRunConfig.model_validate(value)
+        p=self.pipeline();old=p.permit.sha256;p.close()
+        value=self.config.model_dump();value.update(version=2,parent_sha256=old)
+        value['inputs']['scenes'][0]['narration_segments'][0]['text']='Changed without version bump'
+        with self.assertRaises(StudioError):self.pipeline(HostRunConfig.model_validate(value))
+
+    @unittest.skipUnless(os.name=='nt','Windows-only path spelling check')
+    def test_windows_short_long_paths_pin_identical_host_inputs(self):
+        # Uses the same installed Win32 facility as the existing regression;
+        # no user name or RUNNER~1 spelling is assumed.
+        import ctypes
+        folder=self.folder/'long host input directory';folder.mkdir()
+        buffer=ctypes.create_unicode_buffer(32768)
+        result=ctypes.windll.kernel32.GetShortPathNameW(str(folder),buffer,len(buffer))
+        self.assertGreater(result,0)
+        self.assertEqual(no_links(buffer.value),folder.resolve())
+        self.assertEqual(isolated_root(buffer.value),isolated_root(folder))
 
 
 if __name__=='__main__':unittest.main()

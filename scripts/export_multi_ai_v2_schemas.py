@@ -6,13 +6,14 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.v2_contracts import Brief, Task, Result, Artifact, Review
 from app.editorial import Scene, EditPlan
+from app.v2_run_config import HostRunConfig
 
 
 def main():
     folder = Path(__file__).resolve().parents[1] / 'config/multi_ai_v2_schemas'
     folder.mkdir(exist_ok=True)
     for name, model in {'brief': Brief, 'task': Task, 'result': Result, 'artifact': Artifact,
-                        'scene': Scene, 'edit_plan': EditPlan, 'review': Review}.items():
+                        'scene': Scene, 'edit_plan': EditPlan, 'review': Review, 'host_run_config': HostRunConfig}.items():
         (folder / (name + '.schema.json')).write_text(json.dumps(model.model_json_schema(), ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 

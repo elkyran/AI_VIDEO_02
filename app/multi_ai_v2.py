@@ -369,7 +369,7 @@ class RunCoordinator:
 def main(argv=None):
     # SYSTEM-01 extends this entrypoint; historical commands keep their protocol.
     arguments = list(argv) if argv is not None else __import__('sys').argv[1:]
-    if '--config' in arguments:
+    if any(a == '--config' or a.startswith('--config=') for a in arguments):
         from .v2_pipeline import system_main
         return system_main(arguments)
     parser = argparse.ArgumentParser(description=__doc__)

@@ -27,6 +27,7 @@ from .v2_run_config import HostRunConfig, graph, isolated_root, no_links, plan, 
 
 REQUIRED_OPERATION = {'wav': 'synthesize', 'compile': 'compile', 'render': 'render',
                       'qa': 'qa', 'portable': 'portable'}
+PACKAGE_SUFFIXES = {'.mp4', '.mlt', '.json', '.srt', '.png', '.jpg', '.jpeg', '.wav'}
 
 
 def delivery_node(config):
@@ -139,9 +140,15 @@ def verify_output(root, value, *, simulated):
         path = no_links(workspace_path(root, relative))
         if not path.is_file() or path.stat().st_size != meta['size'] or content_hash(path) != meta['sha256']:
             raise StudioError('ARTIFACT_INVALID', 'Accepted stage bytes changed')
+    if not simulated and value.get('audio') and value.get('candidate'):
+        from .v2_storage import ArtifactStore
+        candidate = Artifact.model_validate(value['candidate'])
+        raw = json.loads(ArtifactStore(Path(root)/'coordinator').verify(candidate).read_text(encoding='utf-8'))
+        if verify_audio(Path(root)/'engine', candidate.run_id, raw, value['audio']['job_id']) != value['audio']:
+            raise StudioError('AUDIO_RECEIPT_INVALID', 'Accepted WAV job/request binding changed on replay')
     if value.get('portable'):
         folder = workspace_path(root, value['portable'])
-        manifest = verify_portable(folder)
+        manifest = verify_portable(folder, allowed_suffixes=PACKAGE_SUFFIXES)
         if content_hash(folder/'manifest.json') != value['portable_manifest_sha256'] or manifest['run_id'] != value['run_id']:
             raise StudioError('PORTABLE_INVALID', 'Portable identity or manifest changed')
     return value
@@ -164,11 +171,18 @@ class StageAdapter:
         identifier = task['task_id']
         authority, config, node = self.pipeline.permit.node(identifier)
         self.pipeline.permit.validate()
-        storage(self.pipeline.config)
+        storage(config)
         operation = REQUIRED_OPERATION.get(node['stage'])
         if config.mode != 'simulation' and operation and operation not in config.operations:
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'This host authorization excludes '+operation)
-        output = self.pipeline.execute(node)
+        current = self.pipeline.config
+        try:
+            # Pending reused nodes retain their original runtime and budgets;
+            # a new host policy produces new IDs, never expands the old permit.
+            self.pipeline.config = config
+            output = self.pipeline.execute(node)
+        finally:
+            self.pipeline.config = current
         payload = node['value'] if node['stage'] == 'scene' else {'schema_version': 1,
             'simulated': self.is_simulated, 'text': canonical_json(output)}
         artifact = self.pipeline.q.store.put_json(config.run_id, payload, simulated=self.is_simulated)
@@ -196,7 +210,9 @@ class StageAdapter:
             relative = 'failures/'+task['attempt_id']+'.json'
             write_generated_json(self.pipeline.root, relative, {'exception': type(exc).__name__,
                 'message': str(exc), 'traceback': traceback.format_exc(), 'truncated': False})
-            return [{'type': 'failed', 'failure': {'kind': 'invalid_input', 'code': getattr(exc, 'code', type(exc).__name__),
+            code = getattr(exc, 'code', type(exc).__name__)
+            kind = {'DRIVE_AUTH': 'authentication', 'DRIVE_QUOTA': 'quota_exhausted', 'LOCAL_JOB_TIMEOUT': 'interrupted'}.get(code, 'invalid_input')
+            return [{'type': 'failed', 'failure': {'kind': kind, 'code': code,
                 'message': str(exc)[:1000], 'log_ref': relative, 'truncated': len(str(exc)) > 1000, 'retryable': False}}]
 
     def cancel(self, handle):
@@ -494,11 +510,17 @@ class SystemPipeline(MeasuredEngine):
             if content_hash(src) != content_hash(dst):
                 raise StudioError('PORTABLE_INVALID', 'Partial package has conflicting bytes; preserved')
             files[name] = {'sha256': content_hash(dst), 'bytes': dst.stat().st_size}
+        qa = {k: v for k, v in value['qa'].items() if not k.endswith('_log')}
+        if not (folder/'qa.json').exists():
+            write_generated_json(folder, 'qa.json', qa)
+        if json.loads((folder/'qa.json').read_text(encoding='utf-8')) != qa:
+            raise StudioError('PORTABLE_INVALID', 'Existing portable QA differs')
+        files['qa.json'] = {'sha256': content_hash(folder/'qa.json'), 'bytes': (folder/'qa.json').stat().st_size}
         manifest = {'run_id': self.run_id, 'version': self.config.version, 'files': files,
             'uploaded': False, 'remote_sync': 'UNVERIFIED', 'editorial_review': 'PENDING_OWNER', 'full_video_creative_qa': 'NOT_RUN'}
         if not (folder/'manifest.json').exists():
             write_generated_json(folder, 'manifest.json', manifest)
-        if verify_portable(folder) != manifest:
+        if verify_portable(folder, allowed_suffixes=PACKAGE_SUFFIXES) != manifest:
             raise StudioError('PORTABLE_INVALID', 'Existing package manifest differs')
         return self.output_files({'portable': folder.relative_to(self.root).as_posix(), 'run_id': self.run_id,
             'portable_manifest_sha256': content_hash(folder/'manifest.json'), 'rendered': value['rendered'],
@@ -513,14 +535,28 @@ class SystemPipeline(MeasuredEngine):
         current = next((t for t in selected if t['status'] != 'completed'), None)
         ready = current is None
         blocker = current.get('error') if current else None
+        failures = {'authentication': 'WAITING_AUTH', 'quota_exhausted': 'WAITING_QUOTA', 'interrupted': 'FAILED_RETRYABLE'}
         status = ('SIMULATION_SUCCEEDED' if self.config.mode == 'simulation' else 'READY_FOR_OWNER_REVIEW') if ready else (
-            'FAILED_FINAL' if blocker else 'CANCELLED' if snapshot['control'] == 'stopped' else 'IN_PROGRESS')
+            failures.get(blocker.get('kind'), 'FAILED_FINAL') if blocker else 'CANCELLED' if snapshot['control'] == 'stopped' else 'IN_PROGRESS')
         package = self.accepted(self.nodes[-1]['task_id']) if ready else None
+        owner_review, delivery = None, None
+        if ready and self.config.mode != 'simulation':
+            with Registry(self.q.root) as registry:
+                for row in registry.db.execute("SELECT payload FROM ai_events WHERE kind='system_owner_review' AND task_id=? ORDER BY sequence DESC", (self.run_id,)):
+                    value = json.loads(row[0])
+                    if value['package_sha256'] == package['portable_manifest_sha256'] and value['version'] == self.config.version:
+                        owner_review = json.loads(self.q.store.verify(Artifact.model_validate(value['artifact'])).read_text(encoding='utf-8'))
+                        break
+                row = registry.db.execute('SELECT status FROM ai_tasks WHERE id=?', (delivery_node(self.config)['task_id'],)).fetchone()
+            if row and row['status'] == 'completed':
+                delivery = self.accepted(delivery_node(self.config)['task_id'])['delivery']
         return {'status': status, 'run_id': self.run_id, 'version': self.config.version, 'mode': self.config.mode,
+            'summary': f'{len(completed)}/{len(selected)} stages accepted; '+('technical path complete; owner review remains separate' if ready else 'resume the same inputs or inspect the recorded blocker'),
             'completed': len(completed), 'total': len(selected), 'current_stage': current['context']['v2_contract']['capability'] if current else None,
             'blocker': blocker, 'control': snapshot['control'], 'results': package, 'root': str(self.root),
             'safe_repeat': 'resume with the identical config, key and --execute-system', 'owner_action_required': ready and self.config.mode != 'simulation',
-            'creative_review': 'PENDING_OWNER', 'model_video_review': 'NOT_RUN', 'uploaded': False,
+            'creative_review': 'OWNER_REVIEW_RECORDED' if owner_review else 'PENDING_OWNER',
+            'owner_review': owner_review, 'model_video_review': 'NOT_RUN', 'uploaded': bool(delivery and delivery['uploaded']), 'delivery': delivery,
             'model_requests': 0, 'paid_api_requests': 0, 'production_started': self.production_started(),
             'system_ready_for_autonomous_episode': False, 'truncated': False}
 
@@ -554,16 +590,25 @@ class SystemPipeline(MeasuredEngine):
         expected = {'project_id': self.run_id, 'subject_type': 'render', 'subject_id': derived_id('render', 'h'+rendered['sha256']),
             'subject_version': self.config.version, 'subject_hash': rendered['sha256'],
             'render_id': derived_id('render', 'h'+rendered['sha256']), 'render_hash': rendered['sha256'], 'edit_plan_version': self.config.version,
-            'provided_evidence_mode': 'human_review', 'human_review_authorized': True}
+            'provided_evidence_mode': 'human_review', 'human_review_authorized': True,
+            'provided_coverage': [{'start_ms': 0, 'end_ms': int(package['qa']['duration_seconds']*1000),
+                                   'tracks': ['video', 'audio']}]}
         validate_review(review, expected)
         if review.simulated or review.evidence_mode != 'human_review':
             raise StudioError('REVIEW_INVALID', 'Owner input must explicitly declare canonical human_review')
         if len(review.issues) > 32:
             raise StudioError('REVIEW_INVALID', 'Targeted fix plan is bounded to 32 explicit issues')
         artifact = self.q.store.put_json(self.run_id, review.model_dump(), simulated=False)
+        binding = {'artifact': artifact.model_dump(), 'package_sha256': package['portable_manifest_sha256'],
+                   'version': self.config.version, 'review_id': review.review_id}
         with Registry(self.q.root) as registry, registry.transaction():
-            self.q.queue._event(registry, 'system_owner_review', {'artifact': artifact.model_dump(),
-                'package_sha256': package['portable_manifest_sha256'], 'version': self.config.version}, self.run_id)
+            previous = [json.loads(r[0]) for r in registry.db.execute(
+                "SELECT payload FROM ai_events WHERE kind='system_owner_review' AND task_id=?", (self.run_id,))]
+            matches = [v for v in previous if v.get('review_id') == review.review_id]
+            if matches and any(v != binding for v in matches):
+                raise StudioError('IDEMPOTENCY_CONFLICT', 'Review ID already binds another artifact or decision')
+            if not matches:
+                self.q.queue._event(registry, 'system_owner_review', binding, self.run_id)
         return {'status': 'OWNER_REVIEW_RECORDED', 'review': artifact.model_dump(), 'model_review': False,
             'targeted_fix_plan': [{'issue_id': i.issue_id, 'location': i.location, 'suggested_change': i.suggested_change}
                                   for i in review.issues if i.status == 'open'],
@@ -633,7 +678,7 @@ def system_main(argv):
                 result = pipeline.status()
         print(json.dumps(sanitize(result), ensure_ascii=False, allow_nan=False))
         return {'PLANNED': 0, 'SIMULATION_SUCCEEDED': 0, 'READY_FOR_OWNER_REVIEW': 0, 'OWNER_REVIEW_RECORDED': 0,
-            'UPLOADED_VERIFIED': 0, 'IN_PROGRESS': 2, 'WAITING_AUTH': 3, 'BLOCKED_UNSUPPORTED': 5,
+            'UPLOADED_VERIFIED': 0, 'IN_PROGRESS': 2, 'WAITING_AUTH': 3, 'WAITING_QUOTA': 4, 'BLOCKED_UNSUPPORTED': 5, 'FAILED_RETRYABLE': 6,
             'FAILED_FINAL': 7, 'CANCELLED': 10}.get(result['status'], 9)
     except (ValueError, OSError, StudioError, KeyError) as exc:
         code = getattr(exc, 'code', 'ERROR')

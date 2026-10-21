@@ -190,13 +190,16 @@ def deliver_package(pipeline, package, transport):
         return prior
     receipts = []
     deadline = time.monotonic()+config.budget.seconds
-    requests = 0
+    spent = read('system_drive_budget', key) or {'requests': 0}
+    requests = spent['requests']
     def call(method, *args, **kwargs):
         nonlocal requests
         for attempt in range(config.budget.attempts):
             if requests >= config.budget.external_requests or time.monotonic() > deadline:
                 raise DriveError('request_budget')
             requests += 1
+            # Reserve before transport execution, including failed/restarted calls.
+            save('system_drive_budget', key, {'requests': requests})
             try:
                 return getattr(transport, method)(*args, **kwargs)
             except DriveError as exc:
