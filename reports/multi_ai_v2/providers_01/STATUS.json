@@ -1,0 +1,19 @@
+{
+  "operation_key": "MULTI-AI-V2-PROVIDERS-01",
+  "status": "PROVIDERS_01_OFFLINE_WAITING_FOR_INDEPENDENT_REVIEW",
+  "result": "DUAL_WORKER_OFFLINE_READY_LIVE_BLOCKED_ELIGIBILITY",
+  "initial_head": "34859cc0bf94c3949f92beea1dbaaabe2eb5ad1c",
+  "final_code_head": "314a920057b6fec0c0e619f5c1b5801f4482b42d",
+  "tests": {"total": 541, "passed": 540, "existing_skipped": 1, "failed": 0, "new_tests": 30},
+  "evidence_manifest_sha256": "f606529753f26b06a072148e12c8ec56aae5c51db61ccf246dddbf28087f8468",
+  "source_manifest_sha256": "7f1c90246a39837251cb004253a91a30b9f78b523a165ee346000b45e1125064",
+  "model_requests": 0,
+  "paid_api_requests": 0,
+  "production_started": false,
+  "accounts_connected": 0,
+  "live_story_verified": false,
+  "live_visual_verified": false,
+  "eligibility": "BLOCKED",
+  "system_ready_for_autonomous_episode": false,
+  "blockers": ["NEEDS_CHATGPT_CHANGE_CI_POLICY_AND_NINE_SCHEMAS", "NEEDS_ARCHITECT_REVIEW_LIVE_ROLE_ACCOUNT_ROUTING", "BLOCKED_ELIGIBILITY", "LIVE_AUTH_QUOTA_MEDIA_UNVERIFIED", "INDEPENDENT_REVIEW_PENDING"]
+}
