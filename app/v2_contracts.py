@@ -21,6 +21,7 @@ class Brief(Contract):
     production_mode: Literal['fake', 'production'] = 'fake'
     auto_fix_cycles: int = Field(default=1, ge=0, le=1)
     output_profile: Identifier = 'ruslan-local-narration'
+    additional_requirements: str | None = Field(default=None, max_length=2000)
 
 
 class Task(Contract):

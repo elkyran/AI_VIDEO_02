@@ -37,7 +37,7 @@ def prepare_release(bridge, mlt_artifact, *, additional_artifacts=()):
                 prior=json.loads(row[0])
                 if prior['mlt']==mlt_artifact and prior['additional']==list(additional_artifacts):
                     verify_release(coordinator,prior['artifact'])
-                    return prior['artifact']
+                    return Artifact.model_validate(prior['artifact']).model_dump()
         version=data['edit_plan']['scene_version'];run_id=mlt_artifact['run_id']
         for category in CATEGORIES:
             workspace_path(coordinator.root,f'runs/{run_id}/{category}',for_write=True).mkdir(parents=True,exist_ok=True)

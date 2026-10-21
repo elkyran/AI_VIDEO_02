@@ -182,6 +182,22 @@ class V2ResultGate:
             artifacts.extend(accepted['artifacts'])
             accepted_state[dependency] = accepted['acceptance']
             payloads[dependency] = accepted['payload']
+        if task['context'].get('v2_contract',{}).get('capability')=='offline_revision':
+            # Explicitly versioned offline revision. Validate the prior accepted
+            # Scene without treating its OLD version as the requested NEW output version.
+            contract=Task.model_validate(task['context']['v2_contract'])
+            candidate=Artifact.model_validate(task['context']['revision_candidate'])
+            prior=json.loads(self.store.verify(candidate).read_text(encoding='utf-8'))
+            if (len(payloads)!=1 or not candidate.simulated or candidate.run_id!=contract.run_id
+                    or contract.input_hashes.get('prior_candidate')!=candidate.sha256
+                    or prior['binding']['task_id'] not in payloads
+                    or prior['binding']['accepted']!=accepted_state[prior['binding']['task_id']]
+                    or contract.input_hashes.get('prior_result')!=prior['binding']['accepted']['result_sha256']
+                    or prior['version']+1!=contract.input_version
+                    or not prior['simulated']):
+                raise StudioError('STALE_INPUTS','Revision needs the exact prior candidate and accepted Scene')
+            return {'dependency_results':{},'revision_dependencies':payloads,
+                    'input_artifacts':artifacts,'accepted_state':accepted_state}
         return {'dependency_results': payloads, 'input_artifacts': artifacts, 'accepted_state': accepted_state}
 
     def prepare_context(self, registry, task, attempt_id):

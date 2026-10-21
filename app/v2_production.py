@@ -14,10 +14,11 @@ from .v2_narration import narration_descriptors, narration_identity, voice_asset
 
 
 class OfflineProductionBridge:
-    def __init__(self, coordinator, engine_root):
+    def __init__(self, coordinator, engine_root, *, source_bundle=None):
         self.coordinator = coordinator
         self.root = coordinator.root
         self.engine_root = engine_root
+        self.source_bundle = source_bundle
 
     def accepted_scene(self, run_id, task_id, scene_version):
         """Revalidate all ancestor completions; a cached or arbitrary Scene is insufficient."""
@@ -45,6 +46,8 @@ class OfflineProductionBridge:
             scene = Scene.model_validate(accepted['payload'])
             if scene.project_id != run_id or scene.version != scene_version:
                 raise StudioError('STALE_INPUTS', 'Scene project/version differs from the requested binding')
+            if any(s.simulated is not scene.simulated for s in scene.narration_segments):
+                raise StudioError('ARTIFACT_INVALID','Narration segment provenance differs from its Scene')
             current = registry.db.execute('SELECT * FROM ai_scenes WHERE project_id=? AND scene_id=? ORDER BY version DESC LIMIT 1',
                                           (run_id,scene.scene_id)).fetchone()
             if (not current or current['version'] != scene.version or current['sha256'] != fingerprint(scene.model_dump())
@@ -66,6 +69,20 @@ class OfflineProductionBridge:
     def candidate(self, run_id, task_id, scene_version, mappings):
         with self.coordinator.queue._lock:
             scene, binding = self.accepted_scene(run_id, task_id, scene_version)
+            source_evidence=None
+            if self.source_bundle is not None:
+                from .v2_sources import CanonBible, verify_sources
+                bible=CanonBible.model_validate(self.source_bundle['canon'])
+                if bible.simulated and not scene.simulated:
+                    raise StudioError('ARTIFACT_INVALID','Simulated source research cannot establish a real Scene')
+                source_evidence=verify_sources(self.source_bundle['root'],bible,self.source_bundle['manifest_sha256'])
+                source_evidence['canon_sha256']=fingerprint(bible.model_dump())
+                facts={f'{f.edition}:{f.fact_id}' for f in bible.facts}
+                sources={f'{s.edition}:{s.source_id}':s.sha256 for s in bible.sources}
+                if any(ref not in facts for ref in scene.fact_refs) or any(sources.get(k)!=v for k,v in scene.dependencies.items()):
+                    raise StudioError('SOURCE_REQUIRED','Scene refers to missing or changed source evidence')
+            elif scene.fact_refs or scene.dependencies:
+                raise StudioError('SOURCE_REQUIRED','Factual Scene dependencies require a pinned source bundle')
             visuals, assets = verify_mapping(self.engine_root, run_id, scene, mappings)
             blocks, mapping = [], []
             for segment, visual in zip(scene.narration_segments, visuals):
@@ -84,7 +101,7 @@ class OfflineProductionBridge:
                     'script': script.model_dump(), 'scene_block_mapping': mapping,
                     'visual_mapping': [v.model_dump() for v in visuals],
                     'visual_assets': [assets[key] for key in sorted(assets)], 'simulated': scene.simulated,
-                    'production_started': False, 'creative_review': 'NOT_RUN'}
+                    'source_evidence':source_evidence,'production_started': False, 'creative_review': 'NOT_RUN'}
             return self.coordinator.store.put_json(run_id, {'content_sha256': fingerprint(body), **body},
                                                     simulated=scene.simulated).model_dump()
 
@@ -186,6 +203,10 @@ class OfflineProductionBridge:
         from .v2_contracts import Task
         with self.coordinator.queue._lock:
             value=json.loads(self.coordinator.store.verify(Artifact.model_validate(proposal)).read_text(encoding='utf-8'))
+            proposed_scene=Scene.model_validate(value['scene'])
+            if (proposal['simulated'] is not True or value['simulated'] is not True or not proposed_scene.simulated
+                    or not all(getattr(a,'is_simulated',False) for a in self.coordinator.queue.adapters.values())):
+                raise StudioError('PRODUCTION_DISABLED','Revision replay also requires simulation provenance')
             from pydantic import TypeAdapter
             from .contracts import Identifier
             TypeAdapter(Identifier).validate_python(key)
@@ -195,8 +216,12 @@ class OfflineProductionBridge:
                 if existing:
                     task=self.coordinator.queue._task(existing)
                     if (task['context'].get('fixture_result')!=value['scene']
-                            or task['input_versions']!={'prior_candidate':value['prior_candidate']['sha256']}):
+                            or task['input_versions'].get('prior_candidate')!=value['prior_candidate']['sha256']
+                            or task['context']['v2_contract']['capability']!='offline_revision'
+                            or task['project_id']!=proposal['run_id']):
                         raise StudioError('IDEMPOTENCY_CONFLICT','Revision key already binds different input')
+                    if task['status']=='completed':
+                        self.accepted_scene(proposal['run_id'],task_id,proposed_scene.version)
                     return {'task_id':task_id,'status':task['status'].upper(),'simulated':True,'production_started':False}
             prior=self.read_candidate(value['prior_candidate'])
             scene=Scene.model_validate(value['scene'])
@@ -210,16 +235,19 @@ class OfflineProductionBridge:
                     (scene.project_id,scene.scene_id)).fetchone()
                 if current['pinned']:
                     raise StudioError('PINNED_CONFLICT','Pinned/manual scene needs separate owner approval')
-            inputs={'prior_candidate':value['prior_candidate']['sha256']}
+            inputs={'prior_candidate':value['prior_candidate']['sha256'],
+                    'prior_result':prior['binding']['accepted']['result_sha256']}
+            dependencies=[prior['binding']['task_id']]
             contract=Task(task_id=task_id,run_id=scene.project_id,scene_id=scene.scene_id,role='python',
-                capability='offline_revision',input_version=scene.version,input_hashes=inputs,depends_on=[],
+                capability='offline_revision',input_version=scene.version,input_hashes=inputs,depends_on=dependencies,
                 assigned_worker='fake_python',provider_profile_id='simulation',expected_output_schema='scene',idempotency_key=key)
             # A revision is a new version, not an editorial check of the old version.
             # The pinned prior hash is host-authored; old Scene payload is not a worker instruction.
             self.coordinator.queue.enqueue({'task_id':task_id,'project_id':scene.project_id,'role':'director',
                 'expected_output':'scene','input_versions':inputs,'context':{'project_id':scene.project_id,
                 'scene_id':scene.scene_id,'scene_version':scene.version,'v2_contract':contract.model_dump(),
-                'fixture_result':scene.model_dump()},'depends_on':[]})
+                'revision_candidate':value['prior_candidate'],
+                'fixture_result':scene.model_dump()},'depends_on':dependencies})
             return {'task_id':task_id,'status':'PENDING','simulated':True,'production_started':False}
 
     def verify_compiled(self, compiled):

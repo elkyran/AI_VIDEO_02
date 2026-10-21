@@ -54,6 +54,19 @@
       "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
       "title": "Output Profile",
       "type": "string"
+    },
+    "additional_requirements": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Additional Requirements"
     }
   },
   "required": [

@@ -33,9 +33,9 @@ STAGES = (
     ('ISSUE_ROUTING', 'python'), ('TARGETED_FIX', 'codex'), ('FINAL_RENDER', 'python'),
     ('FINAL_QA', 'python'), ('PACKAGE', 'python'), ('DRIVE_UPLOAD', 'python'))
 SCHEMAS = {'SCENE_SCRIPT': 'scene', 'EDIT_PLAN': 'edit_plan', 'EDITORIAL_QA': 'review'}
-BLOCKERS = ['gemini_story: installed authenticated agy CLI and JSON smoke required',
-            'gemini_visual: independent identity, billing, media probes required',
-            'production_import: approved Scene-to-existing-script bridge required',
+BLOCKERS = ['Antigravity: AGE-GATED / DISABLED; no login, smoke or auth migration authorized',
+            'gemini_visual: logical future Antigravity role; verified media delivery required',
+            'production_import: offline bridge exists; live script registration/submission not authorized',
             'runner: registration and live workflow_dispatch required',
             'drive: configured destination and cloud delivery verification required']
 TERMINAL = frozenset({'SUCCEEDED', 'SIMULATION_SUCCEEDED', 'FAILED_FINAL', 'STALE',
@@ -150,6 +150,8 @@ class RunCoordinator:
              expected_output_schema='note', idempotency_key=key)
         run_id = 'run_' + hashlib.sha256(key.encode()).hexdigest()[:24]
         clean = sanitize(brief.model_dump())
+        if clean.get('additional_requirements') is None:
+            clean.pop('additional_requirements',None)  # Preserve hashes/idempotency of historical briefs.
         request_hash = digest(clean)
         with Registry(self.root) as registry, registry.transaction():
             active = self._refresh_active(registry)
@@ -357,6 +359,10 @@ def main(argv=None):
     parser.add_argument('--root', default=os.environ.get('LOCAL_RUN_ROOT'))
     subs = parser.add_subparsers(dest='command', required=True)
     create = subs.add_parser('create'); create.add_argument('--brief', required=True); create.add_argument('--key', required=True)
+    prepare = subs.add_parser('prepare'); prepare.add_argument('--brief',required=True); prepare.add_argument('--key',required=True)
+    prepare.add_argument('--inputs'); prepare.add_argument('--fixture-demo',action='store_true')
+    for command in ('resume','inspect-artifacts','report'):
+        sub=subs.add_parser(command);sub.add_argument('--run-id',required=True)
     for command in ('status', 'advance', 'pause', 'stop', 'manifest'):
         sub = subs.add_parser(command); sub.add_argument('--run-id', required=True)
         if command == 'advance': sub.add_argument('--ticks', type=int, default=30)
@@ -366,9 +372,20 @@ def main(argv=None):
         with RunCoordinator(args.root) as coordinator:
             if args.command == 'create':
                 result = coordinator.create(json.loads(Path(args.brief).read_text(encoding='utf-8-sig')), args.key)
+            elif args.command in {'prepare','resume','inspect-artifacts','report'}:
+                from .v2_offline import prepare_offline, resume_offline, inspect_offline
+                if args.command=='prepare':
+                    brief=json.loads(Path(args.brief).read_text(encoding='utf-8-sig'))
+                    inputs=json.loads(Path(args.inputs).read_text(encoding='utf-8-sig')) if args.inputs else None
+                    result=prepare_offline(coordinator,brief,args.key,inputs=inputs,fixture_demo=args.fixture_demo)
+                elif args.command=='resume':result=resume_offline(coordinator,args.run_id)
+                else:result=inspect_offline(coordinator,args.run_id)
             else:
                 result = coordinator.status(args.run_id)
-                if args.command == 'advance': result = coordinator.advance(args.run_id, args.ticks)
+                if args.command == 'status':
+                    from .v2_offline import inspect_offline
+                    result=inspect_offline(coordinator,args.run_id)
+                elif args.command == 'advance': result = coordinator.advance(args.run_id, args.ticks)
                 elif args.command in {'pause', 'stop'}:
                     result = getattr(coordinator, args.command)(args.run_id)
                 elif args.command == 'manifest': result = {**result, 'artifact': coordinator.manifest(args.run_id)}
