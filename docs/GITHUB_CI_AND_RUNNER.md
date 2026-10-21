@@ -26,6 +26,9 @@ CI проверяет:
 - отсутствие model requests, paid API и production operations.
 
 Evidence загружается отдельным GitHub Artifact даже при красном regression run.
+Отсутствие evidence directory, непрошедший `manifest.status`/`checks.status`
+или отсутствие загружаемых evidence-файлов теперь являются ошибками CI,
+а не предупреждением. Наличие `passed` проверяется отдельно от exit code checker.
 `upload-artifact` закреплён полным commit SHA; срок хранения — 14 дней. Полные
 логи, `checks.json` и `manifest.json` сохраняются вне Git-репозитория, поэтому
 проверка не делает checkout dirty. Job Summary показывает проверенный commit/tree,
@@ -105,10 +108,16 @@ Codex не редактирует эти файлы. ChatGPT не редакти
 9. Первый self-hosted запуск — только fake.
 10. Live providers и production включаются отдельными пакетами.
 
-## 6. Текущие подтверждённые CI-находки
+## 6. Исторические CI-находки и текущий gate
 
-Clean merge-state CI после Core Fix Pack подтвердил, что все 28 новых v2 tests
-проходят. Merge блокируют четыре существующих Windows-portability regression:
+На предыдущем Core Fix Pack четыре Windows-portability regression блокировали merge.
+Review Fix Pack 2 исправил их, и GitHub-hosted PR run `39460359638` прошёл
+на temporary merge `370ff860960dce96e632a3f2d010760fdb84bda4`.
+Это доказательство только Fix Pack 2; текущий Fix Pack 3 на feature HEAD
+`c4e69d0556169cdc394c97b5f75560d00947df61` ещё требует нового
+merge-state CI и независимой проверки до любого merge.
+
+Исторические Windows regressions:
 
 1. `tests/test_production_bridge.py` сравнивает короткий `RUNNER~1` и длинный
    `runneradmin` путь как разные значения mock-вызова.
@@ -118,10 +127,12 @@ Clean merge-state CI после Core Fix Pack подтвердил, что вс�
 4. Mock worker в `tests/test_speech_review.py` записывает исходный DLL path, тогда
    как настоящий `transcribe_audio.validate_runtime_options()` сохраняет resolved path.
 
-Исправления принадлежат Codex. Для первых трёх сравнений нужно использовать
-канонические файловые пути, сохраняя assertions. Speech-review fixture должен
-имитировать настоящий worker и записывать нормализованный execution object;
-production cache validation ослаблять нельзя.
+Исправления выполнены Codex в Review Fix Pack 2 и подтверждены предыдущим
+merge-state CI. Не возвращать эти регрессии и не ослаблять assertions.
+
+Изменение base branch PR само по себе не гарантирует новый PR-run: при каждом
+следующем integration gate требуется новый фактический temporary merge commit,
+зелёный GitHub-hosted CI и проверенная immutable evidence на exact merge SHA.
 
 ## 7. Реакция на ошибки
 

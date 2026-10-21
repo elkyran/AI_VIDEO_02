@@ -37,19 +37,14 @@ ChatGPT владеет только следующими файлами в эт�
 Codex владеет функциональными Python-границами Multi-AI v2, связанными тестами и
 документацией, кроме файлов дорожки A.
 
-Review Fix Pack 2 отправлен в `feature/multi-ai-coordinator-v2`; ожидаемый HEAD:
-`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`.
+Review Fix Pack 2 (`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`) уже
+прошёл независимый GitHub-hosted Windows CI. После него опубликован Fix Pack 3
+на feature HEAD `c4e69d0556169cdc394c97b5f75560d00947df61`.
+Это текущая проверяемая база, а не разрешение merge.
 
-Он включает:
-
-1. Исправление четырёх Windows portability regressions без ослабления assertions.
-2. Trusted Result acceptance с проверкой task/run/input/schema/provenance/artifact/CAS.
-3. Immutable, expiring и revocable TrustedVideoProbe с host-owned receipt.
-4. Единые exit codes для remote dispatcher.
-5. Обновлённый `docs/VIDEO_REVIEW_PROTOCOL.md`.
-
-До результата merge-state CI Codex не начинает новый пакет и не изменяет файлы
-дорожки A.
+По новому поручению владельца Codex может выполнять только ограниченные
+адресные исправления из отдельного точного промпта с проверкой exact HEAD.
+Он не изменяет файлы дорожки A. Production, providers, runner и merge запрещены.
 
 ## Правила синхронизации
 
@@ -66,15 +61,16 @@ Review Fix Pack 2 отправлен в `feature/multi-ai-coordinator-v2`; ож�
 
 ## Текущий review gate
 
-Review Fix Pack 2 опубликован пятью последовательными коммитами поверх
-`89cbc7ef3b9c35de34b8c99c9ea1ba353630ee78`. Draft PR №1 должен проверить новый
-временный merge commit с базой `68c1d2a3953bdfabd509e71ec004d1cb50cafc30`.
+Draft PR №1 ранее проверил temporary merge
+`370ff860960dce96e632a3f2d010760fdb84bda4`, который содержит Fix Pack 2,
+но не Fix Pack 3. До нового запуска требуется обновлённый temporary merge
+с актуальным feature HEAD и ChatGPT lane HEAD, затем clean CI evidence на этот SHA.
 
 Пока этот merge-state CI не завершён успешно:
 
 - PR остаётся draft;
 - merge запрещён;
-- новый функциональный пакет Codex не начинается;
+- новый этап live-подключения, production или runner не начинается;
 - provider, runner и production остаются выключенными.
 
 ## Текущие запреты

@@ -140,6 +140,8 @@ def validate_ci_workflow() -> None:
     upload_options = upload.get("with", {})
     require(upload_options.get("retention-days") == "14",
             "CI evidence retention must stay bounded at 14 days")
+    require(upload_options.get("if-no-files-found") == "error",
+            "Missing CI evidence must fail the job, not produce a warning")
 
     checker = named_step(steps, "Run clean revision-bound core checker")
     checker_text = str(checker.get("run", ""))
@@ -149,8 +151,14 @@ def validate_ci_workflow() -> None:
     envelope = named_step(steps, "Verify immutable evidence envelope")
     require(envelope.get("if") == "${{ always() }}", "Evidence envelope must be checked after pass or failure")
     envelope_text = str(envelope.get("run", ""))
+    require("throw 'Core checker did not create an evidence directory'" in envelope_text,
+            "Missing evidence root must fail closed")
+    require("Write-Warning 'Core checker did not create an evidence directory'" not in envelope_text,
+            "Missing evidence cannot be only a warning")
     for required in ("git_tree_sha", "Get-FileHash", "source_unchanged_during_checks",
-                     "model_requests", "paid_api_requests", "production_started"):
+                     "model_requests", "paid_api_requests", "production_started",
+                     "$value.status -ne 'passed'", "$checks.status -ne 'passed'",
+                     "$checks.test_count"):
         require(required in envelope_text, f"Evidence envelope check is missing {required}")
 
     clean = named_step(steps, "Verify clean, whitespace-safe checkout")

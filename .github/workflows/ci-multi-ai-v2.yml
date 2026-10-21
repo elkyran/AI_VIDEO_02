@@ -110,8 +110,7 @@ jobs:
           CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
         run: |
           if (-not (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
-            Write-Warning 'Core checker did not create an evidence directory'
-            exit 0
+            throw 'Core checker did not create an evidence directory'
           }
           $manifests = @(Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter manifest.json)
           if ($manifests.Count -ne 1) {
@@ -120,6 +119,7 @@ jobs:
           $manifest = $manifests[0]
           $value = Get-Content -LiteralPath $manifest.FullName -Raw | ConvertFrom-Json
 
+          if ($value.status -ne 'passed') { throw 'Evidence manifest did not report passed' }
           if ($value.dirty -ne $false) { throw 'Published CI evidence must have dirty=false' }
           if ($value.git_commit_sha -ne $env:GITHUB_SHA) {
             throw "Evidence commit $($value.git_commit_sha) does not match GITHUB_SHA $env:GITHUB_SHA"
@@ -154,6 +154,8 @@ jobs:
             throw "Expected exactly one checks.json, found $($checksFiles.Count)"
           }
           $checks = Get-Content -LiteralPath $checksFiles[0].FullName -Raw | ConvertFrom-Json
+          if ($checks.status -ne 'passed') { throw 'Canonical checks did not report passed' }
+          if ([int]$checks.test_count -le 0) { throw 'Canonical checks must record tests' }
           if ($checks.source_unchanged_during_checks -ne $true) {
             throw 'Source changed while regression checks were running'
           }
@@ -182,7 +184,7 @@ jobs:
         with:
           name: multi-ai-v2-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/multi-ai-v2-evidence
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
 
       - name: Verify clean, whitespace-safe checkout
