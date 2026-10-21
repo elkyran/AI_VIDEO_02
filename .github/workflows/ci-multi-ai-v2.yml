@@ -177,15 +177,15 @@ jobs:
             if ($check.status -ne 'passed' -or [int]$check.exit_code -ne 0) {
               throw "Required checker group failed: $($check.group)"
             }
-            $expectedTimeout = if ($check.group -eq 'v2') { 420 } else { 180 }
+            $expectedTimeout = if ($check.group -in @('v2', 'contracts')) { 420 } else { 180 }
             if ([int]$check.timeout_seconds -ne $expectedTimeout) {
               throw "Unexpected bounded timeout for group $($check.group)"
             }
             $testsRecorded += [int]$check.test_count
             $skipsRecorded += [int]$check.skipped_count
           }
-          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 455) {
-            throw "Test count mismatch or regression below 455: $testsRecorded"
+          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 541) {
+            throw "Test count mismatch or regression below 541: $testsRecorded"
           }
           # Windows can legitimately lack an 8.3 short-path alias. In that case
           # one additional test skips, but its exact identity must be in the log.
