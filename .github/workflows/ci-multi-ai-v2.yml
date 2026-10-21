@@ -184,11 +184,20 @@ jobs:
             $testsRecorded += [int]$check.test_count
             $skipsRecorded += [int]$check.skipped_count
           }
-          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 449) {
-            throw "Test count mismatch or regression below 449: $testsRecorded"
+          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 455) {
+            throw "Test count mismatch or regression below 455: $testsRecorded"
           }
-          if ([int]$checks.skipped_count -ne $skipsRecorded -or $skipsRecorded -gt 2) {
+          # Windows can legitimately lack an 8.3 short-path alias. In that case
+          # one additional test skips, but its exact identity must be in the log.
+          if ([int]$checks.skipped_count -ne $skipsRecorded -or $skipsRecorded -gt 3) {
             throw "Unexpected skipped tests: $skipsRecorded"
+          }
+          if ($skipsRecorded -eq 3) {
+            $contractsLog = Join-Path $manifest.DirectoryName 'contracts.log'
+            $contractsText = Get-Content -LiteralPath $contractsLog -Raw
+            if ($contractsText -notmatch 'test_cache_prediction_matches_windows_short_and_long_path_aliases.*skipped') {
+              throw 'Third skip is not the expected Windows short-path alias limitation'
+            }
           }
 
           $manifestHash = (Get-FileHash -LiteralPath $manifest.FullName -Algorithm SHA256).Hash.ToLowerInvariant()

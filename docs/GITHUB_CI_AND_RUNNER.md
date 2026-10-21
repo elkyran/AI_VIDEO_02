@@ -17,9 +17,10 @@ CI проверяет:
 - отсутствие drift у JSON Schema;
 - canonical `scripts/check_multi_ai_v2.py`;
 - Multi-AI v2 unit tests и старые regression-группы;
-- точный список обязательных групп, минимум 449 тестов после BULK-01,
-  не более двух известных окруженческих skips, сохранённые лимиты v2=420
-  секунд / остальные=180 и отсутствие группы с неуспешным exit code;
+- точный список обязательных групп, минимум 455 тестов после BULK-01 review fix,
+  не более трёх окруженческих skips (третий допустим лишь при подтверждённом
+  отсутствии Windows 8.3 short-path alias в `contracts.log`), сохранённые
+  лимиты v2=420 секунд / остальные=180 и отсутствие группы с неуспешным exit code;
 - Git/secret export scan;
 - `git diff --check` и отсутствие tracked/untracked изменений после тестов;
 - immutable evidence на чистом commit;

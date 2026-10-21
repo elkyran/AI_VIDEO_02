@@ -303,7 +303,7 @@ def validate_ci_workflow() -> None:
                      "model_requests", "paid_api_requests", "production_started",
                      "$value.status -ne 'passed'", "$checks.status -ne 'passed'",
                      "$checks.test_count", "$expectedGroups", "$observedGroups",
-                     "$expectedTimeout", "$testsRecorded -lt 449", "$skipsRecorded -gt 2"):
+                     "$expectedTimeout", "$testsRecorded -lt 455", "$skipsRecorded -gt 3", "short-path alias limitation"):
         require(required in envelope_text, f"Evidence envelope check is missing {required}")
 
     clean = named_step(steps, "Verify clean, whitespace-safe checkout")
