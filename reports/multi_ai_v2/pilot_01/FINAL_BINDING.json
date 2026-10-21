@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "code_commit_sha": "234f66db8fcc39544a3327d46df73b7b421b337f",
+  "source_manifest_sha256": "5592bda5f2939015fbd79e3910456a247272333ea03f51f225e80cbf55053af4",
+  "initial_feature_sha": "32860d344116d5eed96659d84658dad5dcfba974",
+  "counts_before": {
+    "jobs": 5,
+    "job_attempts": 5,
+    "queue_attempts": 4,
+    "scene_renders": 4,
+    "film_renders": 2
+  },
+  "counts_after": {
+    "jobs": 5,
+    "job_attempts": 5,
+    "queue_attempts": 4,
+    "scene_renders": 4,
+    "film_renders": 2
+  },
+  "preview_sha256": "8a4bc889a8a96fe1c31eefc76ae8f9b00ae2827de41bac2b8ee0356507a7257a",
+  "final_sha256": "4f43e8a13452e37674f0ba6d69c681138720beabe9196fde67555354284c5447",
+  "mlt_sha256": "f53e8d678490d1c528ad02ebca841bd12c6e016f80fd60062cc83d17d485790d",
+  "portable_manifest_sha256": "bb9ab2315e92011c28c5563707fcf8b6033fdfbcdc6721216d46440f7bee35a7",
+  "input_sha256": "ecd6b40054a4b1b9aeaacb29c5f502ad284b659f995b310f752605f409889a5e",
+  "profile_sha256": "4fda02f2e97c89995bf603d9637774f00d7d5d2c9e0d33cd56fba37cf2f7f26e",
+  "storage": {
+    "persistent_bytes": 44741750,
+    "free_bytes": 9384939520,
+    "planned_bytes": 0,
+    "max_persistent_bytes": 1073741824,
+    "reserve_bytes": 4294967296
+  },
+  "measured_streams": [
+    {
+      "codec_type": "video",
+      "codec_name": "h264",
+      "width": 1920,
+      "height": 1080,
+      "r_frame_rate": "30/1",
+      "avg_frame_rate": "30/1",
+      "nb_frames": "2037",
+      "duration": "67.900000",
+      "start_time": "0.000000"
+    },
+    {
+      "codec_type": "audio",
+      "codec_name": "aac",
+      "r_frame_rate": "0/0",
+      "avg_frame_rate": "0/0",
+      "nb_frames": "3184",
+      "duration": "67.904000",
+      "start_time": "0.000000",
+      "sample_rate": "48000",
+      "channels": 2
+    }
+  ],
+  "max_detected_pause_seconds": 0.557104,
+  "reparse_descendants_rejected": true,
+  "portable_copy_verified": true,
+  "new_jobs": 0,
+  "new_renders": 0,
+  "production_started": true,
+  "llm_provider_requests": 0,
+  "paid_api_requests": 0,
+  "uploaded": false,
+  "remote_sync": "UNVERIFIED"
+}
