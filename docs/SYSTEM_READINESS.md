@@ -23,6 +23,12 @@ Remaining gates, in execution order (one owner action list):
    v2/contracts=420s, other groups=180s. Resolve known immutable evidence CI failure
    from 39608860993, obtain green reviewed CI, then **owner-controlled merge** of
    PR6 when appropriate. Codex does not merge or alter CI/security files.
+   Additionally, `scripts/ci_validate_multi_ai_v2.py:319` must import HostRunConfig
+   and add `host_run_config` to generated_schemas, retaining all seven previous
+   canonical contracts and exact drift checks. Current policy expects seven files,
+   SYSTEM-01 exports eight. This is a concrete NEEDS_CHATGPT_CHANGE, not green CI.
+   Local standalone validator stopped on missing PyYAML (`import yaml`); no install
+   was attempted. Hosted CI must retain its pinned validator dependencies.
 2. Select isolated local input/output storage with explicit budgets/free reserve
    and full approved runtime paths/settings. Keep active studio and original
    PILOT immutable. Larger meaningful production needs its own disk/time budget.
