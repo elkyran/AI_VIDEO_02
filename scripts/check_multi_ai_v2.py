@@ -13,6 +13,10 @@ from scripts.check_multi_ai import GROUPS
 from app.v2_storage import EvidenceRun, source_binding
 
 
+DEFAULT_GROUP_TIMEOUT_SECONDS = 180
+GROUP_TIMEOUT_SECONDS = {'v2': 420}
+
+
 def audit_export():
     """Use the existing scanner read-only; do not overwrite its historical report."""
     from scripts.check_git_export import scan
@@ -43,7 +47,8 @@ def audit_export():
 
 
 def main(argv=None):
-    groups = {'v2': ['tests.test_multi_ai_v2'], **{k: GROUPS[k] for k in ['contracts','queue','adapters','mai05','panel','legacy']}}
+    groups = {'v2': ['tests.test_multi_ai_v2', 'tests.test_multi_ai_v2_checker'],
+              **{k: GROUPS[k] for k in ['contracts','queue','adapters','mai05','panel','legacy']}}
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/multi_ai_v2/evidence', help='Parent directory only; UTC+UUID child is created exclusively')
     parser.add_argument('--groups', nargs='+', choices=list(groups), default=list(groups))
@@ -58,19 +63,21 @@ def main(argv=None):
                 ('check_git_export', [sys.executable, '-c', 'from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())']),
                 ('diff_check', ['git', 'diff', '--check'])])
         for group, command in commands:
+            timeout_seconds = GROUP_TIMEOUT_SECONDS.get(group, DEFAULT_GROUP_TIMEOUT_SECONDS)
             log = run.folder/(group+'.log'); start = time.monotonic()
             with log.open('x', encoding='utf-8') as stream:
                 try:
-                    code = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=180).returncode
+                    code = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=timeout_seconds).returncode
                 except subprocess.TimeoutExpired:
-                    stream.write('\nTimeout 180s; not passed.\n'); code = 124
+                    stream.write(f'\nTimeout {timeout_seconds}s; not passed.\n'); code = 124
             elapsed = round(time.monotonic()-start, 6)
             count = re.search(r'Ran (\d+) tests?', log.read_text(encoding='utf-8'))
             count = int(count.group(1)) if count else None
             skipped = re.search(r'OK \(skipped=(\d+)\)', log.read_text(encoding='utf-8'))
             skipped = int(skipped.group(1)) if skipped else 0
             check = {'group': group, 'status': 'passed' if code == 0 else 'failed', 'exit_code': code,
-                     'test_count': count, 'skipped_count': skipped, 'elapsed_seconds': elapsed, 'command': command, 'log_ref': log.name, 'truncated': False}
+                     'test_count': count, 'skipped_count': skipped, 'elapsed_seconds': elapsed,
+                     'timeout_seconds': timeout_seconds, 'command': command, 'log_ref': log.name, 'truncated': False}
             checks.append(check); run.record_command(command, code, elapsed_seconds=elapsed, test_count=count, skipped_count=skipped)
             print(json.dumps(check, ensure_ascii=False), flush=True)
         unchanged = source_binding(ROOT)['source_manifest_sha256'] == run.binding['source_manifest_sha256']
