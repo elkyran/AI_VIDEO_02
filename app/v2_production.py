@@ -1,12 +1,16 @@
 """Accepted Scene -> immutable existing-engine candidate. Never enqueue a job."""
 import json
+from pathlib import Path
+import uuid
 
 from .editorial import Scene
 from .operations import ProductionScript, ProductionBlock, ProductionVisualShot
-from .registry import Registry, StudioError
+from .registry import Registry, StudioError, content_hash, workspace_path
 from .v2_acceptance import fingerprint
 from .v2_contracts import Artifact
-from .v2_visuals import verify_mapping
+from .v2_visuals import verify_mapping, prepare_edit_plan
+from .production_bridge import ProductionBridge, _ReadOnlyRegistry
+from .v2_narration import narration_descriptors
 
 
 class OfflineProductionBridge:
@@ -41,6 +45,11 @@ class OfflineProductionBridge:
             scene = Scene.model_validate(accepted['payload'])
             if scene.project_id != run_id or scene.version != scene_version:
                 raise StudioError('STALE_INPUTS', 'Scene project/version differs from the requested binding')
+            current = registry.db.execute('SELECT * FROM ai_scenes WHERE project_id=? AND scene_id=? ORDER BY version DESC LIMIT 1',
+                                          (run_id,scene.scene_id)).fetchone()
+            if (not current or current['version'] != scene.version or current['sha256'] != fingerprint(scene.model_dump())
+                    or json.loads(current['payload']) != scene.model_dump()):
+                raise StudioError('STALE_INPUTS', 'A newer or manually edited Scene must be accepted before import')
             exact_file = False
             for artifact in accepted['artifacts']:
                 path = self.coordinator.store.verify(Artifact.model_validate(artifact))
@@ -92,3 +101,60 @@ class OfflineProductionBridge:
         if expected != artifact.model_dump():
             raise StudioError('ARTIFACT_INVALID', 'Candidate differs from accepted Scene and registered visuals')
         return value
+
+    def prepare_engine_request(self, artifact, script_asset_id, base_revision, idempotency_key):
+        value = self.read_candidate(artifact)
+        with _ReadOnlyRegistry(self.engine_root) as registry:
+            asset = registry.asset(artifact['run_id'],script_asset_id,verify=True)
+            registered = ProductionScript.model_validate_json(workspace_path(registry.root,asset['path']).read_text(encoding='utf-8'))
+            if registered.model_dump() != value['script']:
+                raise StudioError('STALE_INPUTS', 'Registered script differs from the accepted candidate')
+        return ProductionBridge(self.engine_root).prepare_request(artifact['run_id'],'synthesize',
+            {'script_asset_id':script_asset_id},base_revision,idempotency_key)
+
+    def prepare_mlt(self, artifact, *, voice_assets=None):
+        with self.coordinator.queue._lock:
+            value = self.read_candidate(artifact)
+            scene, _ = self.accepted_scene(artifact['run_id'],value['binding']['task_id'],value['version'])
+            narration = narration_descriptors(value,self.engine_root)
+            plan, assets = prepare_edit_plan(self.engine_root,artifact['run_id'],scene,value['visual_mapping'],
+                voice_version=fingerprint(narration),voice_assets=voice_assets)
+            key = fingerprint({'candidate':artifact, 'plan':plan.model_dump(),'narration':narration})
+            with Registry(self.root) as registry:
+                for row in registry.db.execute("SELECT payload FROM ai_events WHERE kind='offline_mlt_prepared' AND task_id=?",
+                                                (value['binding']['task_id'],)):
+                    prior = json.loads(row[0])
+                    if prior['key'] == key:
+                        receipt = Artifact.model_validate(prior['artifact'])
+                        saved = json.loads(self.coordinator.store.verify(receipt).read_text(encoding='utf-8'))
+                        self.verify_compiled(saved['compiled'])
+                        return receipt.model_dump()
+            with _ReadOnlyRegistry(self.engine_root) as registry:
+                if registry.db.execute("SELECT 1 FROM sqlite_master WHERE name='jobs'").fetchone():
+                    if registry.db.execute("SELECT 1 FROM jobs WHERE state IN ('pending','running') LIMIT 1").fetchone():
+                        raise StudioError('ACTIVE_OPERATION','Cannot prepare a build during active production')
+            # Interrupted folders are preserved. Only a completed event permits replay.
+            compiled = ProductionBridge(self.engine_root).compile(plan,assets,
+                'builds/offline_'+key[:24]+'_'+uuid.uuid4().hex[:12],
+                scene_version=scene.version,voice_version=plan.voice_version)
+            receipt = self.coordinator.store.put_json(artifact['run_id'],{
+                'candidate':artifact,'edit_plan':plan.model_dump(),'compiled':compiled,'narration':narration,
+                'simulated':scene.simulated,'production_started':False,'render_status':'NOT_RUN',
+                'audio_status':'SYNTHETIC_FIXTURE_ONLY' if voice_assets and scene.simulated else 'NOT_RUN'},simulated=scene.simulated)
+            with Registry(self.root) as registry, registry.transaction():
+                self.coordinator.queue._event(registry,'offline_mlt_prepared',
+                    {'key':key,'artifact':receipt.model_dump()},value['binding']['task_id'])
+            return receipt.model_dump()
+
+    def verify_compiled(self, compiled):
+        root = Path(self.engine_root).resolve()
+        project = Path(compiled['project_mlt']).resolve()
+        if not project.is_relative_to(root):
+            raise StudioError('PATH_UNSAFE','Compiled project is outside the engine workspace')
+        if content_hash(project) != compiled['project_sha256']:
+            raise StudioError('ASSET_CHANGED','Compiled MLT changed')
+        for relative, sha in compiled['file_hashes'].items():
+            path = workspace_path(project.parent,relative)
+            if not path.is_file() or content_hash(path) != sha:
+                raise StudioError('ASSET_CHANGED','Prepared media or output changed')
+        return True
