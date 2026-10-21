@@ -1012,7 +1012,7 @@ class Pack4Tests(unittest.TestCase):
     def test_full_review_requires_exact_immutable_request_account_binding(self):
         base=self.root
         cases={'identity':{'identity_hash':'b'*64,'auth_generation':1},
-               'generation':{'identity_hash':'a'*64,'auth_generation':2},'missing':None,
+               'generation':{'identity_hash':'a'*64,'auth_generation':2},'missing':None,'null_binding':None,
                'bad_hash':{'identity_hash':'invalid','auth_generation':1},
                'bad_generation':{'identity_hash':'a'*64,'auth_generation':True},
                'zero_generation':{'identity_hash':'a'*64,'auth_generation':0}}
@@ -1020,14 +1020,22 @@ class Pack4Tests(unittest.TestCase):
             with self.subTest(name=name):
                 self.root=base/name;q,value,adapter,attempt=self.live_fixture()
                 path=self.root/Path(attempt['result_path']).with_name('request.json');request=json.loads(path.read_text())
-                if binding is None:request.pop('account_binding')
+                if name=='missing':request.pop('account_binding')
                 else:request['account_binding']=binding
                 path.write_text(json.dumps(request))
                 self.assert_poll_rejected(q,attempt);q.close()
 
     def test_null_delivery_account_fingerprint_fails_closed(self):
+        from app.v2_video import BINDING_FIELDS, CONTROL_FEATURES
         q,value,adapter,attempt=self.live_fixture()
-        delivery=value['host_review_delivery'];delivery['account_fingerprint']=None;self.sign_delivery(delivery)
+        with Registry(self.root) as registry:
+            probe=json.loads(registry.db.execute("SELECT evidence FROM ai_v2_capabilities WHERE capability_key='cap1'").fetchone()[0])
+        probe.update(evidence_id='cap_null',account_fingerprint=None,evidence_refs=['cap_null.json'])
+        receipt={'evidence_id':'cap_null','binding':{f:probe[f] for f in BINDING_FIELDS},
+                 'expected_features':CONTROL_FEATURES,'observed_features':CONTROL_FEATURES}
+        path=self.host/'cap_null.json';path.write_text(json.dumps(receipt));probe['result_hash']=hashlib.sha256(path.read_bytes()).hexdigest()
+        q.record_video_probe(probe)
+        delivery=value['host_review_delivery'];delivery.update(account_fingerprint=None,evidence_id='cap_null');self.sign_delivery(delivery)
         self.assert_poll_rejected(q,attempt)
 
     def test_correct_request_fingerprint_is_used_without_current_account_lookup(self):
@@ -1038,7 +1046,25 @@ class Pack4Tests(unittest.TestCase):
         with patch.object(q.queue,'profile_source',side_effect=AssertionError('No current account lookup')) as source:
             q.queue._poll();source.assert_not_called()
         with Registry(self.root) as registry:
+            probe=json.loads(registry.db.execute("SELECT evidence FROM ai_v2_capabilities WHERE capability_key='cap1'").fetchone()[0])
+            self.assertEqual(probe['account_fingerprint'],fingerprint(request['account_binding']))
             self.assertEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'completed')
+
+    def test_delivery_ledger_rejects_each_changed_canonical_binding(self):
+        q,value,adapter,attempt=self.live_fixture();q.queue._poll()
+        with Registry(self.root) as registry:
+            original=registry.db.execute('SELECT content FROM ai_v2_deliveries').fetchone()[0]
+            coverage=deepcopy(value['host_review_delivery']['delivered_coverage']);coverage[0]['end_ms']=2000
+            changes=[{'task_id':'another'},{'run_id':'another'},{'attempt_id':'another'},
+                {'video_artifact_sha256':'f'*64},{'account_fingerprint':'f'*64},{'receipt_sha256':'f'*64},
+                {'returned_model':'another'},{'delivered_coverage':coverage},
+                {'requested_at':(self.now-timedelta(seconds=11)).isoformat()}]
+            for change in changes:
+                with self.subTest(change=change),self.assertRaises(StudioError) as caught:
+                    with registry.transaction():q.video_evidence.bind_delivery(registry,{**value['host_review_delivery'],**change})
+                self.assertEqual(caught.exception.code,'DELIVERY_CONFLICT')
+            self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],1)
+            self.assertEqual(registry.db.execute('SELECT content FROM ai_v2_deliveries').fetchone()[0],original)
 
     def test_delivery_ledger_exact_replay_after_restart(self):
         from app.registry import canonical_json
@@ -1102,6 +1128,65 @@ class Pack4Tests(unittest.TestCase):
         with Registry(self.root) as registry:
             self.assertEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'completed')
             self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],1)
+
+    def test_wrong_json_completion_types_fail_closed_and_preserve_evidence(self):
+        from app.v2_acceptance import fingerprint
+        base=self.root
+        for name,content in [('array',[]),('null',None),('string','string'),('missing_host',{})]:
+            with self.subTest(name=name):
+                self.root=base/name;q,value,adapter,attempt=self.live_fixture(name)
+                if name=='missing_host':content={'task_id':value['task_id'],'attempt_id':attempt['id'],
+                    'payload':value['payload'],'payload_sha256':fingerprint(value['payload']),
+                    'input_versions':value['input_hashes'],'simulated':False}
+                path=self.root/attempt['result_path'];path.write_text(json.dumps(content),encoding='utf-8')
+                raw=path.read_bytes();request=path.with_name('request.json');request_before=request.read_bytes()
+                artifact=self.root/value['artifacts'][0]['path'];artifact_before=artifact.read_bytes()
+                q.close();q=self.coordinator(video_evidence_root=self.host,clock=lambda:self.now)
+                with Registry(self.root) as registry:
+                    row=registry.db.execute('SELECT status,result,error FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+                    self.assertEqual(row['status'],'failed');self.assertIsNone(row['result']);self.assertTrue(json.loads(row['error'])['message'])
+                    self.assertEqual(registry.db.execute('SELECT status FROM ai_attempts WHERE id=?',(attempt['id'],)).fetchone()[0],'failed')
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],0)
+                    event=json.loads(registry.db.execute("SELECT payload FROM ai_events WHERE kind='recovery_rejected' AND attempt_id=?",(attempt['id'],)).fetchone()[0])
+                    self.assertTrue(event['evidence_preserved'])
+                self.assertEqual(path.read_bytes(),raw);self.assertEqual(request.read_bytes(),request_before)
+                self.assertEqual(artifact.read_bytes(),artifact_before);q.close()
+
+    def test_non_object_adapter_recovery_does_not_crash_initialization(self):
+        base=self.root
+        for index,content in enumerate([[],None,'string',{'status':'completed'}]):
+            with self.subTest(content=content):
+                self.root=base/str(index);q,value,adapter,attempt=self.live_fixture('recovery_'+str(index))
+                class Recovery:
+                    is_live=True
+                    is_simulated=False
+                    def recover(self,directory):return content
+                request=self.root/Path(attempt['result_path']).with_name('request.json');before=request.read_bytes()
+                q.close();q=self.coordinator(adapters={'gemini':Recovery(),'codex':FakeAdapter('codex')},
+                    video_evidence_root=self.host,clock=lambda:self.now)
+                with Registry(self.root) as registry:
+                    row=registry.db.execute('SELECT status,result FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()
+                    self.assertEqual(row['status'],'failed');self.assertIsNone(row['result'])
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+                    self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_v2_deliveries').fetchone()[0],0)
+                    self.assertEqual(registry.db.execute("SELECT COUNT(*) FROM ai_events WHERE kind='recovery_rejected' AND attempt_id=?",(attempt['id'],)).fetchone()[0],1)
+                self.assertEqual(request.read_bytes(),before);self.assertFalse((self.root/attempt['result_path']).exists());q.close()
+
+    def test_legacy_coordinator_rejects_non_object_persisted_completion_without_crashing(self):
+        from app.multi_ai import Coordinator
+        for index,content in enumerate([[],None,'string']):
+            root=Path(self.temp.name)/('legacy_'+str(index))
+            with Coordinator(root) as q:
+                q.enqueue({'task_id':'legacy'});q.resume();q.tick()
+                with Registry(root) as registry:relative=registry.db.execute('SELECT result_path FROM ai_attempts').fetchone()[0]
+                path=root/relative;path.write_text(json.dumps(content));before=path.read_bytes()
+            with Coordinator(root) as q,Registry(root) as registry:
+                self.assertEqual(registry.db.execute("SELECT status FROM ai_tasks WHERE id='legacy'").fetchone()[0],'failed')
+                self.assertEqual(registry.db.execute('SELECT COUNT(*) FROM ai_artifacts').fetchone()[0],0)
+                self.assertEqual(registry.db.execute("SELECT COUNT(*) FROM ai_events WHERE kind='recovery_rejected'").fetchone()[0],1)
+                self.assertIsNone(q.result_gate)
+            self.assertEqual(path.read_bytes(),before)
 
 
 if __name__ == '__main__': unittest.main()

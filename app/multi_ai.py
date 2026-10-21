@@ -843,7 +843,15 @@ class Coordinator:
         task = self._task(task_row)
         path = workspace_path(self.workspace, attempt["result_path"])
         envelope = json.loads(path.read_text(encoding="utf-8"))
+        required = {'task_id', 'attempt_id', 'input_versions', 'payload', 'payload_sha256', 'simulated'}
+        if (not isinstance(envelope, dict) or not required.issubset(envelope)
+                or not isinstance(envelope['payload'], dict) or not isinstance(envelope['input_versions'], dict)):
+            raise StudioError('ARTIFACT_INVALID', 'Persisted completion must be an object with required envelope fields')
+        if self.result_gate and not isinstance(envelope.get('host_metadata'), dict):
+            raise StudioError('HOST_ENVELOPE_REQUIRED', 'Persisted v2 completion requires host metadata')
         request = json.loads(path.with_name("request.json").read_text(encoding="utf-8"))
+        if not isinstance(request, dict) or not isinstance(request.get('context'), dict):
+            raise StudioError('ARTIFACT_INVALID', 'Persisted request must be an object with context')
         # Revalidate on recovery too. A persisted completion is never a gate bypass.
         gated = self._gate_result(registry, attempt, envelope.get('payload'), envelope.get('host_metadata')) if self.result_gate else None
         if gated and (gated['payload'] != envelope.get('payload') or gated['host_metadata'] != envelope.get('host_metadata')):
@@ -944,6 +952,13 @@ class Coordinator:
                             (status, canonical_json(failure), self.clock() + delay, self.clock(), row["id"]))
         self._queue_profile_report(registry, attempt, task, failure=failure)
 
+    def _reject_recovery(self, registry, attempt, exc):
+        failure = {'kind': 'invalid_input', 'code': getattr(exc, 'code', type(exc).__name__),
+                   'message': str(exc), 'retryable': False}
+        self._failure(registry, attempt['id'], failure)
+        self._event(registry, 'recovery_rejected', {**failure, 'path': attempt['result_path'],
+                    'evidence_preserved': True}, attempt['task_id'], attempt['id'])
+
     def _recover(self):
         with self._lock, Registry(self.workspace) as registry, registry.transaction():
             for attempt in registry.db.execute("SELECT * FROM ai_attempts WHERE status IN ('running','stopping')").fetchall():
@@ -954,8 +969,8 @@ class Coordinator:
                     try:
                         self._accept(registry, attempt["id"])
                         continue
-                    except (ValueError, OSError, StudioError) as exc:
-                        self._failure(registry, attempt["id"], {"kind": "invalid_input", "message": str(exc), "retryable": False})
+                    except (ValueError, TypeError, KeyError, OSError, StudioError) as exc:
+                        self._reject_recovery(registry, attempt, exc)
                         continue
                 if attempt["owner_id"] in _LIVE:
                     continue
@@ -966,11 +981,15 @@ class Coordinator:
                     except Exception as exc:
                         self._event(registry, "recovery_error", {"message": str(exc), "reservation_retained": True}, attempt["task_id"], attempt["id"])
                         continue
+                    if not isinstance(recovered, dict):
+                        self._reject_recovery(registry, attempt, StudioError('ADAPTER_RECOVERY_INVALID',
+                            'Adapter recovery must return an object, got ' + type(recovered).__name__))
+                        continue
                     if recovered.get("status") == "completed":
                         try:
                             self._complete(registry, attempt, recovered["result"], recovered.get('host_metadata'))
-                        except (ValueError, OSError, StudioError) as exc:
-                            self._failure(registry, attempt["id"], {"kind": "invalid_input", "message": str(exc), "retryable": False})
+                        except (ValueError, TypeError, KeyError, OSError, StudioError) as exc:
+                            self._reject_recovery(registry, attempt, exc)
                         continue
                     if recovered.get("status") == "interrupted":
                         self._failure(registry, attempt["id"], {"kind": "interrupted", "message": "Managed worker is confirmed stopped without a complete result", "retryable": False})
