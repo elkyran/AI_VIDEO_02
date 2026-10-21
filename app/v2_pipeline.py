@@ -181,6 +181,7 @@ class StageAdapter:
             # a new host policy produces new IDs, never expands the old permit.
             self.pipeline.config = config
             output = self.pipeline.execute(node)
+            storage(config)
         finally:
             self.pipeline.config = current
         payload = node['value'] if node['stage'] == 'scene' else {'schema_version': 1,
@@ -345,6 +346,13 @@ class SystemPipeline(MeasuredEngine):
         if stage in {'sources', 'story', 'scene'}:
             return {'simulated': False, 'stage': stage, 'approved_input_sha256': fingerprint(node['value']),
                     'origin': 'owner_supplied_not_model_research', 'files': {}}
+        if stage == 'render':
+            # The protected existing renderer has a fixed 180s deadline. Reserve
+            # that complete slot rather than silently exceeding a smaller host budget.
+            remaining = min(self.config.budget.seconds,
+                getattr(self, 'invocation_deadline', time.monotonic()+self.config.budget.seconds)-time.monotonic())
+            if remaining < 180:
+                raise StudioError('TIME_BUDGET', 'Existing renderer needs a full 180s slot in the explicit host budget')
         self.engine_ready()
         if stage == 'candidate':
             for asset in node['value']['media']:
@@ -411,7 +419,7 @@ class SystemPipeline(MeasuredEngine):
         if stage == 'compile':
             value = deps[0]
             compiled = ProductionBridge(self.engine).compile(EditPlan.model_validate(value['edit_plan']), value['assets'],
-                'builds/'+node['task_id']+'_'+uuid.uuid4().hex[:8])
+            'builds/'+node['stage']+'_'+fingerprint(node)[:24]+'_'+uuid.uuid4().hex[:8])
             folder = Path(compiled['project_mlt']).parent
             return self.output_files({**value, 'compiled': compiled}, [workspace_path(folder, name) for name in compiled['file_hashes']])
         if stage == 'render':
@@ -429,6 +437,10 @@ class SystemPipeline(MeasuredEngine):
         raise StudioError('BLOCKED_UNSUPPORTED', 'No registered engine handler: '+stage)
 
     def synthesize(self, candidate, key):
+        deadline = min(time.monotonic()+self.config.budget.seconds,
+                       getattr(self, 'invocation_deadline', float('inf')))
+        if deadline <= time.monotonic():
+            raise StudioError('TIME_BUDGET', 'Host deadline expired before job admission')
         script_id = derived_id('script', 'h'+fingerprint(candidate['script']))
         relative = 'scripts/'+script_id+'.json'
         path = self.engine/relative
@@ -441,12 +453,18 @@ class SystemPipeline(MeasuredEngine):
             base = manager.status(json.loads(prior[0])['job_id'])['input_revision']-1 if prior else registry._project(self.run_id)['revision']
         ProductionBridge(self.engine).prepare_request(self.run_id, 'synthesize', {'script_asset_id': script_id}, base, key)
         receipt = manager.enqueue(self.run_id, 'synthesize', {'script_asset_id': script_id}, base, key)
-        deadline = time.monotonic()+self.config.budget.seconds
         while manager.status(receipt['job_id'])['state'] in {'pending', 'running'}:
             if time.monotonic() > deadline:
                 raise StudioError('LOCAL_JOB_TIMEOUT', 'Existing job is preserved; resume the same run/key')
             time.sleep(.25)
         return verify_audio(self.engine, self.run_id, candidate, receipt['job_id'])
+
+    def command(self, label, command, *, timeout=180):
+        remaining = min(self.config.budget.seconds,
+            getattr(self, 'invocation_deadline', time.monotonic()+self.config.budget.seconds)-time.monotonic())
+        if remaining <= 0:
+            raise StudioError('TIME_BUDGET', 'Host deadline expired before local tool admission')
+        return super().command(label, command, timeout=min(timeout, remaining))
 
     def measured_edit(self, scene, audio, node):
         pictures, voices, subtitles, assets, cursor = [], [], [], {}, 0
@@ -497,7 +515,7 @@ class SystemPipeline(MeasuredEngine):
         return edit, list(assets.values())
 
     def portable(self, value, node):
-        folder = self.root/'packages'/node['task_id']
+        folder = self.root/'packages'/('package_'+fingerprint(node)[:24])
         folder.mkdir(parents=True, exist_ok=True)
         source = Path(value['compiled']['project_mlt']).parent
         files = {}
@@ -544,15 +562,19 @@ class SystemPipeline(MeasuredEngine):
             with Registry(self.q.root) as registry:
                 for row in registry.db.execute("SELECT payload FROM ai_events WHERE kind='system_owner_review' AND task_id=? ORDER BY sequence DESC", (self.run_id,)):
                     value = json.loads(row[0])
-                    if value['package_sha256'] == package['portable_manifest_sha256'] and value['version'] == self.config.version:
+                    if value['package_sha256'] == package['portable_manifest_sha256'] and value['version'] == package['version']:
                         owner_review = json.loads(self.q.store.verify(Artifact.model_validate(value['artifact'])).read_text(encoding='utf-8'))
                         break
-                row = registry.db.execute('SELECT status FROM ai_tasks WHERE id=?', (delivery_node(self.config)['task_id'],)).fetchone()
+                row = registry.db.execute('SELECT status,error FROM ai_tasks WHERE id=?', (delivery_node(self.config)['task_id'],)).fetchone()
             if row and row['status'] == 'completed':
                 delivery = self.accepted(delivery_node(self.config)['task_id'])['delivery']
+            elif row:
+                delivery = {'status': row['status'], 'blocker': json.loads(row['error']) if row['error'] else None,
+                            'uploaded': False}
+                blocker = blocker or delivery['blocker']
         return {'status': status, 'run_id': self.run_id, 'version': self.config.version, 'mode': self.config.mode,
             'summary': f'{len(completed)}/{len(selected)} stages accepted; '+('technical path complete; owner review remains separate' if ready else 'resume the same inputs or inspect the recorded blocker'),
-            'completed': len(completed), 'total': len(selected), 'current_stage': current['context']['v2_contract']['capability'] if current else None,
+            'completed': len(completed), 'total': len(selected), 'current_stage': current['context']['v2_contract']['capability'] if current else 'system_deliver' if delivery and delivery['status'] in {'pending','running','waiting_access','blocked','failed','interrupted'} else None,
             'blocker': blocker, 'control': snapshot['control'], 'results': package, 'root': str(self.root),
             'safe_repeat': 'resume with the identical config, key and --execute-system', 'owner_action_required': ready and self.config.mode != 'simulation',
             'creative_review': 'OWNER_REVIEW_RECORDED' if owner_review else 'PENDING_OWNER',
@@ -574,6 +596,7 @@ class SystemPipeline(MeasuredEngine):
         self.permit.validate()
         self.q.queue.resume()
         deadline = time.monotonic()+self.config.budget.seconds
+        self.invocation_deadline = deadline
         for _ in range(ticks if ticks is not None else len(self.nodes)*3):
             self.q.queue.tick()
             state = self.status()
@@ -588,8 +611,8 @@ class SystemPipeline(MeasuredEngine):
         package = status['results']; rendered = package['rendered']
         review = Review.model_validate(value)
         expected = {'project_id': self.run_id, 'subject_type': 'render', 'subject_id': derived_id('render', 'h'+rendered['sha256']),
-            'subject_version': self.config.version, 'subject_hash': rendered['sha256'],
-            'render_id': derived_id('render', 'h'+rendered['sha256']), 'render_hash': rendered['sha256'], 'edit_plan_version': self.config.version,
+            'subject_version': package['version'], 'subject_hash': rendered['sha256'],
+            'render_id': derived_id('render', 'h'+rendered['sha256']), 'render_hash': rendered['sha256'], 'edit_plan_version': package['version'],
             'provided_evidence_mode': 'human_review', 'human_review_authorized': True,
             'provided_coverage': [{'start_ms': 0, 'end_ms': int(package['qa']['duration_seconds']*1000),
                                    'tracks': ['video', 'audio']}]}
@@ -600,7 +623,7 @@ class SystemPipeline(MeasuredEngine):
             raise StudioError('REVIEW_INVALID', 'Targeted fix plan is bounded to 32 explicit issues')
         artifact = self.q.store.put_json(self.run_id, review.model_dump(), simulated=False)
         binding = {'artifact': artifact.model_dump(), 'package_sha256': package['portable_manifest_sha256'],
-                   'version': self.config.version, 'review_id': review.review_id}
+                   'version': package['version'], 'review_id': review.review_id}
         with Registry(self.q.root) as registry, registry.transaction():
             previous = [json.loads(r[0]) for r in registry.db.execute(
                 "SELECT payload FROM ai_events WHERE kind='system_owner_review' AND task_id=?", (self.run_id,))]
@@ -628,6 +651,12 @@ class SystemPipeline(MeasuredEngine):
         self.q.queue.resume()
         for _ in range(3):
             self.q.queue.tick()
+        task = next(t for t in self.q.queue.snapshot()['tasks'] if t['task_id'] == node['task_id'])
+        if task['status'] != 'completed':
+            failure = task.get('error') or {}
+            state = {'authentication': 'WAITING_AUTH', 'quota_exhausted': 'WAITING_QUOTA',
+                     'interrupted': 'FAILED_RETRYABLE'}.get(failure.get('kind'), 'FAILED_FINAL' if failure else 'IN_PROGRESS')
+            return {'status': state, 'blocker': failure, 'uploaded': False, 'local_release_preserved': True}
         return self.accepted(node['task_id'])['delivery']
 
 

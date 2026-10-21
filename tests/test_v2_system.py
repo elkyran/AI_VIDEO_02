@@ -255,7 +255,7 @@ class SystemTests(unittest.TestCase):
         from app.v2_contracts import Artifact
         p=self.pipeline()
         render_hash='1'*64
-        package={'rendered':{'sha256':render_hash},'qa':{'duration_seconds':1.0},'portable_manifest_sha256':'2'*64}
+        package={'version':1,'rendered':{'sha256':render_hash},'qa':{'duration_seconds':1.0},'portable_manifest_sha256':'2'*64}
         p.status=lambda:{'status':'READY_FOR_OWNER_REVIEW','results':package}
         review=dict(project_id=p.run_id,review_id='owner_review',subject_type='render',
             subject_id=derived_id('render','h'+render_hash),subject_version=1,subject_hash=render_hash,
@@ -278,6 +278,33 @@ class SystemTests(unittest.TestCase):
         value=self.config.model_dump();value.update(version=2,parent_sha256=old)
         value['inputs']['scenes'][0]['narration_segments'][0]['text']='Changed without version bump'
         with self.assertRaises(StudioError):self.pipeline(HostRunConfig.model_validate(value))
+
+    def test_post_write_storage_failure_preserves_provisional_output_without_acceptance(self):
+        p=self.pipeline()
+        with patch('app.v2_pipeline.storage',side_effect=[{},StudioError('BLOCKED_STORAGE','post-write limit')]):
+            result=p.run(ticks=2)
+        self.assertEqual(result['status'],'FAILED_FINAL');self.assertEqual(result['completed'],0)
+        self.assertEqual(result['blocker']['code'],'BLOCKED_STORAGE')
+        with Registry(p.q.root) as r:
+            self.assertEqual(r.db.execute('SELECT count(*) FROM ai_artifacts').fetchone()[0],0)
+            self.assertEqual(r.db.execute("SELECT count(*) FROM ai_events WHERE kind='system_output'").fetchone()[0],1)
+        self.assertFalse((p.root/'host_receipts').exists())
+
+    def test_small_host_time_budget_cannot_start_protected_renderer(self):
+        p=self.pipeline();p.config=p.config.model_copy(update={'budget':p.config.budget.model_copy(update={'seconds':1})})
+        node=next(n for n in p.nodes if n['stage']=='render')
+        with patch('app.production_bridge.ProductionBridge.render') as render,self.assertRaises(StudioError) as exc:
+            p.execute_engine(node,[])
+        self.assertEqual(exc.exception.code,'TIME_BUDGET');render.assert_not_called()
+        self.assertFalse(p.engine.exists())
+
+    def test_tool_timeout_is_bounded_by_remaining_host_deadline(self):
+        import time
+        p=self.pipeline();p.invocation_deadline=time.monotonic()+.5
+        with patch('app.v2_production.MeasuredEngine.command',return_value='not_executed') as command:
+            self.assertEqual(p.command('fixture',['not_executed'],timeout=180),'not_executed')
+        self.assertGreater(command.call_args.kwargs['timeout'],0)
+        self.assertLessEqual(command.call_args.kwargs['timeout'],.5)
 
     @unittest.skipUnless(os.name=='nt','Windows-only path spelling check')
     def test_windows_short_long_paths_pin_identical_host_inputs(self):

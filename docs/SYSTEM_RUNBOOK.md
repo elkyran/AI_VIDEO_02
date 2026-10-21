@@ -102,6 +102,15 @@ OS lock. При Ctrl+C существующий worker job сохраняетс�
 JobManager остаётся владельцем процессов. Полные ошибки сохраняются в failures/;
 краткий blocker содержит log_ref и признак truncated.
 
+Output size/reserve проверяются до и после host action, до acceptance. Deadline
+`budget.seconds` ограничивает одну команду run/resume и её tool waits; проверенные
+этапы не повторяются при следующей команде. Существующий protected renderer требует
+полного свободного 180s slot; меньший оставшийся budget даёт TIME_BUDGET до render.
+QA tool timeout и ожидание synthesize ограничены оставшимся временем. Уже
+поставленный worker job при client timeout сохраняется для явного recovery.
+Drive request reservations сохраняются в ai_events, включая failed calls и
+restart; исчерпание бюджета не приводит к бесконечным retries.
+
 Для targeted fix создать config version+1 с точным parent_sha256, новыми версиями
 изменённых Scenes/mappings и явным --authorize. Неизменённые узлы сохраняют старое
 разрешение и bytes; final assembly инвалидируется по зависимостям. Previous

@@ -152,6 +152,33 @@ class DeliveryTests(unittest.TestCase):
         for url in ('https://evil.invalid/upload','http://www.googleapis.com/drive/v3/files'):
             with self.assertRaises(DriveError):transport.request('GET',url)
 
+    def test_general_portable_builder_preserves_relative_layout_and_bounded_qa(self):
+        from app.v2_pipeline import SystemPipeline
+        from types import MethodType
+        p=SimpleNamespace(root=self.root,run_id=self.config.run_id,config=self.config)
+        p.output_files=MethodType(SystemPipeline.output_files,p)
+        manifest=json.loads((self.package/'manifest.json').read_text())
+        value={'compiled':{'project_mlt':str(self.package/'project.mlt'),
+            'file_hashes':{k:v['sha256'] for k,v in manifest['files'].items()}},
+            'rendered':{'sha256':content_hash(self.package/'final.mp4')},
+            'qa':{'status':'SIMULATED_TEST_ONLY','duration_seconds':1.0,'silence_detection_log':'excluded.log'}}
+        result=SystemPipeline.portable(p,value,{'task_id':'portable_fixture'})
+        target=self.root/result['portable']
+        self.assertEqual(content_hash(target/'final.mp4'),content_hash(self.package/'final.mp4'))
+        self.assertNotIn('silence_detection_log',json.loads((target/'qa.json').read_text()))
+        self.assertFalse(result['uploaded'])
+
+    def test_delivery_command_returns_auth_quota_and_failure_without_rebuilding_local_release(self):
+        from app.v2_pipeline import SystemPipeline,delivery_node
+        node=delivery_node(self.config)
+        self.pipeline.status=lambda:{'status':'READY_FOR_OWNER_REVIEW','results':self.value}
+        self.pipeline.enqueue=Mock();queue=self.pipeline.q.queue;queue.resume=Mock();queue.tick=Mock()
+        for kind,status in [('authentication','WAITING_AUTH'),('quota_exhausted','WAITING_QUOTA'),('invalid_input','FAILED_FINAL')]:
+            queue.snapshot=Mock(return_value={'tasks':[{'task_id':node['task_id'],'status':'waiting_access','error':{'kind':kind}}]})
+            result=SystemPipeline.deliver(self.pipeline,self.drive)
+            self.assertEqual(result['status'],status);self.assertFalse(result['uploaded']);self.assertTrue(result['local_release_preserved'])
+        self.assertEqual(self.drive.calls,0)
+
 
 class ProviderTests(unittest.TestCase):
     def test_disabled_story_visual_cannot_be_enabled_by_capability_json(self):
