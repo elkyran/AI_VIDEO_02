@@ -102,13 +102,18 @@ def task_status(task, tasks):
 
 
 class RunCoordinator:
-    def __init__(self, root, *, adapters=None, video_evidence_root=None, clock=None, local_pilot=None):
+    def __init__(self, root, *, adapters=None, video_evidence_root=None, clock=None, local_pilot=None, system_permit=None):
         self.root = local_root(root)
         if local_pilot is not None:
             from .v2_local_pilot import PilotPermit
             if type(local_pilot) is not PilotPermit or self.root != local_pilot.root/'coordinator':
                 raise ValueError('Local pilot requires its exact host permit and coordinator root')
             local_pilot.validate()
+        if system_permit is not None:
+            from .v2_pipeline import SystemPermit
+            if type(system_permit) is not SystemPermit or self.root != system_permit.root/'coordinator' or local_pilot is not None:
+                raise ValueError('SYSTEM-01 requires its exact host permit and isolated coordinator root')
+            system_permit.validate()
         if legacy_queue_conflict(self.root):
             raise ValueError('Existing legacy/production queue must not be repurposed as a v2 workspace')
         if video_evidence_root is not None:
@@ -120,6 +125,7 @@ class RunCoordinator:
         # Gate is ready before Coordinator recovery can inspect persisted completions.
         self.result_gate = V2ResultGate(self.root, self.store, self.video_evidence)
         self.result_gate.local_pilot = local_pilot
+        self.result_gate.system_permit = system_permit
         self.queue = Coordinator(self.root, adapters=adapters, result_gate=self.result_gate)
         try:
             with Registry(self.root) as registry:
@@ -361,6 +367,11 @@ class RunCoordinator:
 
 
 def main(argv=None):
+    # SYSTEM-01 extends this entrypoint; historical commands keep their protocol.
+    arguments = list(argv) if argv is not None else __import__('sys').argv[1:]
+    if '--config' in arguments:
+        from .v2_pipeline import system_main
+        return system_main(arguments)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', default=os.environ.get('LOCAL_RUN_ROOT'))
     subs = parser.add_subparsers(dest='command', required=True)

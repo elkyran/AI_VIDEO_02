@@ -271,3 +271,149 @@ class OfflineProductionBridge:
             if not path.is_file() or content_hash(path) != sha:
                 raise StudioError('ASSET_CHANGED','Prepared media or output changed')
         return True
+
+
+# Shared existing-engine primitives, extracted unchanged from PILOT-01.
+import hashlib
+import os
+import re
+from pathlib import PureWindowsPath
+import subprocess
+import time
+import xml.etree.ElementTree as ET
+from .jobs import JobManager
+from .registry import write_generated_json
+from .tts import wav_info
+from .v2_narration import profile_spec
+
+def verify_audio(engine_root, run_id, candidate, job_id):
+    """Accept bytes only from a completed existing synthesize job and exact requests."""
+    root = Path(engine_root).resolve()
+    job = JobManager(root).status(job_id)
+    recipe = narration_descriptors(candidate, root)
+    profile = profile_spec(); voice = profile['voice']
+    if job['project_id'] != run_id or job['operation'] != 'synthesize' or job['state'] != 'done' or job['invalidated']:
+        raise StudioError('AUDIO_RECEIPT_INVALID', 'Audio requires a current completed synthesize job for this run')
+    result = job['result']
+    script_id = job['parameters']['script_asset_id']
+    with _ReadOnlyRegistry(root) as registry:
+        script = registry.asset(run_id, script_id, verify=True)
+        raw = json.loads(workspace_path(root, script['path']).read_text(encoding='utf-8'))
+    manifest_path = workspace_path(root, result['manifest'])
+    if (not manifest_path.is_relative_to(root/'jobs'/job_id) or content_hash(manifest_path) != result['manifest_sha256']
+            or raw != candidate['script'] or result['script_sha256'] != script['sha256']):
+        raise StudioError('AUDIO_RECEIPT_INVALID', 'Job script or manifest binding changed')
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    if (manifest['project_id'] != run_id or manifest['script_asset_id'] != script_id
+            or manifest['script_sha256'] != script['sha256'] or len(manifest['segments']) != len(recipe['segments'])):
+        raise StudioError('AUDIO_RECEIPT_INVALID', 'WAV manifest belongs to another input')
+    verified = []
+    for expected, record in zip(recipe['segments'], manifest['segments']):
+        request = json.loads((root/'jobs'/job_id/(expected['block_id']+'.request.json')).read_text(encoding='utf-8'))
+        wav = workspace_path(root, record['path'])
+        predicted = root/expected['cache_path']
+        info = wav_info(wav)
+        if (request != {'text': expected['spoken_text'], 'output': str(predicted), 'config': expected['settings']}
+                or wav != predicted or record['block_id'] != expected['block_id']
+                or record['text'] != expected['text'] or record['text_hash'] != hashlib.sha256(expected['spoken_text'].encode()).hexdigest()
+                or record['wav_hash'] != content_hash(wav) or record['model_hash'] != voice['model_sha256']
+                or record['model_config_hash'] != voice['model_config_sha256']
+                or record['generation_settings'] != voice['settings'] or record['engine_version'] != voice['engine_version']
+                or record['sample_rate_hz'] != voice['sample_rate_hz']
+                or abs(info['duration_seconds']-record['duration_seconds']) > 1/voice['sample_rate_hz']):
+            raise StudioError('AUDIO_RECEIPT_INVALID', 'WAV text/model/settings/bytes do not match completed request')
+        verified.append({'block_id': expected['block_id'], 'cache_key': expected['cache_key'], 'path': record['path'],
+            'wav_sha256': record['wav_hash'], 'duration_seconds': info['duration_seconds'], 'cache_hit': record['cache_hit']})
+    return {'job_id': job_id, 'script_sha256': script['sha256'], 'manifest_sha256': result['manifest_sha256'],
+            'profile_sha256': recipe['profile_sha256'], 'segments': verified, 'production_started': True}
+
+
+def verify_portable(folder):
+    folder = Path(folder).resolve()
+    manifest = json.loads((folder/'manifest.json').read_text(encoding='utf-8'))
+    if {p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file()} != set(manifest['files']) | {'manifest.json'}:
+        raise StudioError('PORTABLE_INVALID', 'Unlisted files in portable package')
+    for relative, meta in manifest['files'].items():
+        path = workspace_path(folder, relative)
+        if path.suffix.lower() not in {'.mp4', '.mlt', '.json', '.srt', '.png', '.wav'}:
+            raise StudioError('PORTABLE_INVALID', 'Forbidden file in portable package')
+        if not path.is_file() or content_hash(path) != meta['sha256'] or path.stat().st_size != meta['bytes']:
+            raise StudioError('PORTABLE_INVALID', 'Portable file hash/size mismatch')
+    for prop in ET.parse(folder/'project.mlt').findall(".//property[@name='resource']"):
+        resource = prop.text
+        if resource == '0':
+            continue
+        if not resource or Path(resource).is_absolute() or PureWindowsPath(resource).is_absolute():
+            raise StudioError('PORTABLE_INVALID', 'MLT media must have package-relative paths')
+        path = workspace_path(folder, resource)
+        if not path.is_file() or path.relative_to(folder).as_posix() not in manifest['files']:
+            raise StudioError('PORTABLE_INVALID', 'Referenced media missing from package manifest')
+    return manifest
+
+
+class MeasuredEngine:
+    def register(self, identifier, path, kind, *, duration_ms=None):
+        path=workspace_path(self.engine,path)
+        with Registry(self.engine) as registry:
+            prior=registry.db.execute('SELECT id FROM assets WHERE project_id=? AND id=?',(self.run_id,identifier)).fetchone()
+            if prior:
+                asset=registry.asset(self.run_id,identifier,verify=True)
+                if asset['path']!=path.relative_to(self.engine).as_posix() or asset['sha256']!=content_hash(path):
+                    raise StudioError('IDEMPOTENCY_CONFLICT','Registered pilot asset changed')
+                return asset
+            registry.register_asset(self.run_id,identifier,path.relative_to(self.engine).as_posix(),kind=kind,
+                rights='owned',duration_ms=duration_ms,base_revision=registry._project(self.run_id)['revision'],
+                idempotency_key=derived_id('register', identifier))
+            return registry.asset(self.run_id,identifier,verify=True)
+
+    def command(self, label, command, *, timeout=180):
+        folder=workspace_path(self.root,'logs',for_write=True);folder.mkdir(exist_ok=True)
+        prefix=folder/(label+'_'+uuid.uuid4().hex[:10])
+        started=time.monotonic()
+        with prefix.with_suffix('.log').open('x',encoding='utf-8') as stream:
+            result=subprocess.run([str(c) for c in command],stdout=stream,stderr=subprocess.STDOUT,
+                                  timeout=timeout,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+        write_generated_json(self.root,prefix.relative_to(self.root).as_posix()+'.json',
+            {'command':[str(c) for c in command],'exit_code':result.returncode,'elapsed_seconds':time.monotonic()-started})
+        if result.returncode:
+            raise StudioError('LOCAL_TOOL_FAILED',f'{label}: exit {result.returncode}; full log {prefix}.log')
+        return prefix.with_suffix('.log')
+
+    def qa(self, compiled, video):
+        from .operations import subtitle_timing_issues
+        config=json.loads((self.engine/'runtime.json').read_text(encoding='utf-8'))
+        probe=self.command('ffprobe',[config['ffprobe_path'],'-v','error','-show_streams','-show_format','-of','json',video])
+        data=json.loads(probe.read_text(encoding='utf-8'))
+        video_stream=next((s for s in data['streams'] if s['codec_type']=='video'),None)
+        audio_stream=next((s for s in data['streams'] if s['codec_type']=='audio'),None)
+        if video_stream is None or audio_stream is None:
+            raise StudioError('TECHNICAL_QA_FAILED','Decoded MP4 must contain both video and audio')
+        expected=compiled['duration_seconds'];duration=float(data['format']['duration'])
+        if (video_stream['width'],video_stream['height'],video_stream['r_frame_rate'])!=(1920,1080,'30/1'):
+            raise StudioError('TECHNICAL_QA_FAILED','Decoded format differs from 1920x1080/30')
+        if abs(duration-expected)>.1 or abs(float(video_stream.get('start_time',0))-float(audio_stream.get('start_time',0)))>.1:
+            raise StudioError('TECHNICAL_QA_FAILED','Measured duration or stream alignment differs from timeline')
+        log=self.command('decode_analysis',[config['ffmpeg_path'],'-hide_banner','-nostdin','-i',video,
+            '-vf','blackdetect=d=0.2:pix_th=0.1:pic_th=0.98','-af','silencedetect=noise=-45dB:d=0.5,volumedetect',
+            '-f','null','-'],timeout=180)
+        text=log.read_text(encoding='utf-8',errors='replace')
+        if 'black_start:' in text or 'Error while decoding' in text:
+            raise StudioError('TECHNICAL_QA_FAILED','Black interval or decoding error; inspect full log')
+        levels={name:float(value) for name,value in re.findall(r'(mean_volume|max_volume):\s*([-\d.]+) dB',text)}
+        if set(levels)!={'mean_volume','max_volume'} or levels['max_volume']<=-60:
+            raise StudioError('TECHNICAL_QA_FAILED','Decoded audio missing or effectively silent')
+        project=Path(compiled['project_mlt'])
+        for prop in ET.parse(project).findall(".//property[@name='resource']"):
+            if prop.text!='0' and not workspace_path(project.parent,prop.text).is_file():
+                raise StudioError('TECHNICAL_QA_FAILED','MLT has missing media')
+        plan=json.loads((project.parent/'edit_plan.json').read_text(encoding='utf-8'))
+        issues=subtitle_timing_issues(project.parent/'subtitles.srt',duration,
+            [(s['start_ms']/1000,s['end_ms']/1000) for s in plan['subtitle_events']])
+        if issues:raise StudioError('TECHNICAL_QA_FAILED',str(issues))
+        return {'status':'VERIFIED','duration_seconds':duration,'timeline_duration_seconds':expected,
+            'width':1920,'height':1080,'fps':30,'audio_present':True,'full_decode':True,'black_intervals':[],
+            'subtitle_issues':issues,'stream_start_delta_seconds':abs(float(video_stream.get('start_time',0))-float(audio_stream.get('start_time',0))),
+            'probe_log':str(probe),'decode_analysis_log':str(log),'speech_sync_scope':'timeline and decoded stream starts; phoneme alignment not measured',
+            'audio_levels_dbfs':levels,'silence_detection_log':str(log),
+            'editorial_review':'PENDING_OWNER','full_video_creative_qa':'NOT_RUN'}
+

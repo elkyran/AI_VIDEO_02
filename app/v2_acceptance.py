@@ -16,8 +16,13 @@ class V2ResultGate:
     def __init__(self, root, store, video_evidence):
         self.root, self.store, self.video = root, store, video_evidence
         self.local_pilot = None
+        self.system_permit = None
 
     def _pilot_admission(self, contract, task, requested, result):
+        if contract.capability.startswith('system_'):
+            if self.system_permit is None:
+                raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'No host system authorization')
+            self.system_permit.validate_admission(self.root, contract, task, requested, result)
         if contract.capability == 'local_pilot_scene':
             if self.local_pilot is None:
                 raise StudioError('PILOT_PERMISSION_REQUIRED', 'No host local-pilot authorization')
