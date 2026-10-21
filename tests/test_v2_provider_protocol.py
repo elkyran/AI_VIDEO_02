@@ -420,6 +420,20 @@ class CoordinatorIntegrationTests(unittest.TestCase):
         self.q.close(); self.q = RunCoordinator(self.root, adapters={'gemini': bridge})
         self.assertEqual(self.tick()['story']['status'], 'failed')
 
+    def test_receipt_payload_cannot_diverge_from_immutable_artifact(self):
+        self.enqueue(contract()); self.q.queue.tick()
+        self.bridge.poll(next(iter(self.bridge.runs)))
+        receipt = next(self.root.rglob('provider_receipt.json'))
+        original = json.loads(receipt.read_text())
+        for corrupt in ('payload', 'artifacts'):
+            value = deepcopy(original)
+            if corrupt == 'payload': value['result']['payload']['goal'] = 'Corrupt receipt'
+            else: value['result']['artifacts'] = []
+            receipt.write_text(canonical_json(value), encoding='utf-8')
+            self.assertEqual(self.bridge.recover(receipt.parent)['status'], 'failed')
+        receipt.write_text(canonical_json(original), encoding='utf-8')
+        self.assertEqual(self.bridge.recover(receipt.parent)['status'], 'completed')
+
 
 if __name__ == '__main__':
     unittest.main()

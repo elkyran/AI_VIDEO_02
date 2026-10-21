@@ -302,6 +302,7 @@ class DualWorkerBridge:
         from .editorial import validate_result
         request = json.loads((attempt_dir/'request.json').read_text(encoding='utf-8'))
         binding, context = self._request(request)
+        self.runs.pop(binding.session_key, None)  # No synthetic worker survives recovery.
         file = attempt_dir/'provider_receipt.json'
         if not file.exists():
             return {'status': 'interrupted'}  # Never silently re-send a request.
@@ -315,8 +316,8 @@ class DualWorkerBridge:
                 or result.input_version != binding.task.input_version or not result.simulated
                 or result.expected_output_schema != binding.task.expected_output_schema):
             raise StudioError('PROVIDER_SESSION_MISMATCH', 'Persisted receipt differs from the host attempt')
-        for artifact in result.artifacts:
-            self.store.verify(artifact)
+        if len(result.artifacts) != 1 or json.loads(self.store.verify(result.artifacts[0]).read_text(encoding='utf-8')) != result.payload:
+            raise StudioError('ARTIFACT_INVALID', 'Receipt must bind the exact immutable creative artifact')
         validate_result(result.expected_output_schema, result.payload, {**context, 'provided_evidence_mode': 'metadata_only'})
         self._revision_output(result.payload, context)
         return {'status': 'completed', 'result': result.payload, 'host_metadata': result.model_dump()}
