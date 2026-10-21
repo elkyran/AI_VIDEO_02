@@ -85,7 +85,7 @@ class V2ResultGate:
             if not result.simulated and any(c.simulated for c in review.provided_coverage + review.reviewed_coverage):
                 raise StudioError('ARTIFACT_INVALID', 'Live review cannot use simulated coverage')
             if review.subject_type == 'render' and (review.evidence_mode == 'video_audio' or review.verdict == 'ready_for_review'):
-                context = self._review_context(registry, result, contract, task, attempt, context)
+                context = self._review_context(registry, result, contract, task, attempt, context, requested)
         normalized = validate_result(result.expected_output_schema, result.payload, context)
         if validate_result(result.expected_output_schema, payload, context) != normalized:
             raise StudioError('ARTIFACT_INVALID', 'Host envelope does not bind this creative payload')
@@ -183,9 +183,9 @@ class V2ResultGate:
             write_generated_json(self.root, base+'/'+name, value)
         return {**context, 'context_pack': base}
 
-    def _review_context(self, registry, result, contract, task, attempt, context):
+    def _review_context(self, registry, result, contract, task, attempt, context, requested):
         review = Review.model_validate(result.payload)
-        delivery, artifact = self.video.delivery(registry, result, contract, task, attempt, review)
+        delivery, artifact = self.video.delivery(registry, result, contract, task, attempt, review, requested.get('account_binding'))
         # Plan dependency identity was checked against Registry above. A render is
         # the review subject; editorial's plan-review dependency inference does
         # not replace that subject. All media coverage is host receipt coverage.

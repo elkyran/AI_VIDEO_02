@@ -95,12 +95,23 @@ class VideoEvidence:
         except (ValueError, TypeError, KeyError, OSError, StudioError) as exc:
             raise StudioError('VIDEO_CAPABILITY_UNVERIFIED', 'Full video requires current matching host evidence and video material') from exc
 
-    def delivery(self, registry, result, contract, task, attempt, review):
+    def delivery(self, registry, result, contract, task, attempt, review, account_binding):
         """Bind this exact response/file/request; capability alone is insufficient."""
         try:
             if result.simulated or result.host_review_delivery is None:
                 raise ValueError('A real review needs a separate host delivery envelope')
             delivery = HostReviewDelivery.model_validate(result.host_review_delivery)
+            # Only the immutable launch request identifies the login generation.
+            # AccountManager may already describe a different login at completion.
+            if not isinstance(account_binding, dict) or set(account_binding) != {'identity_hash', 'auth_generation'}:
+                raise ValueError('Immutable request account binding is missing or malformed')
+            identity, generation = account_binding['identity_hash'], account_binding['auth_generation']
+            if (not isinstance(identity, str) or len(identity) != 64 or any(c not in '0123456789abcdef' for c in identity)
+                    or type(generation) is not int or generation < 1):
+                raise ValueError('Immutable request account binding is invalid')
+            account_hash = hashlib.sha256(canonical_json(account_binding).encode('utf-8')).hexdigest()
+            if delivery.account_fingerprint != account_hash:
+                raise ValueError('Delivery does not bind the request login generation')
             if any(c.simulated for c in delivery.delivered_coverage):
                 raise ValueError('Live delivery cannot attest simulated coverage')
             if registry.db.execute('SELECT 1 FROM ai_v2_delivery_revocations WHERE delivery_id=?',

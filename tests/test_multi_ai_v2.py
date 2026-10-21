@@ -627,6 +627,7 @@ class UnifiedAcceptanceTests(unittest.TestCase):
         request_path=self.root/Path(attempt['result_path']).with_name('request.json')
         request=json.loads(request_path.read_text());request['context']=deepcopy(task['context'])
         request['expected_output']='review';request['execution_mode']='live'
+        request['account_binding']={'identity_hash':'a'*64,'auth_generation':1}
         request_path.write_text(json.dumps(request),encoding='utf-8')
         path=self.root/f'runs/{run}/artifacts/preview.webm';path.parent.mkdir(parents=True)
         # Opaque bytes only: no MP4, media generation, decoding or real video review.
@@ -636,7 +637,7 @@ class UnifiedAcceptanceTests(unittest.TestCase):
         coverage=Coverage(start_ms=0,end_ms=1000,tracks=['video','audio']).model_dump()
         review=render_review(artifact)
         review.update(verdict='ready_for_review',provided_coverage=[coverage],reviewed_coverage=[coverage])
-        binding=dict(provider=attempt['provider'],provider_profile_id=attempt['profile_id'],account_fingerprint='a'*64,
+        binding=dict(provider=attempt['provider'],provider_profile_id=attempt['profile_id'],account_fingerprint=fingerprint(request['account_binding']),
             client='fixture',client_version='1',requested_model='requested',returned_model='returned',control_video_hash='1'*64)
         cap={'evidence_id':'cap1','binding':binding,'expected_features':CONTROL_FEATURES,'observed_features':CONTROL_FEATURES}
         cap_path=self.host/'cap.json';cap_path.write_text(json.dumps(cap),encoding='utf-8')
@@ -1007,6 +1008,37 @@ class Pack4Tests(unittest.TestCase):
                         registry.db.execute('UPDATE ai_tasks SET result=? WHERE id=?',(json.dumps(stored),value['task_id']))
                 with self.assertRaises(StudioError):q.accepted_artifacts(value['task_id'])
                 q.close()
+
+    def test_full_review_requires_exact_immutable_request_account_binding(self):
+        base=self.root
+        cases={'identity':{'identity_hash':'b'*64,'auth_generation':1},
+               'generation':{'identity_hash':'a'*64,'auth_generation':2},'missing':None,
+               'bad_hash':{'identity_hash':'invalid','auth_generation':1},
+               'bad_generation':{'identity_hash':'a'*64,'auth_generation':True},
+               'zero_generation':{'identity_hash':'a'*64,'auth_generation':0}}
+        for name,binding in cases.items():
+            with self.subTest(name=name):
+                self.root=base/name;q,value,adapter,attempt=self.live_fixture()
+                path=self.root/Path(attempt['result_path']).with_name('request.json');request=json.loads(path.read_text())
+                if binding is None:request.pop('account_binding')
+                else:request['account_binding']=binding
+                path.write_text(json.dumps(request))
+                self.assert_poll_rejected(q,attempt);q.close()
+
+    def test_null_delivery_account_fingerprint_fails_closed(self):
+        q,value,adapter,attempt=self.live_fixture()
+        delivery=value['host_review_delivery'];delivery['account_fingerprint']=None;self.sign_delivery(delivery)
+        self.assert_poll_rejected(q,attempt)
+
+    def test_correct_request_fingerprint_is_used_without_current_account_lookup(self):
+        from app.v2_acceptance import fingerprint
+        q,value,adapter,attempt=self.live_fixture()
+        path=self.root/Path(attempt['result_path']).with_name('request.json');request=json.loads(path.read_text())
+        self.assertEqual(value['host_review_delivery']['account_fingerprint'],fingerprint(request['account_binding']))
+        with patch.object(q.queue,'profile_source',side_effect=AssertionError('No current account lookup')) as source:
+            q.queue._poll();source.assert_not_called()
+        with Registry(self.root) as registry:
+            self.assertEqual(registry.db.execute('SELECT status FROM ai_tasks WHERE id=?',(value['task_id'],)).fetchone()[0],'completed')
 
 
 if __name__ == '__main__': unittest.main()
