@@ -51,7 +51,8 @@ def main(argv=None):
               **{k: GROUPS[k] for k in ['contracts','queue','adapters','mai05','panel','legacy']}}
     groups['contracts'] = [*groups['contracts'], 'tests.test_v2_sources', 'tests.test_v2_production',
         'tests.test_v2_visuals', 'tests.test_v2_engine_bridge', 'tests.test_v2_offline_qa',
-        'tests.test_v2_release', 'tests.test_v2_offline', 'tests.test_v2_bulk_boundaries']
+        'tests.test_v2_release', 'tests.test_v2_offline', 'tests.test_v2_bulk_boundaries',
+        'tests.test_v2_local_pilot']
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/multi_ai_v2/evidence', help='Parent directory only; UTC+UUID child is created exclusively')
     parser.add_argument('--groups', nargs='+', choices=list(groups), default=list(groups))

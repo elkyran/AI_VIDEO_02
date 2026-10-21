@@ -15,6 +15,13 @@ def fingerprint(value):
 class V2ResultGate:
     def __init__(self, root, store, video_evidence):
         self.root, self.store, self.video = root, store, video_evidence
+        self.local_pilot = None
+
+    def _pilot_admission(self, contract, task, requested, result):
+        if contract.capability == 'local_pilot_scene':
+            if self.local_pilot is None:
+                raise StudioError('PILOT_PERMISSION_REQUIRED', 'No host local-pilot authorization')
+            self.local_pilot.validate_admission(self.root, contract, task, requested, result)
 
     def initialize(self, registry):
         self.video.initialize(registry)
@@ -53,6 +60,7 @@ class V2ResultGate:
                 input_version=contract.input_version, input_hashes=contract.input_hashes,
                 payload=payload, artifacts=[artifact.model_dump()], simulated=True)
         result = Result.model_validate(host_metadata)
+        self._pilot_admission(contract, task, requested, result)
         if result.task_id != row['id'] or result.run_id != contract.run_id:
             raise StudioError('RESULT_RUN_MISMATCH', 'Host envelope belongs to another task/run')
         if row['status'] == 'stale' or (task.get('error') or {}).get('kind') == 'stale_inputs':
@@ -136,6 +144,7 @@ class V2ResultGate:
         contract = Task.model_validate(spec['context']['v2_contract'])
         attempt = registry.db.execute('SELECT * FROM ai_attempts WHERE id=?', (host.acceptance_key,)).fetchone()
         request = json.loads(path.with_name('request.json').read_text(encoding='utf-8'))
+        self._pilot_admission(contract, spec, request, host)
         run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (host.run_id,)).fetchone()
         accepted = {'status': 'ACCEPTED', 'acceptance_key': host.acceptance_key,
                     'result_sha256': fingerprint(host.model_dump())}
