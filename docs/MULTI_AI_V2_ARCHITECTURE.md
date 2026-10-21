@@ -9,8 +9,9 @@ unattended Drive host authorization и Windows runner остаются отде�
 `system_ready_for_autonomous_episode=false`. Историческая таблица ниже относится
 к своему срезу и не является текущим утверждением о live readiness.
 
-Единственная целевая схема задана PHASE A FINAL CI GATE. Это направление
-существующего проекта; схема не означает, что все соединения уже реализованы.
+PROVIDERS-01 уточняет цель: два обязательных Antigravity worker, Story с account
+binding A и Visual с отдельным binding B. [Offline границы](DUAL_PROVIDER_INTEGRATION.md)
+не означают подключение аккаунтов. Оба live worker выключены, BLOCKED_ELIGIBILITY.
 
 ```text
 USER: one video brief
@@ -39,8 +40,9 @@ PYTHON COORDINATOR          EXISTING AI_VIDEO_02
         +----------+-------------+
         |                        |
         v                        v
-OFFICIAL CODEX          OFFICIAL ANTIGRAVITY
- subscription           AGE-GATED / DISABLED
+OFFICIAL CODEX          TWO ANTIGRAVITY WORKERS
+ Production             Story A / Visual B
+                        AGE-GATED / DISABLED
         |                        |
         +-----------+------------+
                     |
@@ -60,9 +62,11 @@ metadata, prompts, schemas и небольшие manifests; тяжёлые ме�
 сервер. Тяжёлые операции предназначены локальному Windows runner с RTX 4050;
 проверка GPU и запуск runner этим документом не подтверждаются.
 
-Один запуск начинается с одного brief. Gemini Story (writer) и Gemini Visual
-(critic) — логические роли одного будущего Antigravity integration. Они не
-означают два автоматически независимых аккаунта. Codex выполняет роль director.
+Один запуск начинается с одного brief. `antigravity_story` (writer) и
+`antigravity_visual` (critic) требуют разных host-owned account bindings,
+auth boundaries и session namespaces. Два profile names или окна этого не
+доказывают. Codex Production выполняет производственные операции существующим
+движком. Python Coordinator остаётся единственным scheduler и acceptance gate.
 Автоматической ротации аккаунтов нет; недоступные квоты остаются null.
 Платные API требуют отдельного решения владельца.
 
@@ -74,7 +78,7 @@ metadata, prompts, schemas и небольшие manifests; тяжёлые ме�
 | Coordinator → queue/SQLite | IMPLEMENTED: существующие `app.multi_ai.Coordinator`, Registry, ai_tasks/ai_attempts, CAS, checkpoints/recovery; ai_v2_runs хранит metadata, не вторую очередь |
 | Queue → accepted artifacts | IMPLEMENTED: общий V2ResultGate для manual/poll/recovery, проверенные immutable dependencies, request account binding, insert-only delivery ledger, ArtifactStore |
 | Coordinator → официальные live workers | NOT_IMPLEMENTED для сквозного v2 production; исторический Codex JSON smoke подтверждает только конкретный worker |
-| Story/Visual → Antigravity | BLOCKED / AGE-GATED / DISABLED; до отдельного подтверждения официальных возрастных и других требований нет login, model smoke, auth migration или обходных маршрутов |
+| Story/Visual → Antigravity | Два fixed offline slot реализованы на data-only synthetic transport; live BLOCKED_ELIGIBILITY / AGE-GATED / DISABLED. Identity/auth/quota/media фактически UNVERIFIED; requests NOT_RUN |
 | Coordinator → existing production engine | PARTIAL: ProductionBridge.compile/prepare_production_request существуют; Scene import и запуск production jobs из v2 NOT_IMPLEMENTED |
 | Private GitHub → credentialed Windows runner | BLOCKED: регистрация runner запрещена на текущем этапе; безопасный fake-only workflow проверяется в отдельном security lane |
 | Accepted artifacts → Google Drive | PARTIAL: ArtifactStore поддерживает проверенную копию в локальную sync-папку; это не cloud upload proof. Unattended runner auth/root, cloud readback и автоматический upload pipeline NOT_IMPLEMENTED |

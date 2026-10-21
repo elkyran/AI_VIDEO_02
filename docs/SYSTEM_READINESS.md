@@ -1,4 +1,4 @@
-# SYSTEM-01 readiness
+# SYSTEM-01 / PROVIDERS-01 readiness
 
 `system_ready_for_autonomous_episode=false`.
 Разделять IMPLEMENTED, OFFLINE_TESTED, LIVE_VERIFIED и OWNER_APPROVED.
@@ -8,7 +8,7 @@
 |---|---|---|---|---|
 | Source allowlist/canon/story/Scenes | yes, explicit approved input | yes | no new research | no |
 | General Coordinator plan/permit/gate | yes, per-input dependencies | 1/2/5 scenes, two roots, replay | no new episode | no |
-| Story / Visual provider | capability wrapper, no supported Antigravity integration | injected transport | BLOCKED AGE-GATED / DISABLED | no |
+| Antigravity Story account A / Visual account B | two fixed offline slots, bounded parser, host sessions/receipts | data-only synthetic Story → Review → one revision, queue/gate/replay | BLOCKED_ELIGIBILITY / AGE-GATED / DISABLED; connected=0 | no |
 | Codex director | existing adapter boundary, no role substitution | injected transport | end-to-end unverified | no |
 | Voice/import | existing JobManager + strict completed WAV receipt | negative gates; prior verification tests retained | no new TTS; PILOT-01 historical proof only | no |
 | Measured edit / MLT / render / QA | handlers over existing engine, explicit renderer | fixture wiring and existing regression; byte-preservation copy check | no new render/decode | no |
@@ -26,7 +26,10 @@ Remaining gates, in execution order (one owner action list):
    Additionally, `scripts/ci_validate_multi_ai_v2.py:319` must import HostRunConfig
    and add `host_run_config` to generated_schemas, retaining all seven previous
    canonical contracts and exact drift checks. Current policy expects seven files,
-   SYSTEM-01 exports eight. This is a concrete NEEDS_CHATGPT_CHANGE, not green CI.
+   SYSTEM-01 exported eight. PROVIDERS-01 additionally exports
+   `dual_worker_config` from `app.v2_provider_protocol.DualWorkerConfig`, bringing
+   the exact set to nine. Add this model too; preserve all prior strict checks.
+   This is a concrete NEEDS_CHATGPT_CHANGE, not green CI.
    Local standalone validator stopped on missing PyYAML (`import yaml`); no install
    was attempted. Hosted CI must retain its pinned validator dependencies.
 2. Select isolated local input/output storage with explicit budgets/free reserve
@@ -45,7 +48,17 @@ Remaining gates, in execution order (one owner action list):
    verification and blockers are resolved/explicitly scoped. Review that episode
    before any quality-backlog work.
 
-No protected core change was needed. No architect approval is claimed. A hard
+NEEDS_ARCHITECT_REVIEW before live account wiring: the existing queue selects one
+profile per provider, forbids creative requested_profile_id, reserves one cloud
+attempt per provider and marks the selected profile waiting_reset on quota.
+Review a future host-owned `(role, worker_id) -> account binding` route in
+Coordinator.enqueue/tick/_dispatch/_failure, plus request/Result account-binding
+validation in V2ResultGate. Retain generation/CAS/dependency checks and rotation=false;
+do not encode a second Antigravity account as Codex. No such core edits or live
+activation are included. Synthetic task-level access pauses are described in
+[DUAL_PROVIDER_INTEGRATION](DUAL_PROVIDER_INTEGRATION.md).
+
+No protected core change was made. No architect approval is claimed. A hard
 limit remains: synchronous engine execution is bounded but cannot be immediately
 interrupted by a second CLI while Coordinator owns its OS lock; use existing job
 inspection/recovery. Full live end-to-end system behavior remains unverified.

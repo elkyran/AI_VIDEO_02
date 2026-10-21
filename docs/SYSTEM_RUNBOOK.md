@@ -5,6 +5,25 @@ resume/inspect-artifacts/report и `scripts/dispatch_multi_ai_v2.py` сохра�
 Новый путь выбирается явным `--config`; без него действует прежний протокол.
 Ни одна команда ниже не была разрешением создать следующий выпуск в SYSTEM-01.
 
+PROVIDERS-01: два обязательных Antigravity worker с разными account bindings
+остаются live DISABLED / BLOCKED_ELIGIBILITY. Общий autonomous запуск блокируется
+прежде производства. Этот пакет не разрешает новый выпуск, запуск клиентов,
+логин, подключение аккаунтов или иной маршрут доступа.
+
+Read-only статус offline реализации без config, Registry и проверки аккаунтов:
+
+```powershell
+.venv-core/Scripts/python.exe -B -X utf8 -m app.v2_provider_bridge
+```
+
+Существующие config plan/doctor/status дополнены полем `providers`. Оно отражает
+offline regression scope, а не текущую проверку клиента/аккаунта. Подробнее:
+[DUAL_PROVIDER_INTEGRATION](DUAL_PROVIDER_INTEGRATION.md). Проверки без клиентов:
+
+```powershell
+.venv-core/Scripts/python.exe -X utf8 -m unittest -v tests.test_v2_provider_protocol tests.test_v2_system_delivery
+```
+
 ## Контракт входов
 
 `HostRunConfig` и `config/multi_ai_v2_schemas/host_run_config.schema.json` описывают

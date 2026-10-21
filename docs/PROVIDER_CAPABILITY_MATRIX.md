@@ -15,8 +15,8 @@ Python Coordinator управляет задачами; официальные �
 | Исполнитель / роль | Маршрут | Подтверждённая граница | Текущее решение |
 |---|---|---|---|
 | Codex / director | Официальный Codex, подписка ChatGPT | Исторический один JSON smoke; не сквозная v2 production цепочка | Live production wiring NOT_IMPLEMENTED; новый smoke в Phase A не запускался |
-| Gemini Story / writer | Будущий официальный Antigravity integration | Логическая роль; отдельный аккаунт/квота не предполагаются | AGE-GATED / DISABLED / BLOCKED |
-| Gemini Visual / critic | Тот же будущий официальный Antigravity integration | Логическая роль; независимый второй аккаунт не объявлен | AGE-GATED / DISABLED / BLOCKED |
+| antigravity_story / writer | Целевой Antigravity с отдельным account binding A | Fixed offline slot, synthetic identity/auth/session; actual identity/auth/quota UNVERIFIED | OFFLINE_TESTED; live BLOCKED_ELIGIBILITY / AGE-GATED / DISABLED |
+| antigravity_visual / critic | Целевой Antigravity с отдельным account binding B | Отдельный offline slot и canonical Review; actual identity/auth/quota UNVERIFIED | OFFLINE_TESTED; live BLOCKED_ELIGIBILITY / AGE-GATED / DISABLED |
 | Fake Story/Visual/Codex | FakeAdapter | Локальные JSON fixtures, validators и queue/recovery | IMPLEMENTED только для симуляции; не просмотр MP4 и не реальное производство |
 | Existing AI_VIDEO_02 | Piper, WAV/cache, Timeline/MLT, FFmpeg, technical QA | Существующий производственный движок | Связь v2 с production jobs NOT_IMPLEMENTED; движок в этом пакете не запускался |
 | Windows runner / RTX 4050 | Локальное исполнение тяжёлых операций | Целевая площадка; готовность GPU/runner не подтверждается документацией | Регистрация runner запрещена до отдельного решения |
@@ -24,11 +24,20 @@ Python Coordinator управляет задачами; официальные �
 
 Antigravity остаётся отключённым до подтверждения соответствия официальным
 возрастным и другим требованиям. Не выполнять login, model smoke, auth migration,
-не копировать credentials и не искать обходные маршруты. Cursor и второй
-Antigravity account не являются альтернативными ветвями текущей целевой схемы.
+не копировать credentials и не искать обходные маршруты. Два разных account
+bindings — обязательная цель, не разрешение подключить второй аккаунт или
+устранить возрастное ограничение. Cursor/Codex/API не заменяют эти роли.
 Исторические эксперименты остаются evidence, не действующим планом подключения.
 Автоматическая ротация аккаунтов запрещена; неизвестные квоты — null.
 Никаких платных API без отдельного решения владельца.
+
+PROVIDERS-01: [протокол, квоты и ограничения](DUAL_PROVIDER_INTEGRATION.md).
+Text, image/frame, frame sequence, full video — отдельные capabilities, все
+actual значения UNVERIFIED. Документированный текстовый input и путь MP4 не
+подтверждают media delivery. Requested model не становится returned model;
+последний null без host evidence. Accounts connected=0, live requests=NOT_RUN.
+Разные identity hashes не доказывают независимые квоты. Fake19 остаётся старым
+симулятором, не выполнением требования о двух реальных работниках.
 
 Историческое свидетельство Codex: reports/multi_ai_v2/evidence/20261020T131633Z/
 codex_probe.json, CLI 0.163.0-alpha.10.2, exit=0, MULTI-AI-V2-OK, один запрос,
