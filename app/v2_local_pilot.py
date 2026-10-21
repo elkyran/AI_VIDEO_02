@@ -43,7 +43,7 @@ def safe_root(value):
     from .multi_ai_v2 import local_root
     raw = Path(value).absolute()
     for part in (raw, *raw.parents):
-        if part.exists() and (part.is_symlink() or getattr(part.stat(), 'st_file_attributes', 0) & 0x400):
+        if part.is_symlink() or (part.exists() and getattr(part.lstat(), 'st_file_attributes', 0) & 0x400):
             raise StudioError('PATH_UNSAFE', 'Pilot paths cannot contain reparse points')
     root = local_root(raw)
     if REPO.is_relative_to(root):
@@ -97,6 +97,14 @@ class PilotPermit:
         self.validate()
 
     def validate(self):
+        # Check children before any local worker can follow cache/output paths.
+        # Walk never enters a link: inspect all names before descending.
+        safe_root(self.root)
+        for directory, dirs, files in os.walk(self.root, followlinks=False):
+            for name in dirs+files:
+                child=Path(directory)/name
+                if child.is_symlink() or getattr(child.lstat(),'st_file_attributes',0) & 0x400:
+                    raise StudioError('PATH_UNSAFE','Pilot descendants cannot be symlinks or reparse points')
         doc = self.document
         TypeAdapter(Identifier).validate_python(doc['run_id'])
         if (content_hash(self.path) != self.sha256 or json.loads(self.path.read_text(encoding='utf-8')) != doc
@@ -271,7 +279,7 @@ class LocalPilot:
         self.permit = PilotPermit(root, opt_in=opt_in)
         self.root = self.permit.root
         self.run_id = self.permit.document['run_id']
-        self.engine = self.root/'engine'
+        self.engine = workspace_path(self.root,'engine',for_write=True)
         storage_check(self.root)
         self.q = RunCoordinator(self.root/'coordinator', adapters={'local': HostAdmissionAdapter(self.permit)},
                                 local_pilot=self.permit)
@@ -338,7 +346,7 @@ class LocalPilot:
             return registry.asset(self.run_id,identifier,verify=True)
 
     def command(self, label, command, *, timeout=180):
-        folder=self.root/'logs';folder.mkdir(exist_ok=True)
+        folder=workspace_path(self.root,'logs',for_write=True);folder.mkdir(exist_ok=True)
         prefix=folder/(label+'_'+uuid.uuid4().hex[:10])
         started=time.monotonic()
         with prefix.with_suffix('.log').open('x',encoding='utf-8') as stream:
@@ -352,7 +360,7 @@ class LocalPilot:
 
     def graphic(self, scene_id):
         relative='visuals/'+scene_id+'.png'
-        path=self.engine/relative
+        path=workspace_path(self.engine,relative,for_write=True)
         if not path.exists():
             folder=path.parent;folder.mkdir(parents=True,exist_ok=True)
             # Fixed host-authored drawing code, no imported media or model output.
@@ -615,7 +623,8 @@ $g.Dispose();$bitmap.Dispose();$title.Dispose();$body.Dispose()
 
     def deliver(self):
         value=self.film(2)
-        destination=self.root/'portable';copy=self.root/'portable_copy'
+        destination=workspace_path(self.root,'portable',for_write=True)
+        copy=workspace_path(self.root,'portable_copy',for_write=True)
         prior=self.checkpoint('pilot_delivery','local')
         if prior:
             manifest=verify_portable(destination)

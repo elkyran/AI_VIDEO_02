@@ -2,6 +2,7 @@
 from copy import deepcopy
 import json
 import hashlib
+import os
 from pathlib import Path
 import tempfile
 import subprocess
@@ -69,6 +70,21 @@ class LocalPilotTests(unittest.TestCase):
         foreign=self.root/'foreign'
         with self.assertRaises(ValueError):RunCoordinator(foreign,local_pilot=permit)
         self.assertFalse(foreign.exists())
+
+    def test_junction_cache_escape_is_rejected_before_job_or_graphic_write(self):
+        outside=Path(self.temporary.name)/'outside';outside.mkdir()
+        sentinel=outside/'keep.txt';sentinel.write_text('original fixture')
+        link=self.root/'engine/cache'
+        if os.name=='nt':
+            result=subprocess.run(['cmd','/c','mklink','/J',str(link),str(outside)],capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr)
+        else:
+            link.symlink_to(outside,target_is_directory=True)
+        with patch.object(JobManager,'enqueue') as enqueue:
+            with self.assertRaises(StudioError) as caught:PilotPermit(self.root,opt_in=True)
+            self.assertEqual(caught.exception.code,'PATH_UNSAFE');enqueue.assert_not_called()
+        self.assertEqual(sentinel.read_text(),'original fixture')
+        self.assertEqual({p.name for p in outside.iterdir()},{'keep.txt'})
 
     def test_low_storage_fails_before_runtime_or_jobs(self):
         with patch('app.v2_local_pilot.shutil.disk_usage',return_value=type('Usage',(),{'free':4*1024**3})()), \
