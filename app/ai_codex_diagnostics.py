@@ -105,12 +105,18 @@ def _windows_job(process):
     class Extended(ctypes.Structure):
         _fields_ = [("basic", Basic), ("io", IO), ("process_memory", ctypes.c_size_t), ("job_memory", ctypes.c_size_t),
                     ("peak_process_memory", ctypes.c_size_t), ("peak_job_memory", ctypes.c_size_t)]
+    class Accounting(ctypes.Structure):
+        _fields_ = [(name, ctypes.c_longlong) for name in ("user_time", "kernel_time", "period_user", "period_kernel")] + [
+            (name, wintypes.DWORD) for name in ("page_faults", "total", "active", "terminated")]
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     kernel.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
     kernel.CreateJobObjectW.restype = wintypes.HANDLE
     kernel.SetInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
     kernel.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
     kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
+    kernel.QueryInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p,
+                                                wintypes.DWORD, ctypes.c_void_p]
     handle = kernel.CreateJobObjectW(None, None)
     limits = Extended()
     limits.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
@@ -118,39 +124,68 @@ def _windows_job(process):
         if handle:
             kernel.CloseHandle(handle)
         raise _DiagnosticError("cleanup_unverified", "Unable to establish ownership of the diagnostic process tree.")
-    return kernel, handle
+    return kernel, handle, Accounting
 
 
-def _stop(process, job=None):
-    """Close only the process created here; never a PID supplied by a client."""
-    if job:
-        job[0].CloseHandle(job[1])
-    elif os.name != "nt":
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    if process.poll() is None:
-        if os.name == "nt":
-            try:
-                subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                               stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                               timeout=3, creationflags=subprocess.CREATE_NO_WINDOW, check=False)
-            except (OSError, subprocess.TimeoutExpired):
-                process.kill()
-        else:
+def _stop(process, job=None, *, readers=(), timeout=3.0):
+    """Verify the owned tree has exited before releasing its pipes and handles.
+
+    Closing a Windows job requests termination but does not wait for descendants
+    to release their cwd and inherited pipe handles. Keep the job queryable until
+    its active count reaches zero, even when the direct CLI already exited.
+    """
+    deadline = time.monotonic() + timeout
+    failure = False
+    try:
+        if job:
+            import ctypes
+            kernel, handle, accounting_type = job
+            if not kernel.TerminateJobObject(handle, 1):
+                raise _DiagnosticError("cleanup_unverified", "Unable to terminate the owned diagnostic process tree.")
+            while True:
+                accounting = accounting_type()
+                if not kernel.QueryInformationJobObject(handle, 1, ctypes.byref(accounting), ctypes.sizeof(accounting), None):
+                    raise _DiagnosticError("cleanup_unverified", "Unable to query the owned diagnostic process tree.")
+                if accounting.active == 0:
+                    break
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise _DiagnosticError("cleanup_unverified", "The owned diagnostic process tree did not terminate before its deadline.")
+                # Each bounded wait follows a concrete nonzero active-process observation.
+                threading.Event().wait(min(.01, remaining))
+        elif os.name != "nt":
             try:
                 os.killpg(process.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-        try:
-            process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
+        elif process.poll() is None:
+            # Job assignment failed: only the process handle created here is safe.
             process.kill()
-            process.wait(timeout=2)
-    for pipe in (process.stdin, process.stdout, process.stderr):
-        if pipe and not pipe.closed:
-            pipe.close()
+    except (_DiagnosticError, OSError, subprocess.TimeoutExpired):
+        failure = True
+    finally:
+        if job and not job[0].CloseHandle(job[1]):
+            failure = True
+        try:
+            process.wait(timeout=max(0, deadline - time.monotonic()))
+        except (OSError, subprocess.TimeoutExpired):
+            failure = True
+        # Termination delivers EOF before buffered stream.close(), which could
+        # otherwise wait without a bound on a reader's held buffer lock.
+        for reader in readers:
+            reader.join(timeout=max(0, deadline - time.monotonic()))
+        live_readers = any(reader.is_alive() for reader in readers)
+        failure = failure or live_readers
+        for pipe in (process.stdin, process.stdout, process.stderr):
+            if pipe and not pipe.closed and (pipe is process.stdin or not live_readers):
+                try:
+                    pipe.close()
+                except OSError:
+                    failure = True
+        if os.name == "nt" and process.returncode is not None:
+            process._handle.Close()
+    if failure:
+        raise _DiagnosticError("cleanup_unverified", "Account diagnostic process, stream or handle cleanup could not be verified.")
 
 
 def diagnose_codex(command: list[str], *, cwd, env, timeout: float = 20.0) -> dict:
@@ -310,11 +345,10 @@ def diagnose_codex(command: list[str], *, cwd, env, timeout: float = 20.0) -> di
     finally:
         stopped.set()
         if process is not None:
-            _stop(process, job)
-        for reader in readers:
-            reader.join(timeout=2)
-        if any(reader.is_alive() for reader in readers):
-            result["error"] = {"code": "cleanup_unverified", "reason": "Account diagnostic stream cleanup could not be verified."}
-            result["authenticated"] = False
-            result["identity_verified"] = False
+            try:
+                _stop(process, job, readers=readers)
+            except _DiagnosticError as exc:
+                result["error"] = {"code": exc.code, "reason": exc.reason}
+                result["authenticated"] = False
+                result["identity_verified"] = False
     return result
