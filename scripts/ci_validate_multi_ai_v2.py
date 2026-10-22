@@ -21,6 +21,7 @@ from app.editorial import EditPlan, Scene
 from app.v2_contracts import Artifact, Brief, Result, Review, Task
 from app.v2_run_config import HostRunConfig
 from app.v2_provider_protocol import DualWorkerConfig
+from app.v2_acquisition_contracts import ACQUISITION_OUTPUTS
 
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 SETUP_PYTHON_SHA = "ece7cb06caefa5fff74198d8649806c4678c61a1"
@@ -305,7 +306,7 @@ def validate_ci_workflow() -> None:
                      "model_requests", "paid_api_requests", "production_started",
                      "$value.status -ne 'passed'", "$checks.status -ne 'passed'",
                      "$checks.test_count", "$expectedGroups", "$observedGroups",
-                     "$expectedTimeout", "$testsRecorded -lt 541", "$skipsRecorded -gt 3", "short-path alias limitation",
+                     "$expectedTimeout", "$testsRecorded -lt 623", "$skipsRecorded -gt 3", "short-path alias limitation",
                      "$check.group -in @('v2', 'contracts')"):
         require(required in envelope_text, f"Evidence envelope check is missing {required}")
 
@@ -330,6 +331,7 @@ def generated_schemas() -> dict[str, dict]:
         "review": Review,
         "host_run_config": HostRunConfig,
         "dual_worker_config": DualWorkerConfig,
+        **ACQUISITION_OUTPUTS,
     }
     return {f"{name}.schema.json": model.model_json_schema() for name, model in models.items()}
 
