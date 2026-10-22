@@ -101,10 +101,24 @@ class ClosureIntegrationTests(unittest.TestCase):
             def call(*args):
                 with redirect_stdout(io.StringIO()) as out:code=launch(['--config',str(path),*args],host_services=services)
                 value=json.loads(out.getvalue());self.assertEqual(code,0,value);return value
-            value=call('--execute-system','--authorize','start')
+            from app.multi_ai import Coordinator
+            complete=Coordinator._complete;crashed=[]
+            def crash_after_receipt(queue,registry,attempt,payload,host_metadata=None):
+                if host_metadata and host_metadata['expected_output_schema']=='edit_plan' and not crashed:
+                    crashed.append(attempt['id']);raise RuntimeError('receipt-before-completion crash')
+                return complete(queue,registry,attempt,payload,host_metadata)
+            with patch.object(Coordinator,'_complete',new=crash_after_receipt):
+                with self.assertRaisesRegex(RuntimeError,'receipt-before-completion'):call('--execute-system','--authorize','start')
+            self.assertEqual(len(director.tasks),1)
+            value=call('--execute-system','resume')
             self.assertEqual(value['status'],'SIMULATION_SUCCEEDED',value)
             self.assertFalse(value['production_started']);self.assertFalse(value['uploaded'])
             self.assertEqual(len(director.tasks),1)
+            from app.v2_acceptance import fingerprint
+            manifest=json.loads((Path(config.root)/value['results']['portable']/'manifest.json').read_text(encoding='utf-8'))
+            lineage=manifest['acquisition_lineage'];self.assertEqual(lineage['brief_sha256'],fingerprint(config.brief.model_dump()))
+            self.assertEqual(lineage['citations'][0]['source_sha256'],config.inputs.sources[0].sha256)
+            self.assertEqual(lineage['citations'][0]['edition'],config.inputs.sources[0].edition)
             scene,measured=proposal(director.tasks[0]['context'])
             self.assertEqual(measured['edit_plan']['duration_ms'],60000)
             self.assertEqual(measured['edit_plan']['subtitle_events'][0]['text'],scene['narration_segments'][0]['text'])
@@ -117,6 +131,8 @@ class ClosureIntegrationTests(unittest.TestCase):
             with Registry(Path(config.root)/'coordinator') as db:
                 rows=[row for row in db.db.execute('SELECT result,payload FROM ai_tasks') if json.loads(row['payload'])['expected_output']=='edit_plan']
                 self.assertEqual(len(rows),1);self.assertEqual(json.loads(rows[0][0])['v2_acceptance']['status'],'ACCEPTED')
+                self.assertEqual(db.db.execute('SELECT count(*) FROM ai_attempts WHERE task_id=(SELECT task_id FROM ai_attempts WHERE id=?)',
+                    (crashed[0],)).fetchone()[0],1)
 
     def test_one_edit_fix_is_addressed_other_scene_is_preserved_and_second_cycle_is_rejected(self):
         from app.v2_acceptance import fingerprint

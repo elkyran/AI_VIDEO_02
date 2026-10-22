@@ -69,7 +69,7 @@ class GenericRecoveryTests(unittest.TestCase):
         manager=self.manager;identifier=self.receipt['job_id']
         record(self.p,'system_worker_identity',identifier,{'attempts':1,'worker_pid':99999999,'birth':'owned'})
         cases=[({'invalidated':1},False,'JOB_STALE'),({'cancel_requested':1},False,'CANCELLED'),
-            ({'attempts':2},False,'RETRY_LIMIT'),({},None,'JOB_LIVENESS_UNVERIFIED'),({},'foreign','JOB_LIVENESS_UNVERIFIED'),
+            ({'attempts':2,'state':'failed','error':json.dumps({'code':'TIMEOUT'})},False,'RETRY_LIMIT'),({},None,'JOB_LIVENESS_UNVERIFIED'),({},'foreign','JOB_LIVENESS_UNVERIFIED'),
             ({'state':'failed','error':json.dumps({'code':'RIGHTS_UNCONFIRMED'})},False,'JOB_TERMINAL'),
             ({'state':'blocked','error':json.dumps({'code':'CAPABILITY_MISSING'})},False,'JOB_TERMINAL')]
         for update,identity,code in cases:
@@ -90,6 +90,23 @@ class GenericRecoveryTests(unittest.TestCase):
         with patch('app.multi_ai_preview.process_identity',return_value=False),patch.object(JobManager,'resume') as resume:
             with self.assertRaises(StudioError) as error:guarded_resume(self.p,manager,manager.status(identifier))
         self.assertEqual(error.exception.code,'JOB_RECOVERY_HOLD');resume.assert_not_called()
+
+    def test_live_final_attempt_polls_and_async_resume_observes_new_worker(self):
+        from app.v2_job_recovery import guarded_resume,record
+        identifier=self.receipt['job_id']
+        self.state(state='running',worker_pid=12345,attempts=2)
+        record(self.p,'system_worker_identity',identifier,{'attempts':2,'worker_pid':12345,'birth':'current'})
+        with patch('app.multi_ai_preview.process_identity',return_value='current'),patch.object(JobManager,'resume') as resume:
+            self.assertFalse(guarded_resume(self.p,self.manager,self.manager.status(identifier)));resume.assert_not_called()
+        self.state(state='failed',worker_pid=None,attempts=1,error=json.dumps({'code':'TIMEOUT'}))
+        observed=[]
+        def sleep(_):
+            if not observed:self.state(state='running',worker_pid=12345,attempts=2);observed.append('running')
+            else:self.state(state='done',worker_pid=None);observed.append('done')
+        with patch.object(JobManager,'_spawn') as spawn,patch('app.multi_ai_preview.process_identity',return_value='current'), \
+             patch('app.v2_pipeline.time.sleep',side_effect=sleep),patch('app.v2_pipeline.verify_audio',return_value={'receipt':True}):
+            self.assertEqual(self.p.synthesize(self.candidate,'same_key'),{'receipt':True})
+        self.assertEqual(observed,['running','done']);spawn.assert_called_once_with(identifier)
 
     def test_explicit_retryable_failure_uses_the_actual_helper_and_binding_tamper_is_rejected(self):
         from app.v2_job_recovery import guarded_resume,existing_request

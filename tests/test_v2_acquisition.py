@@ -114,10 +114,12 @@ class ExtractionTests(unittest.TestCase):
     def test_actual_read_buffer_hash_is_rechecked_after_initial_inventory_verification(self):
         from unittest.mock import patch
         config=source_config(self.folder)
-        read=Path.read_bytes
-        def changed(path):
-            return b'changed after manifest verification' if path.name=='source.txt' else read(path)
-        with patch.object(Path,'read_bytes',new=changed):
+        from app.v2_run_config import verify_inputs
+        def changed(value):
+            result=verify_inputs(value)
+            (Path(value.input_root)/'source.txt').write_bytes(b'changed after manifest verification')
+            return result
+        with patch('app.v2_run_config.verify_inputs',side_effect=changed):
             with self.assertRaises(StudioError) as error:extract_sources(config)
         self.assertEqual(error.exception.code,'SOURCE_CHANGED')
     def setUp(self):

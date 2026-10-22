@@ -51,8 +51,6 @@ def guarded_resume(pipeline, manager, job):
     if job['cancel_requested'] or job['state']=='cancelled' or (job.get('error') or {}).get('code')=='CANCELLED':
         raise StudioError('CANCELLED','Cancellation is terminal for automatic recovery')
     if job['state'] in {'done','pending'}:return False
-    if job['attempts']>=min(3,pipeline.config.budget.attempts):
-        raise StudioError('RETRY_LIMIT','Host attempt budget exhausted; no automatic restart')
     if job['state']=='running':
         identity=checkpoint(pipeline,'system_worker_identity',job['job_id'])
         if not identity or (identity['attempts'],identity['worker_pid'])!=(job['attempts'],job['worker_pid']):
@@ -69,6 +67,8 @@ def guarded_resume(pipeline, manager, job):
             raise StudioError('JOB_TERMINAL','Failure is outside the explicit retryable error policy')
     else:
         raise StudioError('JOB_TERMINAL','State is outside automatic recovery scope')
+    if job['attempts']>=min(3,pipeline.config.budget.attempts):
+        raise StudioError('RETRY_LIMIT','Host attempt budget exhausted; no automatic restart')
     token=fingerprint({k:job[k] for k in ('job_id','input_revision','attempts','worker_pid','parameters')})
     with Registry(pipeline.q.root) as registry,registry.transaction():
         intents=[json.loads(r[0]) for r in registry.db.execute(

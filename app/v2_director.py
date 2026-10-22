@@ -27,6 +27,7 @@ def fix_controller(context, *, authorized, cycles):
     if not authorized or cycles!=1:raise StudioError('NEEDS_REVIEW','One explicit host fix budget is required')
     if len(issues)!=1:raise StudioError('NEEDS_REVIEW','Only one unambiguous addressed edit issue is executable')
     issue=issues[0];locations={p['placement_id'] for p in prior['shot_placements']}
+    if issue.required_evidence!='metadata_only':raise StudioError('NEEDS_REVIEW','Requested fix needs media evidence unavailable in this package')
     if issue.category not in {'continuity','repetition','pacing','technical'} or issue.location not in locations:
         owner='gemini_story' if issue.category in {'story_causality','motivation'} else 'gemini_visual' if issue.category=='visual_relevance' else None
         raise StudioError('NEEDS_REVIEW','Requested scope requires '+(owner or 'owner')+'; automatic edit-only controller cannot perform it')
@@ -41,6 +42,20 @@ def proposal(context):
     if scene is None or measured is None:
         raise StudioError('DIRECTOR_MEASUREMENTS_REQUIRED','Director needs accepted Scene and measured WAV proposal')
     return scene,measured
+
+
+def validate_fix_delta(payload,context,config):
+    decision=fix_controller(context,authorized=config.acquisition.auto_fix_authorized,cycles=config.brief.auto_fix_cycles)
+    prior=next(v for v in context['dependency_results'].values() if 'plan_id' in v)
+    expected=deepcopy(prior)
+    if decision['action']=='execute':
+        index=next(i for i,p in enumerate(prior['shot_placements']) if p['placement_id']==decision['location'])
+        if len(payload['shot_placements'])!=len(prior['shot_placements']):
+            raise StudioError('REVISION_SCOPE','Fix changed placement count')
+        expected['shot_placements'][index]=payload['shot_placements'][index]
+        expected['important_decisions']=payload['important_decisions']
+    if payload!=expected:raise StudioError('REVISION_SCOPE','Edit fix changed another placement or unrelated field')
+    return payload
 
 
 def validate_plan(payload, context):
@@ -104,6 +119,13 @@ class DirectorAdapter:
         return handle
 
     def poll(self,handle):
+        try:return self._poll(handle)
+        except Exception as error:
+            self.pending.pop(handle,None)
+            return [{'type':'failed','failure':{'kind':'invalid_input','code':getattr(error,'code','DIRECTOR_INVALID'),
+                'message':'Structured director result rejected; inspect exact accepted dependencies','retryable':False}}]
+
+    def _poll(self,handle):
         if handle.startswith('reuse_'):
             task=self.requests[handle]
             if task.get('_reused'):return []
@@ -132,14 +154,8 @@ class DirectorAdapter:
             task=self.requests[handle];contract=Task.model_validate(task['context']['v2_contract'])
             payload=validate_plan(event['result'],task['context'])
             decision=task['context'].get('targeted_fix')
-            if decision and decision['action']=='execute':
-                prior=next(v for v in task['context']['dependency_results'].values() if 'plan_id' in v)
-                expected=deepcopy(prior)
-                index=next(i for i,p in enumerate(prior['shot_placements']) if p['placement_id']==decision['location'])
-                expected['shot_placements'][index]=payload['shot_placements'][index]
-                expected['important_decisions']=payload['important_decisions']
-                if payload!=expected:
-                    raise StudioError('REVISION_SCOPE','Edit fix changed another placement or unrelated field')
+            if decision:
+                validate_fix_delta(payload,task['context'],self.pipeline.permit.node(contract.task_id)[1])
             artifact=self.pipeline.q.store.put_json(contract.run_id,payload,simulated=True)
             result=Result(task_id=contract.task_id,run_id=contract.run_id,acceptance_key=task['attempt_id'],
                 expected_output_schema='edit_plan',input_version=contract.input_version,input_hashes=contract.input_hashes,
@@ -166,7 +182,7 @@ class DirectorAdapter:
 class SystemDispatch:
     """Python host stages and Codex tasks share the existing adapter key only."""
     is_simulated=True
-    is_local=False
+    is_local=True  # Receipt recovery only; is_simulated keeps tool/live gates intact.
     def __init__(self,host,director):self.host,self.director=host,director;self.handles={}
     def start(self,task,profile,attempt_dir=None):
         adapter=self.director if task['context']['v2_contract']['role']=='codex' else self.host

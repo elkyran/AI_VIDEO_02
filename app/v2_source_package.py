@@ -36,7 +36,9 @@ def inventory(root):
 
 def verify(folder):
     folder=no_links(folder)
-    manifest=json.loads((folder/MANIFEST).read_text(encoding='utf-8'))
+    file=no_links(folder/MANIFEST)
+    if file.stat().st_size>1024**2:raise StudioError('SOURCE_CLOSURE','Source inventory exceeds its fixed bound')
+    manifest=json.loads(file.read_text(encoding='utf-8'))
     actual={p.relative_to(folder).as_posix() for p in folder.rglob('*') if p.is_file()}
     if actual!=set(manifest['files'])|{MANIFEST}:
         raise StudioError('SOURCE_CLOSURE','Source package has missing or unlisted files')

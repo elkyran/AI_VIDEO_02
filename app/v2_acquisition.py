@@ -47,7 +47,8 @@ def extract_sources(config):
     for source in bible.sources:
         if source.size > policy.max_source_bytes:
             raise StudioError('SOURCE_BUDGET', 'A permitted source exceeds the explicit extraction bound')
-        raw = no_links(Path(config.input_root)/source.path).read_bytes()
+        with no_links(Path(config.input_root)/source.path).open('rb') as stream:
+            raw = stream.read(min(source.size,policy.max_source_bytes)+1)
         import hashlib
         if len(raw) != source.size or hashlib.sha256(raw).hexdigest() != source.sha256:
             raise StudioError('SOURCE_CHANGED', 'Read source bytes differ from the permitted size/hash')

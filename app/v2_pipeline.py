@@ -146,8 +146,14 @@ class SystemPermit:
             if any(v['context'].get('acquisition_scope')!=scope for v in (task,requested)):
                 raise StudioError('SYSTEM_PERMISSION_REQUIRED','Acquisition context differs from original host scope')
         if node['stage'] in {'director','director_fix'}:
-            from .v2_director import validate_plan
-            validate_plan(result.payload,requested['context'])
+            from .v2_director import validate_plan,validate_fix_delta
+            # Rebuild from the canonical gate, including on manual completion or
+            # recovery. Persisted request dependency dictionaries grant no scope.
+            with Registry(self.root/'coordinator') as registry:
+                context=self.pipeline.q.result_gate.dependency_context(registry,task)
+            context.update(project_id=config.run_id,scene_id=node['scene_id'],scene_version=node['version'])
+            validate_plan(result.payload,context)
+            if node['stage']=='director_fix':validate_fix_delta(result.payload,context,config)
         if result.payload != node['value'] and node['stage'] == 'scene' and not node.get('acquisition'):
             raise StudioError('STALE_INPUTS', 'Scene payload differs from approved inputs')
         if node['stage'] == 'worker_scene' and result.payload != node['value']:
@@ -346,6 +352,7 @@ class SystemPipeline(MeasuredEngine):
                 ArtifactStore(self.root/'coordinator'), pipeline=self)
         self.q = RunCoordinator(self.root/'coordinator', adapters=adapters, system_permit=self.permit,
             worker_routes=config.worker_routes,defer_recovery=self.is_acquisition)
+        self.permit.pipeline=self
         self.bridge=None
         if not self.is_acquisition:
             self.initialize_bridge(config)
@@ -623,7 +630,7 @@ class SystemPipeline(MeasuredEngine):
             if newly_submitted:
                 observe_new_worker(self,job)
                 if job['state']=='running':newly_submitted=False
-            guarded_resume(self,manager,job)
+            if guarded_resume(self,manager,job):newly_submitted=True
             job=manager.status(job['job_id'])
             if job['state']=='done':break
             if time.monotonic() > deadline:
@@ -710,6 +717,15 @@ class SystemPipeline(MeasuredEngine):
         files['qa.json'] = {'sha256': content_hash(folder/'qa.json'), 'bytes': (folder/'qa.json').stat().st_size}
         manifest = {'run_id': self.run_id, 'version': self.config.version, 'files': files,
             'uploaded': False, 'remote_sync': 'UNVERIFIED', 'editorial_review': 'PENDING_OWNER', 'full_video_creative_qa': 'NOT_RUN'}
+        if getattr(self,'is_acquisition',False):
+            from .v2_release_plan import acquisition_graph
+            acquisition=acquisition_graph(self.host_config)
+            expansion=self.accepted(acquisition[-1]['task_id'])
+            manifest['acquisition_lineage']={'brief_sha256':fingerprint(self.host_config.brief.model_dump()),
+                'host_authority':expansion['authority'],'source_manifest_sha256':
+                    self.accepted(acquisition[0]['task_id'])['source_manifest_sha256'],
+                'passages_sha256':fingerprint(self.accepted(acquisition[0]['task_id'])),
+                'expansion_sha256':fingerprint(expansion),'citations':expansion['citation_bindings']}
         if not (folder/'manifest.json').exists():
             write_generated_json(folder, 'manifest.json', manifest)
         if verify_portable(folder, allowed_suffixes=PACKAGE_SUFFIXES) != manifest:
