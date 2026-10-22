@@ -571,6 +571,8 @@ class SystemPipeline(MeasuredEngine):
                 for item in dependency['assets']:
                     assets[item['id']] = item
                 cursor += edit.duration_ms
+            if self.config.acquisition and abs(cursor-self.config.brief.target_minutes*60000)>self.config.acquisition.duration_tolerance_ms:
+                raise StudioError('DURATION_REQUIRES_REVIEW','Measured WAV duration exceeds the explicit Brief tolerance; no speech was trimmed or accelerated')
             edit = EditPlan(project_id=self.run_id, plan_id=derived_id('assembly', node['task_id']), scene_id='assembly',
                 version=self.config.version, scene_version=self.config.version, voice_version=fingerprint([d['edit_plan']['voice_version'] for d in deps]),
                 duration_ms=cursor, shot_placements=pictures, voice_placements=voices, subtitle_events=subtitles,
