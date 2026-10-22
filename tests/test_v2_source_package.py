@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 from app.registry import StudioError
@@ -95,6 +96,9 @@ class SourcePackageTests(unittest.TestCase):
                 path=extracted/relative;path.mkdir(parents=True,exist_ok=True)
                 (path/'fixture.bin').write_bytes(b'not an executable')
             self.assertEqual(verify(extracted)['external_dependencies'],dependencies)
+            def unreadable(*args,**kwargs):kwargs['onerror'](PermissionError('fixture enumeration denied'))
+            with patch('app.v2_source_package.os.walk',side_effect=unreadable):
+                with self.assertRaises(StudioError):verify(extracted)
             for relative in ('app/extra.py','scripts/extra.py','config/extra.json','models/unknown.onnx',
                              'workspace/studio/registry.sqlite','tools/Other/extra.bin'):
                 path=extracted/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'unlisted')

@@ -74,7 +74,8 @@ def verify(folder):
     directories={parent.as_posix() for name in files|set(INSTALL_ROOTS)
                  for parent in Path(name).parents if parent!=Path('.')}
     directories.update(INSTALL_ROOTS)
-    for directory,dirs,names in os.walk(folder,followlinks=False):
+    def walk_error(_):raise StudioError('SOURCE_CLOSURE','Source package directory could not be checked')
+    for directory,dirs,names in os.walk(folder,followlinks=False,onerror=walk_error):
         for name in list(dirs):
             path=no_links(Path(directory)/name);relative=path.relative_to(folder).as_posix()
             if relative not in directories:
