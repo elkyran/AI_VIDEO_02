@@ -8,7 +8,7 @@ import unittest
 import zipfile
 
 from app.registry import StudioError
-from app.v2_source_package import build,verify
+from app.v2_source_package import build,verify,external_dependencies,MANIFEST
 
 CHILD=r'''
 import importlib,json,sys
@@ -28,6 +28,15 @@ from app.registry import Registry,content_hash,write_generated_json
 from app.contracts import ProjectBrief
 from app.operations import Context,ProductionScript,ProductionBlock,synthesize
 from app.production_bridge import ProductionBridge
+# Missing private profile proofs must block the unchanged general caller before
+# enqueue/native IO; source integrity alone cannot certify a runnable installation.
+with patch('app.jobs.subprocess.Popen') as native:
+    try:ProductionBridge(work).prepare_request('relocated','synthesize',{'script_asset_id':'script'},1,'proof_probe',project_root=root)
+    except FileNotFoundError as exc:
+        profile=json.loads((root/'config/production_profile.json').read_text(encoding='utf-8'))
+        assert Path(exc.filename)==root/profile['provenance']['base_manifest_ref']
+    else:raise AssertionError('Missing profile provenance was accepted')
+    native.assert_not_called()
 manager=JobManager(work)
 with patch('app.jobs.subprocess.Popen') as native:
     manager._spawn('relocated_probe')
@@ -76,6 +85,27 @@ class SourcePackageTests(unittest.TestCase):
                 cwd=folder,capture_output=True,text=True,encoding='utf-8',timeout=30)
             self.assertEqual(child.returncode,0,child.stdout+child.stderr)
             self.assertEqual(json.loads(child.stdout)['native_tools_started'],0)
+            # Conventional installations and exact profile references are external,
+            # optional to source verification, and never copied into the ZIP.
+            dependencies=external_dependencies(extracted)
+            for relative in dependencies['files']:
+                path=extracted/relative;path.parent.mkdir(parents=True,exist_ok=True)
+                path.write_bytes(b'fixture dependency, never used as production proof')
+            for relative in dependencies['install_roots']:
+                path=extracted/relative;path.mkdir(parents=True,exist_ok=True)
+                (path/'fixture.bin').write_bytes(b'not an executable')
+            self.assertEqual(verify(extracted)['external_dependencies'],dependencies)
+            for relative in ('app/extra.py','scripts/extra.py','config/extra.json','models/unknown.onnx',
+                             'workspace/studio/registry.sqlite','tools/Other/extra.bin'):
+                path=extracted/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'unlisted')
+                with self.assertRaises(StudioError):verify(extracted)
+                path.unlink()
+                if relative.startswith('tools/Other/'):path.parent.rmdir()
+            manifest=extracted/MANIFEST;original_manifest=manifest.read_bytes()
+            changed=json.loads(original_manifest);changed['external_dependencies']['install_roots'].append('app')
+            manifest.write_text(json.dumps(changed),encoding='utf-8')
+            with self.assertRaises(StudioError):verify(extracted)
+            manifest.write_bytes(original_manifest)
             script=extracted/'scripts/synthesize_script.py';original=script.read_bytes();script.write_bytes(original+b'\n# changed\n')
             with self.assertRaises(StudioError):verify(extracted)
             script.write_bytes(original);script.unlink()
