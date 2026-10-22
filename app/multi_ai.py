@@ -49,7 +49,7 @@ class Coordinator:
     keeps its reservations; live access comes from a separate account manager.
     """
 
-    def __init__(self, workspace, adapters=None, profile_source=None, result_observer=None, result_gate=None, worker_routes=None):
+    def __init__(self, workspace, adapters=None, profile_source=None, result_observer=None, result_gate=None, worker_routes=None, defer_recovery=False):
         from .v2_routes import WorkerRoutes
         self.worker_routes = WorkerRoutes.model_validate_json(worker_routes.model_dump_json()) if worker_routes is not None else None
         self.workspace = Path(workspace).resolve()
@@ -142,7 +142,8 @@ class Coordinator:
                                                 (profile["profile_id"], canonical_json(profile)))
                 if self.result_gate and hasattr(self.result_gate, 'initialize'):
                     self.result_gate.initialize(registry)
-            self._recover()
+            if not defer_recovery:
+                self._recover()
             self._flush_profile_reports()
         except BaseException:
             self.close()
@@ -372,7 +373,7 @@ class Coordinator:
                 registry.db.execute("UPDATE ai_profile_reports SET delivered=1 WHERE attempt_id=?", (row["attempt_id"],))
             self._report_backoff.pop(row["attempt_id"], None)
 
-    def enqueue(self, task, *, _assignment=None):
+    def enqueue(self, task, *, _assignment=None, _registry=None):
         from .ai_adapters import sanitize
         spec = sanitize(dict(task))
         spec.setdefault("schema_version", 1)
@@ -431,7 +432,9 @@ class Coordinator:
                 raise StudioError("SCHEMA_INVALID", "Unknown active role assignment")
             spec["assignment"] = sanitize(dict(_assignment))
         request_hash = _hash(spec)
-        with self._lock, Registry(self.workspace) as registry, registry.transaction():
+        from contextlib import nullcontext
+        with self._lock, (Registry(self.workspace) if _registry is None else nullcontext(_registry)) as registry, \
+                (registry.transaction() if _registry is None else nullcontext()):
             prior = registry.db.execute("SELECT * FROM ai_tasks WHERE id=?", (spec["task_id"],)).fetchone()
             if prior:
                 if prior["request_hash"] != request_hash:
@@ -461,6 +464,18 @@ class Coordinator:
                                  request_hash, int(bool(spec["pinned"])), now, now))
             self._event(registry, "task_enqueued", {"simulated": spec["execution_mode"] == "simulated"}, spec["task_id"])
             return self._task(registry.db.execute("SELECT * FROM ai_tasks WHERE id=?", (spec["task_id"],)).fetchone())
+
+    def enqueue_batch(self, specs, *, receipt, operation_key):
+        """One existing Registry transaction/CAS boundary, no second queue or acceptance store."""
+        with self._lock, Registry(self.workspace) as registry, registry.transaction():
+            old = registry.db.execute("SELECT payload FROM ai_events WHERE kind='system_expansion' AND task_id=?",
+                                     (operation_key,)).fetchone()
+            if old and json.loads(old[0]) != receipt:
+                raise StudioError('IDEMPOTENCY_CONFLICT', 'Expansion key already binds other accepted inputs')
+            for spec in specs:
+                self.enqueue(spec, _registry=registry)
+            if not old:
+                self._event(registry, 'system_expansion', receipt, operation_key)
 
     def snapshot(self):
         with self._lock, Registry(self.workspace) as registry:

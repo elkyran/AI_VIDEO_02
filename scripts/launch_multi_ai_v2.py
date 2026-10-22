@@ -25,7 +25,7 @@ def _blocked(code, action):
     return 5
 
 
-def main(argv=None):
+def main(argv=None, *, host_services=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, help='Explicit owner-approved host JSON; no automatic studio scan')
     parser.add_argument('--execute-system', action='store_true')
@@ -67,7 +67,7 @@ def main(argv=None):
             for command in preflight_commands:
                 output = io.StringIO()
                 with redirect_stdout(output):
-                    code = system_main([*base, command])
+                    code = system_main([*base, command],host_services=host_services)
                 report = json.loads(output.getvalue())
                 checks[command] = report
                 if code or report.get('blockers'):
@@ -86,7 +86,7 @@ def main(argv=None):
             base.extend(['--review', str(no_links(args.review))])
         if args.ticks is not None:
             base.extend(['--ticks', str(args.ticks)])
-        return system_main([*base, command])
+        return system_main([*base, command],host_services=host_services)
     except (ValueError, OSError, ImportError, KeyError, TypeError):
         # Do not echo arbitrary config content, private exception diagnostics,
         # environment values, or credentials into the operator output.

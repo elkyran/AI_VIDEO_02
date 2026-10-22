@@ -31,8 +31,8 @@ REQUIRED_OPERATION = {'wav': 'synthesize', 'compile': 'compile', 'render': 'rend
 PACKAGE_SUFFIXES = {'.mp4', '.mlt', '.json', '.srt', '.png', '.jpg', '.jpeg', '.wav'}
 
 
-def delivery_node(config):
-    parent = graph(config)[-1]['task_id']
+def delivery_node(config, parent=None):
+    parent = parent or graph(config)[-1]['task_id']
     value = {'drive': config.drive.model_dump() if config.drive else None, 'version': config.version}
     return {'task_id': derived_id(config.run_id, 'deliver', 'h'+fingerprint({'parent': parent, **value})),
         'stage': 'deliver', 'value': value, 'dependencies': [parent], 'profile': config.profile_sha256,
@@ -67,8 +67,8 @@ class SystemPermit:
                         or (parent.run_id, parent.key, parent.mode, parent.root) !=
                            (config.run_id, config.key, config.mode, str(self.root))):
                     raise StudioError('IDEMPOTENCY_CONFLICT', 'Revision must extend its exact host configuration')
-                old = {s.scene_id: s for s in parent.inputs.scenes}
-                for scene in config.inputs.scenes:
+                old = {s.scene_id: s for s in getattr(parent.inputs,'scenes',[])}
+                for scene in getattr(config.inputs,'scenes',[]):
                     previous = old.get(scene.scene_id)
                     if previous and scene != previous and scene.version != previous.version+1:
                         raise StudioError('STALE_INPUTS', 'A changed Scene requires the next explicit version')
@@ -110,6 +110,20 @@ class SystemPermit:
         except KeyError as exc:
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'Node is outside the host approved plan') from exc
 
+    def install_expansion(self, pipeline, config):
+        self.validate()
+        authority=fingerprint(config.pinned())
+        if pipeline.permit is not self or not any(h==authority for h,_ in self.configs):
+            raise StudioError('SYSTEM_PERMISSION_REQUIRED','Expansion must retain original host authority')
+        from .v2_acquisition_executor import derive_expansion
+        effective,nodes,receipt=derive_expansion(pipeline,config)
+        if (effective.root,effective.runtime,effective.operations,effective.profile_sha256,effective.budget)!= (
+                config.root,config.runtime,config.operations,config.profile_sha256,config.budget):
+            raise StudioError('SYSTEM_PERMISSION_REQUIRED','Acquisition cannot expand execution authority')
+        for node in [*nodes,delivery_node(effective,nodes[-1]['task_id'])]:
+            self.nodes.setdefault(node['task_id'],(authority,effective,node))
+        return effective,nodes,receipt
+
     def validate_admission(self, coordinator_root, contract, task, requested, result):
         self.validate()
         authority, config, node = self.node(contract.task_id)
@@ -126,7 +140,12 @@ class SystemPermit:
         operation = 'deliver' if node['stage'] == 'deliver' else REQUIRED_OPERATION.get(node['stage'])
         if config.mode != 'simulation' and operation and operation not in config.operations:
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'Operation was not authorized')
-        if result.payload != node['value'] and node['stage'] == 'scene':
+        if node.get('acquisition') and node.get('provider_role')!='python':
+            from .v2_acquisition import acquisition_scope
+            scope=acquisition_scope(config,node['provider_role'])
+            if any(v['context'].get('acquisition_scope')!=scope for v in (task,requested)):
+                raise StudioError('SYSTEM_PERMISSION_REQUIRED','Acquisition context differs from original host scope')
+        if result.payload != node['value'] and node['stage'] == 'scene' and not node.get('acquisition'):
             raise StudioError('STALE_INPUTS', 'Scene payload differs from approved inputs')
         if node['stage'] == 'worker_scene' and result.payload != node['value']:
             raise StudioError('STALE_INPUTS', 'Worker Scene differs from these host-approved inputs')
@@ -275,14 +294,22 @@ class PipelineWorkers(DualWorkerBridge):
 
 
 class SystemPipeline(MeasuredEngine):
-    def __init__(self, config, *, opt_in=False, authorize=False, drive_host=None, worker_fixtures=None):
+    def __init__(self, config, *, opt_in=False, authorize=False, drive_host=None, worker_fixtures=None, host_services=None):
         from .multi_ai_v2 import RunCoordinator
+        from .v2_run_config import BriefInputs
+        from .v2_host_services import host_services as checked_services
+        self.services=checked_services(host_services)
+        self.host_config=config
+        self.is_acquisition=isinstance(config.inputs,BriefInputs) and config.acquisition is not None
+        self.expanded=False
         self.config = config
         from .v2_delivery_host import DriveHostContext
         if drive_host is not None and type(drive_host) is not DriveHostContext:
             raise StudioError('WAITING_AUTH', 'Only an explicit host Drive context can resolve authorization')
-        self.drive_host = drive_host
-        if config.worker_routes is not None and config.mode == 'simulation' and type(worker_fixtures) is not dict:
+        self.drive_host = drive_host or self.services.drive_host
+        if self.is_acquisition and config.mode=='simulation' and self.services.worker_transport is None:
+            raise StudioError('HOST_TRANSPORT_REQUIRED','The source-only offline path needs an explicit synthetic host transport; live remains disabled')
+        if not self.is_acquisition and config.worker_routes is not None and config.mode == 'simulation' and type(worker_fixtures) is not dict:
             raise StudioError('SYNTHETIC_RESULTS_REQUIRED', 'Explicit synthetic worker results are required; there is no fallback')
         self.permit = SystemPermit(config, opt_in=opt_in, authorize=authorize)
         self.root, self.run_id = self.permit.root, config.run_id
@@ -295,6 +322,8 @@ class SystemPipeline(MeasuredEngine):
             from .v2_storage import ArtifactStore
             slots = {}
             for route in config.worker_routes.routes:
+                if self.is_acquisition and route.role=='codex':
+                    continue
                 if route.role not in {'gemini_story', 'gemini_visual'}:
                     raise StudioError('WORKER_ROUTE_MISMATCH', 'Production stages stay in the existing host engine')
                 slots[route.role] = WorkerSlot(worker_id=route.worker_id, role=route.role, profile_id=route.profile_id,
@@ -304,12 +333,13 @@ class SystemPipeline(MeasuredEngine):
             if set(slots) != {'gemini_story', 'gemini_visual'}:
                 raise StudioError('WORKER_ROUTE_REQUIRED', 'Both fixed Story/Visual routes are required')
             adapters['gemini'] = PipelineWorkers(DualWorkerConfig(story=slots['gemini_story'], visual=slots['gemini_visual']),
-                SyntheticTransport(worker_fixtures), ArtifactStore(self.root/'coordinator'), pipeline=self)
+                self.services.worker_transport if self.is_acquisition else SyntheticTransport(worker_fixtures),
+                ArtifactStore(self.root/'coordinator'), pipeline=self)
         self.q = RunCoordinator(self.root/'coordinator', adapters=adapters, system_permit=self.permit,
-            worker_routes=config.worker_routes)
-        self.bridge = OfflineProductionBridge(self.q, self.engine, source_bundle={
-            'canon': config.inputs.canon.model_dump(), 'root': Path(config.input_root),
-            'manifest_sha256': fingerprint(__import__('app.v2_sources', fromlist=['source_manifest']).source_manifest(config.inputs.canon))})
+            worker_routes=config.worker_routes,defer_recovery=self.is_acquisition)
+        self.bridge=None
+        if not self.is_acquisition:
+            self.initialize_bridge(config)
         try:
             with Registry(self.q.root) as registry, registry.transaction():
                 versions = [json.loads(r[0]) for r in registry.db.execute(
@@ -329,6 +359,21 @@ class SystemPipeline(MeasuredEngine):
             self.nodes = graph(config)
             for node in self.nodes:
                 self.enqueue(node)
+            if self.is_acquisition:
+                from .v2_acquisition_executor import maybe_expand
+                # Reconstruct derived authorities before recovery can admit any
+                # unfinished task from a previously authorized version.
+                from .v2_run_config import BriefInputs
+                for _, previous in reversed(self.permit.configs[1:]):
+                    if isinstance(previous.inputs, BriefInputs) and previous.acquisition:
+                        from .v2_release_plan import acquisition_graph
+                        identifier = acquisition_graph(previous)[-1]['task_id']
+                        with Registry(self.q.root) as registry:
+                            row = registry.db.execute('SELECT status FROM ai_tasks WHERE id=?', (identifier,)).fetchone()
+                        if row and row['status'] == 'completed':
+                            self.permit.install_expansion(self, previous)
+                maybe_expand(self)
+                self.q.queue._recover()
         except BaseException:
             self.q.close()
             raise
@@ -336,7 +381,19 @@ class SystemPipeline(MeasuredEngine):
     def close(self):
         self.q.close()
 
+    def delivery_task(self):
+        nodes = getattr(self, 'nodes', None)
+        return delivery_node(self.config, nodes[-1]['task_id'] if nodes else None)
+
+    def initialize_bridge(self, config):
+        self.bridge = OfflineProductionBridge(self.q,self.engine,source_bundle={
+            'canon':config.inputs.canon.model_dump(),'root':Path(config.input_root),
+            'manifest_sha256':fingerprint(__import__('app.v2_sources',fromlist=['source_manifest']).source_manifest(config.inputs.canon))})
+
     def enqueue(self, node):
+        return self.q.queue.enqueue(self.task_spec(node))
+
+    def task_spec(self, node):
         authority, config, original = self.permit.node(node['task_id'])
         hashes = {'node': fingerprint(node), 'authority': authority, 'profile': config.profile_sha256}
         role = node.get('provider_role', 'python')
@@ -351,18 +408,22 @@ class SystemPipeline(MeasuredEngine):
             context.update(scene_id=node['scene_id'], scene_version=node['version'])
         if role != 'python':
             context['source_text'] = config.brief.topic
-        self.q.queue.enqueue({'task_id': node['task_id'], 'project_id': self.run_id,
+        if node.get('acquisition') and role!='python':
+            from .v2_acquisition import acquisition_scope
+            context['acquisition_scope']=acquisition_scope(config,role)
+        return {'task_id': node['task_id'], 'project_id': self.run_id,
             'role': {'gemini_story': 'writer', 'gemini_visual': 'critic'}.get(role, 'director'),
-            'resource_class': 'cloud' if config.mode == 'simulation' else 'local_heavy',
+            'resource_class': 'cloud' if config.mode == 'simulation' or role!='python' else 'local_heavy',
             'expected_output': node['schema'], 'input_versions': hashes, 'depends_on': node['dependencies'],
-            'context': context, 'max_attempts': config.budget.attempts})
+            'context': context, 'max_attempts': config.budget.attempts}
 
     def accepted(self, identifier):
         with Registry(self.q.root) as registry:
             row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (identifier,)).fetchone()
             accepted = self.q.result_gate.accepted_dependency(registry, row)
         payload = accepted['payload']
-        return payload if 'text' not in payload else json.loads(payload['text'])
+        from .v2_acquisition import unwrapped
+        return unwrapped(payload)
 
     def output_files(self, value, paths):
         value = {**value, 'simulated': False, 'files': {}}
@@ -380,7 +441,13 @@ class SystemPipeline(MeasuredEngine):
                                       (node['task_id'],)).fetchone()
         if old:
             return verify_output(self.root, json.loads(old[0]), simulated=self.config.mode == 'simulation')
-        if self.config.mode == 'simulation':
+        if node.get('acquisition') and node['stage']=='extract_sources':
+            from .v2_acquisition import extract_sources
+            output=extract_sources(self.config)
+        elif node.get('acquisition') and node['stage']=='production_expansion':
+            from .v2_acquisition_executor import expansion_receipt
+            output=expansion_receipt(self,self.config)
+        elif self.config.mode == 'simulation':
             output = {'simulated': True, 'stage': node['stage'], 'node_sha256': fingerprint(node),
                       'dependency_hashes': [fingerprint(d) for d in dependencies], 'production_started': False,
                       'uploaded': False, 'files': {}}
@@ -620,7 +687,7 @@ class SystemPipeline(MeasuredEngine):
         selected = [tasks[n['task_id']] for n in self.nodes]
         completed = [t for t in selected if t['status'] == 'completed']
         current = next((t for t in selected if t['status'] != 'completed'), None)
-        ready = current is None
+        ready = current is None and (not self.is_acquisition or self.expanded)
         blocker = current.get('error') if current else None
         failures = {'authentication': 'WAITING_AUTH', 'quota_exhausted': 'WAITING_QUOTA', 'interrupted': 'FAILED_RETRYABLE'}
         status = ('SIMULATION_SUCCEEDED' if self.config.mode == 'simulation' else 'READY_FOR_OWNER_REVIEW') if ready else (
@@ -634,9 +701,9 @@ class SystemPipeline(MeasuredEngine):
                     if value['package_sha256'] == package['portable_manifest_sha256'] and value['version'] == package['version']:
                         owner_review = json.loads(self.q.store.verify(Artifact.model_validate(value['artifact'])).read_text(encoding='utf-8'))
                         break
-                row = registry.db.execute('SELECT status,error FROM ai_tasks WHERE id=?', (delivery_node(self.config)['task_id'],)).fetchone()
+                row = registry.db.execute('SELECT status,error FROM ai_tasks WHERE id=?', (self.delivery_task()['task_id'],)).fetchone()
             if row and row['status'] == 'completed':
-                delivery = self.accepted(delivery_node(self.config)['task_id'])['delivery']
+                delivery = self.accepted(self.delivery_task()['task_id'])['delivery']
             elif row:
                 delivery = {'status': row['status'], 'blocker': json.loads(row['error']) if row['error'] else None,
                             'uploaded': False}
@@ -666,8 +733,12 @@ class SystemPipeline(MeasuredEngine):
         self.q.queue.resume()
         deadline = time.monotonic()+self.config.budget.seconds
         self.invocation_deadline = deadline
-        for _ in range(ticks if ticks is not None else len(self.nodes)*3):
+        limit=(12*self.host_config.inputs.requested_scene_count+20)*3 if self.is_acquisition else len(self.nodes)*3
+        for _ in range(ticks if ticks is not None else limit):
             self.q.queue.tick()
+            if self.is_acquisition:
+                from .v2_acquisition_executor import maybe_expand
+                maybe_expand(self)
             state = self.status()
             if state['status'] not in {'IN_PROGRESS'} or time.monotonic() > deadline:
                 return state
@@ -723,7 +794,7 @@ class SystemPipeline(MeasuredEngine):
                     raise StudioError('WAITING_AUTH', 'Host authorization does not match this folder/run/version') from None
                 raise StudioError('BLOCKED_UNSUPPORTED', 'Host delivery binding or private session store is unavailable') from None
         self.drive_transport = transport
-        node = delivery_node(self.config)
+        node = self.delivery_task()
         self.enqueue(node)
         self.q.queue.resume()
         for _ in range(3):
@@ -737,7 +808,7 @@ class SystemPipeline(MeasuredEngine):
         return self.accepted(node['task_id'])['delivery']
 
 
-def system_main(argv):
+def system_main(argv, *, host_services=None):
     """The existing app.multi_ai_v2 CLI selects this path only with --config."""
     import argparse
     from .ai_adapters import sanitize
@@ -780,7 +851,7 @@ def system_main(argv):
             result = persist_plan(config, opt_in=args.execute_system and args.authorize)
         else:
             pipeline = SystemPipeline(config, opt_in=args.execute_system, authorize=args.authorize,
-                worker_fixtures=worker_fixtures)
+                worker_fixtures=worker_fixtures,host_services=host_services)
             if args.command in {'run', 'resume'}:
                 if args.ticks is not None and args.ticks < 1:
                     raise ValueError('ticks must be positive')

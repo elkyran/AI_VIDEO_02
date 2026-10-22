@@ -48,6 +48,9 @@ def extract_sources(config):
         if source.size > policy.max_source_bytes:
             raise StudioError('SOURCE_BUDGET', 'A permitted source exceeds the explicit extraction bound')
         raw = no_links(Path(config.input_root)/source.path).read_bytes()
+        import hashlib
+        if len(raw) != source.size or hashlib.sha256(raw).hexdigest() != source.sha256:
+            raise StudioError('SOURCE_CHANGED', 'Read source bytes differ from the permitted size/hash')
         try:
             text = raw.decode('utf-8-sig')
             if not text.strip():
@@ -174,6 +177,8 @@ def validate_acquisition(kind, payload, context):
                 raise StudioError('OUTLINE_INVALID', 'Outline must keep the stable host scene slots')
             resolve_refs(canon,item.fact_refs); resolve_refs(canon,item.assumption_refs,assumptions=True)
     elif kind == 'scene':
+        if any(n.simulated != scope['simulated'] for n in result.narration_segments):
+            raise StudioError('STALE_INPUTS', 'Narration provenance differs from the host request')
         if canon is None or outline is None or extraction is None or result.project_id != scope['run_id']:
             raise StudioError('CANON_REFERENCE_INVALID', 'Scene requires accepted Canon/outline/source passages')
         slot = next((s for s in outline['scenes'] if s['scene_id'] == result.scene_id), None)
@@ -195,11 +200,19 @@ def validate_acquisition(kind, payload, context):
         if len(by_segment)!=len(result.mappings) or set(by_segment)!={n['segment_id'] for n in scene['narration_segments']}:
             raise StudioError('VISUAL_REQUIRED', 'Mappings must cover each accepted narration segment exactly once')
         media = {m['asset_id']:m for m in scope['media']}
+        shot_ids, used = set(), []
         for mapping in result.mappings:
             if (mapping.scene_id != scene['scene_id'] or mapping.scene_version != scene['version']
                     or sum(s.source_out_ms-s.source_in_ms for s in mapping.shots)!=mapping.duration_ms):
                 raise StudioError('VISUAL_REQUIRED', 'Mapping version/ranges do not cover the segment')
             for shot in mapping.shots:
+                if shot.shot_id in shot_ids:
+                    raise StudioError('SCHEMA_INVALID', 'Duplicate acquired shot ID')
+                shot_ids.add(shot.shot_id)
+                if any(p.asset_id == shot.asset_id and p.source_in_ms < shot.source_out_ms
+                        and shot.source_in_ms < p.source_out_ms for p in used) and not (shot.reuse_reason or '').strip():
+                    raise StudioError('REUSE_REASON_REQUIRED', 'Repeated source range needs explicit explanation')
+                used.append(shot)
                 asset=media.get(shot.asset_id)
                 if not asset or asset['kind']=='image' and shot.source_in_ms or asset['kind']=='video' and shot.source_out_ms>asset['duration_ms']:
                     raise StudioError('ASSET_RANGE_INVALID', 'Mapping exceeds host media inventory/ranges')

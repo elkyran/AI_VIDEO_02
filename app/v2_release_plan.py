@@ -34,24 +34,29 @@ def acquisition_graph(config):
                   'runtime': config.runtime, 'renderer': config.renderer}
         if config.worker_routes is not None:
             policy['worker_routes'] = config.worker_routes.model_dump()
+        if config.acquisition is not None:
+            policy['acquisition'] = config.acquisition.model_dump()
         binding = {'stage': stage, 'value': value, 'dependencies': list(dependencies),
                    'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id,
                    'host_execution': fingerprint(policy), 'role': role}
         identifier = derived_id(config.run_id, stage, 'h'+fingerprint(binding))
         nodes.append({'task_id': identifier, **binding, 'scene_id': scene_id,
             'version': config.inputs.version, 'schema': schema, 'acquisition': True})
+        if config.acquisition is not None:
+            nodes[-1]['provider_role'] = role
         return identifier
 
-    source = add('sources', source_manifest(source_inventory(config)))
+    source = add('extract_sources' if config.acquisition else 'sources', source_manifest(source_inventory(config)))
     canon = add('canon', {'source_manifest_sha256': fingerprint(source_manifest(source_inventory(config)))},
         [source], role='gemini_story', schema='canon_bible')
     outline = add('story_outline', {'brief': config.brief.model_dump(),
-        'requested_scene_count': config.inputs.requested_scene_count}, [canon],
+        'requested_scene_count': config.inputs.requested_scene_count}, [canon, source] if config.acquisition else [canon],
         role='gemini_story', schema='story_outline')
     drafts = []
     for index in range(config.inputs.requested_scene_count):
         scene_id = derived_id(config.run_id, 'scene', 'n'+str(index+1))
-        scene = add('scene', {'ordinal': index+1, 'scene_id': scene_id}, [outline],
+        scene = add('acquire_scene' if config.acquisition else 'scene', {'ordinal': index+1, 'scene_id': scene_id},
+            [outline,canon,source] if config.acquisition else [outline],
             role='gemini_story', schema='scene', scene_id=scene_id)
         drafts.append(add('visual_mapping', {'allowed_media': [m.model_dump() for m in config.inputs.media]},
             [scene], role='gemini_visual', schema='segment_visuals', scene_id=scene_id))
@@ -62,20 +67,20 @@ def acquisition_graph(config):
 
 def acquisition_blockers(config):
     """Exact missing capabilities; no inference from a Scene/Review JSON parser."""
-    blockers = [
+    blockers = [] if config.acquisition is not None else [
         'CANON_CAPABILITY_UNVERIFIED: CanonBible acquisition is not supported by the current provider transport',
         'STORY_OUTLINE_CAPABILITY_UNVERIFIED: dynamic story outline acquisition has no verified provider schema',
         'VISUAL_MAPPING_CAPABILITY_UNVERIFIED: SegmentVisuals selection is not implemented by metadata-only Review',
     ]
-    if config.mode == 'simulation':
+    if config.mode == 'simulation' and config.acquisition is None:
         blockers.append('SYNTHETIC_RESULTS_REQUIRED: Brief execution requires explicitly injected synthetic acquisition results; no fixture fallback')
-    else:
+    elif config.mode != 'simulation':
         blockers.append('BLOCKED_ELIGIBILITY: Story and Visual remain AGE-GATED / DISABLED')
     if not config.inputs.media:
         blockers.append('APPROVED_MEDIA_REQUIRED: choose an explicit permitted local media inventory')
-    elif any(m.kind == 'image' for m in config.inputs.media):
+    elif config.mode != 'simulation' and any(m.kind == 'image' for m in config.inputs.media):
         blockers.append('IMAGE_DELIVERY_UNVERIFIED: a local image inventory does not prove worker image delivery')
-    if any(m.kind == 'video' for m in config.inputs.media):
+    if config.mode != 'simulation' and any(m.kind == 'video' for m in config.inputs.media):
         blockers.append('FULL_VIDEO_DELIVERY_UNVERIFIED: an MP4 path does not prove full-video delivery or review')
     return blockers
 

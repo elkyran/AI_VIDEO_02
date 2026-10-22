@@ -259,7 +259,7 @@ def storage(config):
     return {'persistent_bytes': size, 'free_bytes': free, **config.budget.model_dump()}
 
 
-def graph(config):
+def graph(config, *, acquired=False, acquisition_parent=None):
     """IDs bind complete input identities; unaffected scenes retain their exact nodes."""
     if isinstance(config.inputs, BriefInputs):
         from .v2_release_plan import acquisition_graph
@@ -270,6 +270,8 @@ def graph(config):
                   'runtime': config.runtime, 'renderer': config.renderer}
         if config.worker_routes is not None:
             policy['worker_routes'] = config.worker_routes.model_dump()
+        if config.acquisition is not None:
+            policy['acquisition'] = config.acquisition.model_dump()
         binding = {'stage': stage, 'value': value, 'dependencies': list(dependencies),
                    'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id,
                    'host_execution': fingerprint(policy)}
@@ -279,12 +281,12 @@ def graph(config):
         nodes.append({'task_id': identifier, **binding, 'scene_id': scene.scene_id if scene else None,
                       'version': scene.version if scene else 1, 'schema': schema})
         return identifier
-    sources = add('sources', config.inputs.canon.model_dump())
+    sources = add('sources', config.inputs.canon.model_dump(), [acquisition_parent] if acquisition_parent else [])
     story = add('story', {'story': config.inputs.story}, [sources])
     finals = []
     for scene in config.inputs.scenes:
         admission_deps = [story]
-        if config.worker_routes is not None:
+        if config.worker_routes is not None and not acquired:
             worker_scene = add('worker_scene', scene.model_dump(), [story], scene, 'scene', 'gemini_story')
             review = Review(project_id=config.run_id, review_id=derived_id('review', scene.scene_id, 'v'+str(scene.version)),
                 subject_type='scene', subject_id=scene.scene_id, subject_version=scene.version,
@@ -318,9 +320,12 @@ def plan(config):
         raise StudioError('PATH_UNSAFE', 'Input originals and run outputs must be separate trees')
     evidence = verify_inputs(config)
     blockers = []
+    if isinstance(config.inputs, BriefInputs) and config.acquisition and config.worker_routes is None:
+        blockers.append('HOST_ROUTES_REQUIRED: acquisition requires fixed Story and Visual routes')
     if config.worker_routes is not None:
         roles = {r.role for r in config.worker_routes.routes}
-        if roles != {'gemini_story', 'gemini_visual'}:
+        if roles != {'gemini_story', 'gemini_visual'} and not (config.acquisition and
+                {'gemini_story','gemini_visual'} <= roles <= {'gemini_story','gemini_visual','codex'}):
             blockers.append('HOST_ROUTES_REQUIRED: SYSTEM workers require exactly Story and Visual; production remains in the host engine')
         if config.mode != 'simulation':
             blockers.append('BLOCKED_ELIGIBILITY: routed Antigravity workers remain AGE-GATED / DISABLED')

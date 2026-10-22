@@ -102,7 +102,7 @@ def task_status(task, tasks):
 
 
 class RunCoordinator:
-    def __init__(self, root, *, adapters=None, video_evidence_root=None, clock=None, local_pilot=None, system_permit=None, worker_routes=None):
+    def __init__(self, root, *, adapters=None, video_evidence_root=None, clock=None, local_pilot=None, system_permit=None, worker_routes=None, defer_recovery=False):
         self.root = local_root(root)
         if local_pilot is not None:
             from .v2_local_pilot import PilotPermit
@@ -126,7 +126,8 @@ class RunCoordinator:
         self.result_gate = V2ResultGate(self.root, self.store, self.video_evidence)
         self.result_gate.local_pilot = local_pilot
         self.result_gate.system_permit = system_permit
-        self.queue = Coordinator(self.root, adapters=adapters, result_gate=self.result_gate, worker_routes=worker_routes)
+        self.queue = Coordinator(self.root, adapters=adapters, result_gate=self.result_gate, worker_routes=worker_routes,
+                                 defer_recovery=defer_recovery)
         try:
             with Registry(self.root) as registry:
                 registry.db.execute('''CREATE TABLE IF NOT EXISTS ai_v2_runs (
