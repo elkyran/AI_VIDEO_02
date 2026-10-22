@@ -1,5 +1,11 @@
 # PROVIDERS-01: два worker, только offline
 
+SYSTEM-CLOSURE-02: тот же fixed two-account transport теперь принимает CanonBible,
+StoryOutline, Scene и SegmentVisuals wrapper; реальные accepted dependencies
+попадают в context. Исполнение/границы описаны в SYSTEM_CLOSURE_02.md. Codex
+director подключается отдельной factory; он не заменяет Story/Visual. Live доступ
+по-прежнему BLOCKED_ELIGIBILITY; новые offline тесты не проверяют аккаунты.
+
 RELEASE-01 реализует ранее запрошенную host routing границу в существующем
 Coordinator: immutable role→worker→provider→profile→identity/auth_generation.
 Конфигурация `worker_routes` явная; без неё legacy поведение сохраняется.

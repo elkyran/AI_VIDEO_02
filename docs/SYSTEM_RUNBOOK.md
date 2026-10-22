@@ -1,5 +1,10 @@
 # SYSTEM-01: общий запуск
 
+SYSTEM-CLOSURE-02 добавляет executable source-only queue acquisition и host-only
+director/Drive wiring. Текущий scope, команды, source ZIP и оставшиеся software
+gaps: [SYSTEM_CLOSURE_02.md](SYSTEM_CLOSURE_02.md). Ниже описан совместимый
+approved_input/legacy synthetic-handoff путь RELEASE-01.
+
 RELEASE-01: обычный вход Windows — `studio-v2.cmd --config PATH doctor`, затем
 явные `--execute-system --authorize start` только для разрешённой конфигурации.
 [START_HERE](START_HERE.md) содержит короткую последовательность. Старый studio.cmd

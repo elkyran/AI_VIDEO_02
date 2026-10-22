@@ -10,7 +10,7 @@ read-only observation/control и private Drive host interface реализова
 | LOCAL_RUNTIME / APPROVED_INPUT | Config/manifest checks, installed core dependencies; старый PILOT portable проверяется копией; новый TTS/render не запускался | Владелец выбирает approved inputs, реальные runtime paths и отдельно разрешает execution |
 | DUAL_WORKER_ROUTING_OFFLINE | Реальные ветки existing scheduler/gate на synthetic A/B, generation/reservations/quota/recovery | Независимый review RELEASE-01 |
 | STORY_LIVE / VISUAL_LIVE | false, BLOCKED_ELIGIBILITY / AGE-GATED / DISABLED | Допуск и отдельный разрешённый live implementation/verification; обходы запрещены |
-| Canon / outline / visual selection | Brief план содержит реальные требуемые стадии; текущий Scene/Review transport их не реализует | Отдельное review строгих provider capabilities после допустимого доступа |
+| Canon / outline / visual selection | SYSTEM-CLOSURE-02: executable UTF-8 extraction, typed queue/gate acquisition, transactional production expansion; synthetic transport only | Независимый review и отдельный допустимый live gate |
 | DRIVE_REMOTE | false; exact host resolver + DPAPI sessions локально проверены | Owner-authorized callback/folder и отдельный remote readback gate |
 | SELF_HOSTED_RUNNER | false; не регистрировался | Отдельное owner/release authorization после accepted main |
 | EXACT_SHA_CI | Локальные tests не независимый CI | ChatGPT интегрирует/reviews PR9 без действий Codex; hosted CI на точном итоговом SHA |
@@ -22,8 +22,9 @@ ActiveProcesses=0, затем parent/readers/pipes/native handles до bounded d
 TemporaryDirectory.cleanup. Старое failing CI evidence сохраняется.
 
 HostRunConfig schema обратно совместимо расширена BriefInputs и WorkerRoutes;
-число schemas остаётся 9. Нужен существующий PR9 CI sync (9 models, 420/420/180,
-minimum541) и независимый review; защищённые файлы не изменены в RELEASE-01.
+SYSTEM-CLOSURE-02 добавляет 3 canonical outputs: schemas теперь 12. CI sync,
+новые test groups и telemetry перечислены в `reports/multi_ai_v2/system_closure_02/NEEDS_CHATGPT_CHANGE.md`;
+защищённые CI файлы Codex не меняет. Все прежние 596 test IDs должны сохраняться.
 Статические OFFLINE_TESTED — история regression, не runtime probe.
 
 `system_ready_for_autonomous_episode=false`.

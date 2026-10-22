@@ -26,6 +26,10 @@ def _blocked(code, action):
 
 
 def main(argv=None, *, host_services=None):
+    inventory=ROOT/'SOURCE_INVENTORY.json'
+    if inventory.exists():
+        from app.v2_source_package import verify
+        verify(ROOT)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, help='Explicit owner-approved host JSON; no automatic studio scan')
     parser.add_argument('--execute-system', action='store_true')

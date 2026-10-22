@@ -65,6 +65,12 @@ def main(argv=None):
         'tests.test_v2_local_pilot', 'tests.test_v2_system_delivery', 'tests.test_v2_provider_protocol',
         'tests.test_v2_release_routes', 'tests.test_v2_release_plan', 'tests.test_v2_release_operator',
         'tests.test_v2_release_flow']
+    # New tests only. The seven historical groups and all old test IDs stay put.
+    # Both additions retain the existing 180s default; CI-lane synchronization is
+    # proposed explicitly in system_closure_02/NEEDS_CHATGPT_CHANGE.md.
+    groups['acquisition']=['tests.test_v2_acquisition','tests.test_v2_acquisition_pipeline']
+    groups['closure']=['tests.test_v2_closure_handlers','tests.test_v2_closure_integration',
+        'tests.test_v2_closure_delivery','tests.test_v2_source_package']
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/multi_ai_v2/evidence', help='Parent directory only; UTC+UUID child is created exclusively')
     parser.add_argument('--groups', nargs='+', choices=list(groups), default=list(groups))
