@@ -1,5 +1,6 @@
 """Conservative caller guards around the existing JobManager.resume helper."""
 import json
+from pathlib import Path
 
 from .registry import Registry, StudioError
 from .v2_acceptance import fingerprint
@@ -18,6 +19,8 @@ def record(pipeline, kind, job_id, payload):
 
 
 def existing_request(pipeline, manager, script_id, candidate, key):
+    if Path(manager.root).resolve()!=Path(pipeline.engine).resolve():
+        raise StudioError('JOB_OWNERSHIP_UNVERIFIED','Job manager belongs to another engine root')
     with Registry(pipeline.engine) as registry:
         prior=registry.db.execute('SELECT request_hash,response FROM requests WHERE project_id=? AND key=?',
             (pipeline.run_id,key)).fetchone()
@@ -42,6 +45,8 @@ def observe_new_worker(pipeline, job):
 
 
 def guarded_resume(pipeline, manager, job):
+    if Path(manager.root).resolve()!=Path(pipeline.engine).resolve():
+        raise StudioError('JOB_OWNERSHIP_UNVERIFIED','Job manager belongs to another engine root')
     if job['invalidated'] or job['state']=='stale':
         raise StudioError('JOB_STALE','Inputs were invalidated; keep the old job and authorize a new version')
     if job['cancel_requested'] or job['state']=='cancelled' or (job.get('error') or {}).get('code')=='CANCELLED':

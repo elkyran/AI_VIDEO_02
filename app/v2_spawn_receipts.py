@@ -3,6 +3,9 @@ import json
 import os
 from pathlib import Path
 import uuid
+import sqlite3
+import sys
+import time
 
 from .jobs import JobManager
 from .registry import Registry, StudioError
@@ -53,26 +56,45 @@ def binding(pipeline,job):
 
 
 class SpawnObserver:
-    def __init__(self,pipeline):self.pipeline=pipeline;self.intents={}
+    def __init__(self,pipeline,*,deadline=float('inf')):
+        self.pipeline=pipeline;self.intents={};self.deadline=deadline
 
     def __call__(self,phase,job_id,process):
         from .v2_job_recovery import checkpoint,record
-        p=self.pipeline;job=JobManager(p.engine).status(job_id);base=binding(p,job)
+        p=self.pipeline
+        if phase in {'admit','intent'} and time.monotonic()>=self.deadline:
+            raise StudioError('TIME_BUDGET','Deadline expired before job/spawn admission')
+        if phase=='admit':
+            # Called INSIDE the existing enqueue/resume writer transaction. A
+            # read-only connection sees the stable pre-insertion queue snapshot.
+            connection=sqlite3.connect((Path(p.engine)/'registry.sqlite').as_uri()+'?mode=ro',uri=True)
+            try:busy=connection.execute("SELECT 1 FROM jobs WHERE state IN ('pending','running') AND id!=? LIMIT 1",(job_id,)).fetchone()
+            finally:connection.close()
+            if busy:raise StudioError('JOB_QUEUE_OWNERSHIP','Another active job prevents atomic SYSTEM admission')
+            return
+        job=JobManager(p.engine).status(job_id);base=binding(p,job)
         if phase=='intent':
             with Registry(p.engine) as db:
                 active=[r[0] for r in db.db.execute("SELECT id FROM jobs WHERE state IN ('pending','running')")]
             if active!=[job_id] or job['state']!='pending':
                 raise StudioError('JOB_QUEUE_OWNERSHIP','SYSTEM requires exactly its one active per-run job')
             intent_key=fingerprint({**base,'expected_attempt':job['attempts']+1})
-            old=checkpoint(p,'system_spawn_intent',job_id)
-            if old and old['intent_key']==intent_key:
-                raise StudioError('JOB_RECOVERY_HOLD','Spawn intent already exists; no ambiguous repeat')
             intent={**base,'expected_attempt':job['attempts']+1,'intent_key':intent_key,'spawn_token':uuid.uuid4().hex}
-            record(p,'system_spawn_intent',job_id,intent);self.intents[job_id]=intent
+            with Registry(p.q.root) as db,db.transaction():
+                row=db.db.execute("SELECT payload FROM ai_events WHERE kind='system_spawn_intent' AND task_id=? ORDER BY sequence DESC LIMIT 1",(job_id,)).fetchone()
+                if row and json.loads(row[0])['intent_key']==intent_key:
+                    raise StudioError('JOB_RECOVERY_HOLD','Spawn intent already exists; no ambiguous repeat')
+                p.q.queue._event(db,'system_spawn_intent',intent,job_id)
+            self.intents[job_id]=intent
+            if time.monotonic()>=self.deadline:
+                raise StudioError('TIME_BUDGET','Deadline expired while saving spawn intent; preserved for inspection')
         elif phase=='spawned':
             intent=self.intents.pop(job_id,None)
             if not intent or any(intent[k]!=v for k,v in base.items()):
                 raise StudioError('JOB_RECOVERY_HOLD','Created process lost its exact durable spawn intent')
+            expected=[sys.executable,'-m','app.worker','--workspace',str(Path(p.engine).resolve()),'--job',job_id]
+            if getattr(process,'args',None)!=expected:
+                raise StudioError('JOB_OWNERSHIP_UNVERIFIED','Created process argv differs from fixed job/workspace')
             birth=spawned_identity(process)
             if birth is None:
                 record(p,'system_spawn_unknown',job_id,{'intent_key':intent['intent_key'],'identity':'UNKNOWN'})

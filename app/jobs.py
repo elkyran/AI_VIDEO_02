@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import uuid
+from contextlib import nullcontext
 
 from .registry import Registry, StudioError, canonical_json
 
@@ -68,6 +69,8 @@ class JobManager:
                        'base_revision':base_revision}
             def mutate(new_revision):
                 identifier = 'job_' + uuid.uuid4().hex[:20]
+                if self.spawn_observer is not None:
+                    self.spawn_observer('admit', identifier, None)
                 registry.db.execute('INSERT INTO jobs(id,project_id,operation,parameters,state,created,input_revision) VALUES(?,?,?,?,?,?,?)',
                     (identifier,project_id,operation,canonical_json(parameters),'pending',time.time(),new_revision))
                 return {'job_id':identifier,'state':'pending'}, True
@@ -132,9 +135,12 @@ class JobManager:
         if job['attempts']>=3:
             raise StudioError('RETRY_LIMIT','Two retries exhausted; review the error before a new request')
         with Registry(self.root) as registry:
-            changed = registry.db.execute("UPDATE jobs SET state='pending',cancel_requested=0,error=NULL,worker_pid=NULL,message='Resuming saved work' WHERE id=? AND invalidated=0",(job_id,))
-            if not changed.rowcount:
-                raise StudioError('JOB_STALE','Inputs changed while resuming; create a new job from the current script')
+            with registry.transaction() if self.spawn_observer is not None else nullcontext():
+                if self.spawn_observer is not None:
+                    self.spawn_observer('admit', job_id, None)
+                changed = registry.db.execute("UPDATE jobs SET state='pending',cancel_requested=0,error=NULL,worker_pid=NULL,message='Resuming saved work' WHERE id=? AND invalidated=0",(job_id,))
+                if not changed.rowcount:
+                    raise StudioError('JOB_STALE','Inputs changed while resuming; create a new job from the current script')
         self._spawn(job_id)
         return self.status(job_id)
 

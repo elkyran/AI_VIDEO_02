@@ -44,6 +44,8 @@ class SpawnReceiptTests(unittest.TestCase):
             identity=spawned_identity(child)
             self.assertIsInstance(identity,str)
             self.assertTrue(identity)
+            if sys.platform=='win32':
+                self.assertIsNone(spawned_identity(SimpleNamespace(pid=child.pid+1,_handle=child._handle,poll=child.poll)))
         finally:
             if child.poll() is None:child.terminate()
             child.wait(timeout=5)
@@ -57,11 +59,106 @@ class GuardedReceiptTests(unittest.TestCase):
         self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
         self.p=self.fixture.p;self.manager=self.fixture.manager;self.job_id=self.fixture.receipt['job_id']
 
+    def test_atomic_admission_rolls_back_enqueue_and_resume_with_foreign_pending_job(self):
+        from app.v2_spawn_receipts import SpawnObserver
+        from app.registry import Registry,StudioError
+        manager=JobManager(self.p.engine,spawn_observer=SpawnObserver(self.p))
+        def state():
+            with Registry(self.p.engine) as db:
+                return {table:[tuple(r) for r in db.db.execute('SELECT * FROM '+table+' ORDER BY 1')]
+                    for table in ('jobs','requests','projects')}
+        before=state()
+        with Registry(self.p.engine) as db:base=db._project(self.p.run_id)['revision']
+        with patch('app.jobs.subprocess.Popen') as native:
+            with self.assertRaises(StudioError):manager.enqueue(self.p.run_id,'synthesize',{'script_asset_id':self.fixture.sid},base,'competing')
+            native.assert_not_called()
+        self.assertEqual(before,state())
+        with Registry(self.p.engine) as db:
+            row=db.db.execute('SELECT * FROM jobs WHERE id=?',(self.job_id,)).fetchone()
+            columns=list(row.keys());values=list(row);values[columns.index('id')]='foreign_pending'
+            db.db.execute('INSERT INTO jobs('+','.join(columns)+') VALUES('+','.join('?' for _ in columns)+')',values)
+        self.fixture.state(state='failed',attempts=1)
+        before=state()
+        with patch('app.jobs.subprocess.Popen') as native:
+            with self.assertRaises(StudioError):manager.resume(self.job_id)
+            native.assert_not_called()
+        self.assertEqual(before,state())
+
+    def test_two_observers_compete_for_one_atomic_intent_and_only_one_native_spawn(self):
+        from concurrent.futures import ThreadPoolExecutor
+        import threading
+        from app.v2_spawn_receipts import SpawnObserver
+        from app.registry import Registry,StudioError
+        barrier=threading.Barrier(2);managers=[]
+        for _ in range(2):
+            observer=SpawnObserver(self.p)
+            def enter(phase,job,process,observe=observer):
+                if phase=='intent':barrier.wait(timeout=5)
+                return observe(phase,job,process)
+            managers.append(JobManager(self.p.engine,spawn_observer=enter))
+        process=SimpleNamespace(pid=23456,args=[sys.executable,'-m','app.worker','--workspace',str(self.p.engine),'--job',self.job_id])
+        def invoke(manager):
+            try:manager._spawn(self.job_id);return 'created'
+            except StudioError as error:return error.code
+        with patch('app.jobs.subprocess.Popen',return_value=process) as native, \
+             patch('app.v2_spawn_receipts.spawned_identity',return_value='native'):
+            with ThreadPoolExecutor(max_workers=2) as pool:outcomes=list(pool.map(invoke,managers))
+            native.assert_called_once()
+        self.assertCountEqual(outcomes,['created','JOB_RECOVERY_HOLD'])
+        with Registry(self.p.q.root) as db:
+            self.assertEqual(db.db.execute("SELECT count(*) FROM ai_events WHERE kind='system_spawn_intent'").fetchone()[0],1)
+
+    def test_deadline_root_and_fixed_argv_fail_closed_before_ownership(self):
+        from app.v2_spawn_receipts import SpawnObserver
+        from app.v2_job_recovery import guarded_resume,checkpoint
+        from app.registry import StudioError
+        observer=SpawnObserver(self.p,deadline=1)
+        with patch('app.v2_spawn_receipts.time.monotonic',side_effect=[0,2]),patch('app.jobs.subprocess.Popen') as native:
+            with self.assertRaises(StudioError) as error:JobManager(self.p.engine,spawn_observer=observer)._spawn(self.job_id)
+            self.assertEqual(error.exception.code,'TIME_BUDGET');native.assert_not_called()
+        self.assertIsNotNone(checkpoint(self.p,'system_spawn_intent',self.job_id))
+        foreign=JobManager(self.p.root/'foreign')
+        with self.assertRaises(StudioError) as error:guarded_resume(self.p,foreign,self.manager.status(self.job_id))
+        self.assertEqual(error.exception.code,'JOB_OWNERSHIP_UNVERIFIED')
+        # A different claimed next attempt cannot legitimize arbitrary argv.
+        self.fixture.state(attempts=1)
+        wrong=SimpleNamespace(pid=23456,args=['arbitrary','command'])
+        with patch('app.jobs.subprocess.Popen',return_value=wrong),patch('app.v2_spawn_receipts.spawned_identity') as identity:
+            with self.assertRaises(StudioError):JobManager(self.p.engine,spawn_observer=SpawnObserver(self.p))._spawn(self.job_id)
+            identity.assert_not_called()
+        self.assertIsNone(checkpoint(self.p,'system_spawn_receipt',self.job_id))
+
+    def test_crash_after_durable_spawn_receipt_polls_then_resume_crash_holds_without_repeating(self):
+        from app.v2_spawn_receipts import SpawnObserver
+        from app.v2_job_recovery import guarded_resume,checkpoint
+        from app.registry import StudioError
+        observer=SpawnObserver(self.p)
+        def interrupt(phase,job,process):
+            observer(phase,job,process)
+            if phase=='spawned':raise RuntimeError('after durable receipt')
+        manager=JobManager(self.p.engine,spawn_observer=interrupt)
+        process=SimpleNamespace(pid=23456,args=[sys.executable,'-m','app.worker','--workspace',str(self.p.engine),'--job',self.job_id])
+        with patch('app.jobs.subprocess.Popen',return_value=process) as native,patch('app.v2_spawn_receipts.spawned_identity',return_value='native'):
+            with self.assertRaisesRegex(RuntimeError,'after durable'):manager._spawn(self.job_id)
+            native.assert_called_once()
+        self.assertIsNotNone(checkpoint(self.p,'system_spawn_receipt',self.job_id))
+        with patch('app.multi_ai_preview.process_identity',return_value='native'),patch('app.jobs.subprocess.Popen') as native:
+            self.assertFalse(guarded_resume(self.p,manager,manager.status(self.job_id)));native.assert_not_called()
+        self.fixture.state(state='running',worker_pid=process.pid,attempts=1)
+        with patch('app.multi_ai_preview.process_identity',return_value=False),patch('app.jobs.process_alive',return_value=False), \
+             patch('app.jobs.subprocess.Popen',return_value=process) as native,patch('app.v2_spawn_receipts.spawned_identity',return_value='new'):
+            with self.assertRaisesRegex(RuntimeError,'after durable'):guarded_resume(self.p,manager,manager.status(self.job_id))
+            native.assert_called_once()
+        self.fixture.state(state='running',worker_pid=process.pid,attempts=2)
+        with patch('app.multi_ai_preview.process_identity',return_value=False),patch('app.jobs.subprocess.Popen') as native:
+            with self.assertRaises(StudioError):guarded_resume(self.p,manager,manager.status(self.job_id))
+            native.assert_not_called()
+
     def test_actual_observer_pending_running_dead_resume_and_replay_use_one_exact_child(self):
         from app.v2_spawn_receipts import SpawnObserver
         from app.v2_job_recovery import guarded_resume,checkpoint
         observer=SpawnObserver(self.p);manager=JobManager(self.p.engine,spawn_observer=observer)
-        process=SimpleNamespace(pid=23456)
+        process=SimpleNamespace(pid=23456,args=[sys.executable,'-m','app.worker','--workspace',str(self.p.engine.resolve()),'--job',self.job_id])
         with patch('app.jobs.subprocess.Popen',return_value=process) as native, \
              patch('app.v2_spawn_receipts.spawned_identity',return_value='native-birth'):
             manager._spawn(self.job_id)
@@ -120,6 +217,7 @@ class GuardedReceiptTests(unittest.TestCase):
         from app.registry import StudioError
         bad=SimpleNamespace(pid=23456,_handle=0,poll=lambda:None)
         self.assertIsNone(spawned_identity(bad))
+        bad.args=[sys.executable,'-m','app.worker','--workspace',str(self.p.engine.resolve()),'--job',self.job_id]
         manager=JobManager(self.p.engine,spawn_observer=SpawnObserver(self.p))
         with patch('app.jobs.subprocess.Popen',return_value=bad) as native, \
              patch('app.v2_spawn_receipts.spawned_identity',return_value=None):
