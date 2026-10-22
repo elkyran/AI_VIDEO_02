@@ -404,7 +404,8 @@ class SystemPipeline(MeasuredEngine):
     def initialize_bridge(self, config):
         self.bridge = OfflineProductionBridge(self.q,self.engine,source_bundle={
             'canon':config.inputs.canon.model_dump(),'root':Path(config.input_root),
-            'manifest_sha256':fingerprint(__import__('app.v2_sources',fromlist=['source_manifest']).source_manifest(config.inputs.canon))})
+            'manifest_sha256':fingerprint(__import__('app.v2_sources',fromlist=['source_manifest']).source_manifest(config.inputs.canon))},
+            strict_assumptions=config.acquisition is not None)
 
     def enqueue(self, node):
         return self.q.queue.enqueue(self.task_spec(node))

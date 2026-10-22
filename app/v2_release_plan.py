@@ -114,7 +114,8 @@ def reconcile_inputs(config, *, canon, story, scenes, visuals):
     from .v2_acquisition import resolve_refs
     for scene in parsed_scenes:
         resolve_refs(bible,scene.fact_refs)
-        resolve_refs(bible,scene.assumption_refs,assumptions=True)
+        if config.acquisition is not None:
+            resolve_refs(bible,scene.assumption_refs,assumptions=True)
     return ApprovedInputs(version=config.inputs.version, canon=bible, story=story,
         scenes=parsed_scenes, media=config.inputs.media, visuals=mappings)
 

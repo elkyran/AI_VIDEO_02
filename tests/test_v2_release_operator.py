@@ -83,7 +83,8 @@ class OperatorTests(unittest.TestCase):
     def test_observation_stop_and_prepare_do_not_require_an_executable_plan(self):
         # CLI owns state/permit checks. A failed doctor must not hide an existing
         # status/stop request, nor prevent prepare from persisting a blocked plan.
-        def dispatch(arguments):
+        def dispatch(arguments, *, host_services=None):
+            self.assertIsNone(host_services)
             self.assertNotIn(arguments[-1], ('plan', 'doctor'))
             print(json.dumps({'status': 'IN_PROGRESS', 'production_started': False, 'uploaded': False}))
             return 2
@@ -95,7 +96,8 @@ class OperatorTests(unittest.TestCase):
 
     def test_synthetic_inputs_are_explicit_argv_and_never_enable_live_mode(self):
         supplied = self.folder/'synthetic fixture.json'; supplied.write_text('{}')
-        def dispatch(arguments):
+        def dispatch(arguments, *, host_services=None):
+            self.assertIsNone(host_services)
             self.assertEqual(arguments[arguments.index('--synthetic-inputs')+1], str(supplied))
             print(json.dumps({'status': 'PLANNED'})); return 0
         with patch('app.v2_pipeline.system_main', side_effect=dispatch):

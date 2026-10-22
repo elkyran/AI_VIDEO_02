@@ -15,11 +15,12 @@ from .v2_narration import narration_descriptors, narration_identity, voice_asset
 
 
 class OfflineProductionBridge:
-    def __init__(self, coordinator, engine_root, *, source_bundle=None):
+    def __init__(self, coordinator, engine_root, *, source_bundle=None, strict_assumptions=False):
         self.coordinator = coordinator
         self.root = coordinator.root
         self.engine_root = engine_root
         self.source_bundle = source_bundle
+        self.strict_assumptions = strict_assumptions
 
     def accepted_scene(self, run_id, task_id, scene_version):
         """Revalidate all ancestor completions; a cached or arbitrary Scene is insufficient."""
@@ -80,7 +81,11 @@ class OfflineProductionBridge:
                 source_evidence['canon_sha256']=fingerprint(bible.model_dump())
                 from .v2_acquisition import resolve_refs
                 resolve_refs(bible, scene.fact_refs)
-                resolve_refs(bible, scene.assumption_refs, assumptions=True)
+                # Legacy approved Scenes can contain free-form unverified notes
+                # here. New acquisition binds assumptions to Canon before gate
+                # acceptance and repeats that check at the engine boundary.
+                if self.strict_assumptions:
+                    resolve_refs(bible, scene.assumption_refs, assumptions=True)
                 sources={f'{s.edition}:{s.source_id}':s.sha256 for s in bible.sources}
                 if any(sources.get(k)!=v for k,v in scene.dependencies.items()):
                     raise StudioError('SOURCE_REQUIRED','Scene refers to missing or changed source evidence')

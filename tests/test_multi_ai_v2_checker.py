@@ -100,11 +100,11 @@ class CheckerTimeoutTests(unittest.TestCase):
     def test_full_run_selects_bounded_timeouts_and_keeps_all_groups(self):
         code, calls, checks, manifest, _ = self.run_checker()
         expected = ['v2', 'contracts', 'queue', 'adapters', 'mai05', 'panel', 'legacy',
-                    'compileall', 'check_git_export', 'diff_check']
+                    'acquisition', 'closure', 'compileall', 'check_git_export', 'diff_check']
         self.assertEqual([c[0] for c in calls], expected)
         self.assertEqual(calls[0][1][-2:], ['tests.test_multi_ai_v2', 'tests.test_multi_ai_v2_checker'])
-        self.assertEqual([c[2] for c in calls], [420, 420] + [180] * 8)
-        self.assertEqual([c['timeout_seconds'] for c in checks['checks']], [420, 420] + [180] * 8)
+        self.assertEqual([c[2] for c in calls], [420, 420] + [180] * 10)
+        self.assertEqual([c['timeout_seconds'] for c in checks['checks']], [420, 420] + [180] * 10)
         self.assertEqual(code, 0)
         self.assertEqual(checks['status'], 'passed')
         self.assertEqual(manifest['status'], 'passed')
