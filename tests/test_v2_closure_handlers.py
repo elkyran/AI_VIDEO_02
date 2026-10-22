@@ -44,12 +44,22 @@ class GenericRecoveryTests(unittest.TestCase):
             registry.db.execute('UPDATE jobs SET '+','.join(k+'=?' for k in values)+' WHERE id=?',
                 [*values.values(),self.receipt['job_id']])
 
+    def ownership(self,birth='owned'):
+        """Controlled native receipt fixture; real object path tested separately."""
+        from app.v2_spawn_receipts import binding
+        from app.v2_job_recovery import record
+        job=self.manager.status(self.receipt['job_id']);base=binding(self.p,job)
+        attempt=job['attempts']+1 if job['state']=='pending' else job['attempts']
+        value={**base,'expected_attempt':attempt,'intent_key':fingerprint({**base,'expected_attempt':attempt}),
+               'spawn_token':'fixture-token'}
+        record(self.p,'system_spawn_intent',job['job_id'],value)
+        record(self.p,'system_spawn_receipt',job['job_id'],{**value,'worker_pid':job['worker_pid'] or 99999999,
+            'birth':birth,'scope':'EXACT_SPAWN_OBJECT','identity_source':'controlled test native boundary'})
+
     def test_dead_running_same_request_reaches_existing_resume_once(self):
         self.state(state='running',worker_pid=99999999,attempts=1)
         # A host receipt for this attempt predates the observed process exit.
-        with Registry(self.p.q.root) as registry,registry.transaction():
-            self.p.q.queue._event(registry,'system_worker_identity',{'attempts':1,'worker_pid':99999999,
-                'birth':'owned-birth'},self.receipt['job_id'])
+        self.ownership('owned-birth')
         def finished(manager,job_id):
             self.state(state='done',worker_pid=None,attempts=2)
         original=JobManager.resume;calls=[]
@@ -76,10 +86,12 @@ class GenericRecoveryTests(unittest.TestCase):
             with self.subTest(code=code,identity=identity):
                 self.state(state='running',worker_pid=99999999,attempts=1,cancel_requested=0,invalidated=0,error=None)
                 self.state(**update)
+                self.ownership()
                 with patch('app.multi_ai_preview.process_identity',return_value=identity),patch.object(JobManager,'_spawn') as spawn:
                     with self.assertRaises(StudioError) as error:guarded_resume(self.p,manager,manager.status(identifier))
                 self.assertEqual(error.exception.code,code);spawn.assert_not_called()
         self.state(state='running',worker_pid=99999999,attempts=1,cancel_requested=0,invalidated=0,error=None)
+        self.ownership()
         with patch('app.multi_ai_preview.process_identity',return_value='owned'),patch.object(JobManager,'resume') as resume:
             self.assertFalse(guarded_resume(self.p,manager,manager.status(identifier)));resume.assert_not_called()
         with patch('app.multi_ai_preview.process_identity',return_value=False),patch('app.jobs.process_alive',return_value=False), \
@@ -87,6 +99,7 @@ class GenericRecoveryTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):guarded_resume(self.p,manager,manager.status(identifier))
         self.assertEqual(spawn.call_count,1)
         self.state(state='running',worker_pid=99999999,attempts=1)
+        self.ownership()
         with patch('app.multi_ai_preview.process_identity',return_value=False),patch.object(JobManager,'resume') as resume:
             with self.assertRaises(StudioError) as error:guarded_resume(self.p,manager,manager.status(identifier))
         self.assertEqual(error.exception.code,'JOB_RECOVERY_HOLD');resume.assert_not_called()
@@ -95,22 +108,32 @@ class GenericRecoveryTests(unittest.TestCase):
         from app.v2_job_recovery import guarded_resume,record
         identifier=self.receipt['job_id']
         self.state(state='running',worker_pid=12345,attempts=2)
+        self.ownership('current')
         record(self.p,'system_worker_identity',identifier,{'attempts':2,'worker_pid':12345,'birth':'current'})
         with patch('app.multi_ai_preview.process_identity',return_value='current'),patch.object(JobManager,'resume') as resume:
             self.assertFalse(guarded_resume(self.p,self.manager,self.manager.status(identifier)));resume.assert_not_called()
         self.state(state='failed',worker_pid=None,attempts=1,error=json.dumps({'code':'TIMEOUT'}))
+        self.ownership('current')
         observed=[]
         def sleep(_):
             if not observed:self.state(state='running',worker_pid=12345,attempts=2);observed.append('running')
             else:self.state(state='done',worker_pid=None);observed.append('done')
-        with patch.object(JobManager,'_spawn') as spawn,patch('app.multi_ai_preview.process_identity',return_value='current'), \
+        def spawned(manager,job_id):
+            manager.spawn_observer('intent',job_id,None)
+            manager.spawn_observer('spawned',job_id,SimpleNamespace(pid=12345))
+        def identity(pid):return False if self.manager.status(identifier)['state']=='failed' else 'current'
+        with patch.object(JobManager,'_spawn',autospec=True,side_effect=spawned) as spawn, \
+             patch('app.v2_spawn_receipts.spawned_identity',return_value='current'), \
+             patch('app.multi_ai_preview.process_identity',side_effect=identity), \
              patch('app.v2_pipeline.time.sleep',side_effect=sleep),patch('app.v2_pipeline.verify_audio',return_value={'receipt':True}):
             self.assertEqual(self.p.synthesize(self.candidate,'same_key'),{'receipt':True})
-        self.assertEqual(observed,['running','done']);spawn.assert_called_once_with(identifier)
+        self.assertEqual(observed,['running','done']);self.assertEqual(spawn.call_count,1)
+        self.assertEqual(spawn.call_args.args[1],identifier)
 
     def test_explicit_retryable_failure_uses_the_actual_helper_and_binding_tamper_is_rejected(self):
         from app.v2_job_recovery import guarded_resume,existing_request
         self.state(state='failed',error=json.dumps({'code':'TIMEOUT'}),attempts=1)
+        self.ownership()
         with patch.object(JobManager,'_spawn') as spawn:
             self.assertTrue(guarded_resume(self.p,self.manager,self.manager.status(self.receipt['job_id'])))
         spawn.assert_called_once_with(self.receipt['job_id'])

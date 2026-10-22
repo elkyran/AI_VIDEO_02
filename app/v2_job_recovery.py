@@ -36,13 +36,9 @@ def existing_request(pipeline, manager, script_id, candidate, key):
 
 
 def observe_new_worker(pipeline, job):
-    if job['state']!='running':return
-    from .multi_ai_preview import process_identity
-    birth=process_identity(job['worker_pid'])
-    if birth is not False and birth is not None:
-        record(pipeline,'system_worker_identity',job['job_id'],{
-            'attempts':job['attempts'],'worker_pid':job['worker_pid'],'birth':birth,
-            'scope':'HOST_OBSERVED_WORKER; not proof for arbitrary historical PID'})
+    # Kept for callers of the old observation hook. A status PID can never create
+    # ownership. Only the trusted _spawn observer may persist a strong receipt.
+    return None
 
 
 def guarded_resume(pipeline, manager, job):
@@ -50,26 +46,30 @@ def guarded_resume(pipeline, manager, job):
         raise StudioError('JOB_STALE','Inputs were invalidated; keep the old job and authorize a new version')
     if job['cancel_requested'] or job['state']=='cancelled' or (job.get('error') or {}).get('code')=='CANCELLED':
         raise StudioError('CANCELLED','Cancellation is terminal for automatic recovery')
-    if job['state'] in {'done','pending'}:return False
-    if job['state']=='running':
-        identity=checkpoint(pipeline,'system_worker_identity',job['job_id'])
-        if not identity or (identity['attempts'],identity['worker_pid'])!=(job['attempts'],job['worker_pid']):
-            raise StudioError('JOB_OWNERSHIP_UNVERIFIED','Historical job has no matching host worker identity receipt')
-        from .multi_ai_preview import process_identity
-        current=process_identity(job['worker_pid'])
-        if current is None or current is not False and current!=identity['birth']:
-            raise StudioError('JOB_LIVENESS_UNVERIFIED','Unknown or foreign process identity; no restart')
-        if current is not False:return False
-    elif job['state'] in {'failed','blocked'}:
+    if job['state']=='done':return False  # Generic caller still verifies all WAV/job hashes.
+    if job['state'] not in {'pending','running','failed','blocked'}:
+        raise StudioError('JOB_TERMINAL','State is outside automatic recovery scope')
+    from .v2_spawn_receipts import exact_receipt,binding
+    try:identity=exact_receipt(pipeline,job)
+    except StudioError:
+        if checkpoint(pipeline,'system_spawn_intent',job['job_id']):
+            raise StudioError('JOB_RECOVERY_HOLD','Spawn has an intent without its exact current receipt') from None
+        raise
+    from .multi_ai_preview import process_identity
+    current=process_identity(identity['worker_pid'])
+    if current is None or current is not False and current!=identity['birth']:
+        raise StudioError('JOB_LIVENESS_UNVERIFIED','Unknown or foreign process identity; no restart')
+    if current is not False:return False
+    if job['state']=='pending':
+        raise StudioError('JOB_RECOVERY_HOLD','Exact child exited before claiming; no safe pending restart')
+    if job['state'] in {'failed','blocked'}:
         policy=getattr(pipeline.config,'acquisition',None)
         allowed=policy.retryable_job_errors if policy else []
         if (job.get('error') or {}).get('code') not in allowed:
             raise StudioError('JOB_TERMINAL','Failure is outside the explicit retryable error policy')
-    else:
-        raise StudioError('JOB_TERMINAL','State is outside automatic recovery scope')
     if job['attempts']>=min(3,pipeline.config.budget.attempts):
         raise StudioError('RETRY_LIMIT','Host attempt budget exhausted; no automatic restart')
-    token=fingerprint({k:job[k] for k in ('job_id','input_revision','attempts','worker_pid','parameters')})
+    token=fingerprint(binding(pipeline,job))  # Stable across attempts: at most one automatic resume.
     with Registry(pipeline.q.root) as registry,registry.transaction():
         intents=[json.loads(r[0]) for r in registry.db.execute(
             "SELECT payload FROM ai_events WHERE kind='system_job_resume_intent' AND task_id=?",(job['job_id'],))]

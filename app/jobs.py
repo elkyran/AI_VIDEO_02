@@ -34,7 +34,8 @@ def process_alive(pid: int | None) -> bool:
 
 
 class JobManager:
-    def __init__(self, root: str | Path):
+    def __init__(self, root: str | Path, *, spawn_observer=None):
+        self.spawn_observer = spawn_observer
         self.root = Path(root).resolve()
         with Registry(self.root) as registry:
             registry.db.executescript('''
@@ -77,13 +78,17 @@ class JobManager:
 
     def _spawn(self, job_id: str) -> None:
         # Only this installed worker is executable. Model responses cannot choose code.
+        if self.spawn_observer is not None:
+            self.spawn_observer('intent', job_id, None)
         directory = self.root/'jobs'/job_id
         directory.mkdir(parents=True, exist_ok=True)
         with (directory/'worker.log').open('a',encoding='utf-8') as log:
             flags = (subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP) if os.name == 'nt' else 0
-            subprocess.Popen([sys.executable,'-m','app.worker','--workspace',str(self.root),'--job',job_id],
+            process = subprocess.Popen([sys.executable,'-m','app.worker','--workspace',str(self.root),'--job',job_id],
                 cwd=Path(__file__).resolve().parents[1], stdout=log,stderr=log,stdin=subprocess.DEVNULL,
                 close_fds=True,creationflags=flags,start_new_session=(os.name!='nt'))
+        if self.spawn_observer is not None:
+            self.spawn_observer('spawned', job_id, process)
 
     def status(self, job_id: str) -> dict:
         with Registry(self.root) as registry:

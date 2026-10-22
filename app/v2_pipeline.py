@@ -618,7 +618,8 @@ class SystemPipeline(MeasuredEngine):
         if not path.exists():
             write_generated_json(self.engine, relative, candidate['script'])
         self.register(script_id, relative, 'text')
-        manager = JobManager(self.engine)
+        from .v2_spawn_receipts import SpawnObserver
+        manager = JobManager(self.engine,spawn_observer=SpawnObserver(self))
         from .v2_job_recovery import existing_request, guarded_resume, observe_new_worker
         job=existing_request(self,manager,script_id,candidate,key)
         newly_submitted=job is None
