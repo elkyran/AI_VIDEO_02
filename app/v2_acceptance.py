@@ -49,6 +49,11 @@ class V2ResultGate:
             raise StudioError('TASK_NOT_FOUND', 'Result task is not registered')
         contract = Task.model_validate(task['context']['v2_contract'])
         context, requested = self._context(task, attempt)
+        validator = getattr(self, 'route_validator', None)
+        if validator:
+            validator(registry, task, attempt, requested, historical=bool((task.get('result') or {}).get('v2_acceptance')))
+        elif task.get('worker_route'):
+            raise StudioError('WORKER_ROUTE_REQUIRED', 'Host route validator is not connected')
         context.update(self.dependency_context(registry, task))
         run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (contract.run_id,)).fetchone()
         if (not run or row['project_id'] != contract.run_id or task['project_id'] != contract.run_id
@@ -149,6 +154,13 @@ class V2ResultGate:
         contract = Task.model_validate(spec['context']['v2_contract'])
         attempt = registry.db.execute('SELECT * FROM ai_attempts WHERE id=?', (host.acceptance_key,)).fetchone()
         request = json.loads(path.with_name('request.json').read_text(encoding='utf-8'))
+        validator = getattr(self, 'route_validator', None)
+        if validator:
+            validator(registry, spec, attempt, request, historical=True)
+        elif spec.get('worker_route'):
+            raise StudioError('WORKER_ROUTE_REQUIRED', 'Host route validator is not connected')
+        if completion.get('worker_route') != spec.get('worker_route'):
+            raise StudioError('WORKER_ROUTE_MISMATCH', 'Accepted completion differs from historical host route')
         self._pilot_admission(contract, spec, request, host)
         run = registry.db.execute('SELECT mode FROM ai_v2_runs WHERE run_id=?', (host.run_id,)).fetchone()
         accepted = {'status': 'ACCEPTED', 'acceptance_key': host.acceptance_key,

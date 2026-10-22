@@ -49,7 +49,9 @@ class Coordinator:
     keeps its reservations; live access comes from a separate account manager.
     """
 
-    def __init__(self, workspace, adapters=None, profile_source=None, result_observer=None, result_gate=None):
+    def __init__(self, workspace, adapters=None, profile_source=None, result_observer=None, result_gate=None, worker_routes=None):
+        from .v2_routes import WorkerRoutes
+        self.worker_routes = WorkerRoutes.model_validate_json(worker_routes.model_dump_json()) if worker_routes is not None else None
         self.workspace = Path(workspace).resolve()
         production = Path(__file__).resolve().parents[1] / "workspace" / "studio"
         if self.workspace == production.resolve():
@@ -61,6 +63,8 @@ class Coordinator:
         self.profile_source = profile_source
         self.result_observer = result_observer
         self.result_gate = result_gate
+        if result_gate is not None:
+            result_gate.route_validator = self.validate_worker_route
         from .development import locked
         self._workspace_lock = locked(self.workspace / "ai" / "coordinator.lock")
         try:
@@ -146,6 +150,64 @@ class Coordinator:
 
     def _settings(self, registry):
         return {row["key"]: json.loads(row["value"]) for row in registry.db.execute("SELECT * FROM ai_settings")}
+
+    def _route(self, task):
+        return self.worker_routes.for_task(task) if self.worker_routes else None
+
+    def validate_worker_route(self, registry, task, attempt, request, *, historical=False):
+        """Same request binding for poll, manual, recovery and historical replay."""
+        from .v2_routes import WorkerRoute
+        pinned, requested = task.get('worker_route'), request.get('worker_route')
+        if pinned is None and requested is None:
+            return
+        if pinned is None or requested != pinned:
+            raise StudioError('WORKER_ROUTE_MISMATCH', 'Task and immutable request routes differ')
+        route = WorkerRoute.model_validate(pinned)
+        if (attempt['provider'] != route.provider or attempt['profile_id'] != route.profile_id
+                or request.get('account_binding') != route.account_binding.model_dump()
+                or request.get('task_id') != task['task_id'] or request.get('attempt_id') != attempt['id']
+                or request.get('project_id') != task['project_id']
+                or request.get('input_versions') != task['input_versions']):
+            raise StudioError('WORKER_ROUTE_MISMATCH', 'Attempt does not bind this account/task/input')
+        contract = task.get('context', {}).get('v2_contract')
+        if contract and (contract['role'], contract['assigned_worker'], contract['provider_profile_id']) != (
+                route.role, route.worker_id, route.profile_id):
+            raise StudioError('WORKER_ROUTE_MISMATCH', 'Canonical Task differs from host worker binding')
+        if not historical:
+            current = self._route(task)
+            if current != route:
+                raise StudioError('WORKER_ROUTE_STALE', 'Host route/account generation changed; accepted history is preserved')
+            adapter = self.adapters.get(route.provider)
+            if route.synthetic != (getattr(adapter, 'is_simulated', False) is True):
+                raise StudioError('WORKER_ROUTE_MISMATCH', 'Route provenance changed')
+            if not route.synthetic:
+                profile = self._profile(registry, route.provider, route.profile_id)
+                if profile.get('account_binding') != route.account_binding.model_dump():
+                    raise StudioError('WORKER_ROUTE_STALE', 'Account manager binding changed')
+
+    def _active_route(self, registry, attempt):
+        path = workspace_path(self.workspace, Path(attempt['result_path']).with_name('request.json').as_posix())
+        from .v2_routes import WorkerRoute
+        try:
+            request = json.loads(path.read_text(encoding='utf-8'))
+            row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (attempt['task_id'],)).fetchone()
+            task = self._task(row)
+            self.validate_worker_route(registry, task, attempt, request, historical=True)
+            value = task.get('worker_route')
+            return WorkerRoute.model_validate(value) if value is not None else None
+        except (ValueError, OSError, TypeError, AttributeError, KeyError, StudioError):
+            return None  # Unknown reservation remains held conservatively.
+
+    def _pending_report(self, registry, provider, route):
+        attempts = registry.db.execute('SELECT a.* FROM ai_profile_reports r JOIN ai_attempts a ON a.id=r.attempt_id '
+            'WHERE r.delivered=0 AND a.provider=?', (provider,)).fetchall()
+        if route is None:
+            return bool(attempts)
+        for attempt in attempts:
+            pending = self._active_route(registry, attempt)
+            if pending is None or pending.reservation == route.reservation:
+                return True
+        return False
 
     def _setting(self, registry, key, value):
         registry.db.execute("INSERT OR REPLACE INTO ai_settings VALUES (?,?)", (key, canonical_json(value)))
@@ -350,6 +412,19 @@ class Coordinator:
                 raise StudioError("SCHEMA_INVALID", "Access checks are one bounded note request without dependencies")
         elif "requested_profile_id" in spec or "probe_provider" in spec:
             raise StudioError("SCHEMA_INVALID", "Creative work uses the selected profiles only")
+        worker_task = (spec['resource_class'] == 'cloud' and spec['kind'] != 'access_check'
+                       and spec['context'].get('v2_contract', {}).get('role') != 'python')
+        route = self._route(spec) if worker_task else None
+        if 'worker_route' in spec and (route is None or spec['worker_route'] != route.model_dump()):
+            raise StudioError('WORKER_ROUTE_MISMATCH', 'Only explicit host configuration can pin worker routes')
+        if self.worker_routes is not None and worker_task:
+            if route is None:
+                raise StudioError('WORKER_ROUTE_REQUIRED', 'No unique host route for this task role')
+            spec['worker_route'] = route.model_dump()
+            contract = spec['context'].get('v2_contract')
+            if contract and (contract['role'], contract['assigned_worker'], contract['provider_profile_id']) != (
+                    route.role, route.worker_id, route.profile_id):
+                raise StudioError('WORKER_ROUTE_MISMATCH', 'Task must name its fixed host worker/profile')
         if _assignment is not None:
             if _assignment.get("role") != spec["role"] or _assignment.get("provider") not in ACTIVE_PROVIDERS:
                 raise StudioError("SCHEMA_INVALID", "Unknown active role assignment")
@@ -367,6 +442,8 @@ class Coordinator:
                     raise StudioError("DEPENDENCY_INVALID", "Dependency must be an existing task in the same project")
             spec["assignment"] = (spec["assignment"] if _assignment is not None
                                   else self._settings(registry)["roles"][spec["role"]])
+            if route:
+                spec['assignment'] = {**spec['assignment'], 'provider': route.provider}
             if spec["kind"] == "access_check":
                 spec["assignment"] = {**spec["assignment"], "provider": spec["probe_provider"], "model": None,
                                       "rules": "Return only a short technical access-check note."}
@@ -434,10 +511,26 @@ class Coordinator:
     def pause(self):
         return self._control("paused")
 
-    def resume(self):
+    def resume(self, worker_id=None):
         with self._lock, Registry(self.workspace) as registry, registry.transaction():
+            pauses = self._settings(registry).get('worker_pauses', {})
+            requested = None
+            if worker_id is not None:
+                match = next((r for r in self.worker_routes.routes if r.worker_id == worker_id), None) if self.worker_routes else None
+                if match is None:
+                    raise StudioError('WORKER_ROUTE_REQUIRED', 'Resume requires a configured host worker')
+                requested = match.reservation
+            pauses = {key: value for key, value in pauses.items()
+                      if value.get('resume_after', 0) > self.clock() or requested is not None and key != requested}
+            self._setting(registry, 'worker_pauses', pauses)
             for row in registry.db.execute("SELECT * FROM ai_tasks WHERE status IN ('interrupted','waiting_access')").fetchall():
-                if row["attempts"] < json.loads(row["payload"])["max_attempts"]:
+                task = self._task(row)
+                route = self._route(task) if task.get('worker_route') else None
+                if route and (route.reservation in pauses or requested is not None and route.reservation != requested):
+                    continue
+                if requested is not None and route is None:
+                    continue
+                if row["attempts"] < task["max_attempts"]:
                     registry.db.execute("UPDATE ai_tasks SET status='pending',error=NULL WHERE id=?", (row["id"],))
         return self._control("running")
 
@@ -607,6 +700,20 @@ class Coordinator:
                     if task["resource_class"] == "local_heavy" and not getattr(self.adapters.get("local"), "is_local", False):
                         registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?", (canonical_json({"kind": "local_executor_required", "message": "Local work requires a separate local executor"}), row["id"]))
                         continue
+                    route = None
+                    if task.get('worker_route') is not None:
+                        from .v2_routes import WorkerRoute
+                        route = WorkerRoute.model_validate(task['worker_route'])
+                        if self._route(task) != route:
+                            registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
+                                (canonical_json({'kind': 'unverified_access', 'code': 'WORKER_ROUTE_STALE',
+                                    'message': 'Restore the exact host route or enqueue a new task'}), row['id']))
+                            continue
+                        paused = settings.get('worker_pauses', {}).get(route.reservation)
+                        if paused:
+                            registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
+                                (canonical_json(paused), row['id']))
+                            continue
                     provider = "local" if task["resource_class"] == "local_heavy" else task["assignment"]["provider"]
                     if provider != "local" and provider not in ACTIVE_PROVIDERS:
                         registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
@@ -616,12 +723,22 @@ class Coordinator:
                         registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
                                             (canonical_json({"kind": "role_model_confirmation", "message": "Confirm the preserved model for the role's new provider before creating a new task"}), row["id"]))
                         continue
-                    if provider in held:
+                    if provider in held and route is None:
                         continue
                     adapter = self.adapters.get(provider)
                     is_local = provider == "local" and getattr(adapter, "is_local", False)
                     is_simulated = bool(getattr(adapter, "is_simulated", False))
                     is_live = bool(getattr(adapter, "is_live", False)) and not is_simulated
+                    if route and route.synthetic != is_simulated:
+                        registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
+                            (canonical_json({'kind': 'unverified_access', 'code': 'WORKER_ROUTE_MISMATCH',
+                                'message': 'Host route provenance differs from adapter'}), row['id']))
+                        continue
+                    if route and not is_simulated and not is_live:
+                        registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
+                            (canonical_json({'kind': 'unverified_access', 'code': 'CLOUD_EXECUTOR_REQUIRED',
+                                'message': 'is_local cannot authorize a routed cloud worker'}), row['id']))
+                        continue
                     if not adapter or not (is_simulated or is_local or is_live):
                         registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?", (canonical_json({"kind": "unverified_access", "message": "A verified live executor is not connected"}), row["id"]))
                         continue
@@ -630,27 +747,39 @@ class Coordinator:
                     if original_mode != current_mode:
                         registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?", (canonical_json({"kind": "execution_mode_changed", "message": "Task was created for a different execution mode; enqueue a new explicit task"}), row["id"]))
                         continue
-                    if is_live and callable(self.result_observer) and registry.db.execute(
-                            "SELECT 1 FROM ai_profile_reports r JOIN ai_attempts a ON a.id=r.attempt_id "
-                            "WHERE r.delivered=0 AND a.provider=? LIMIT 1", (provider,)).fetchone():
+                    if is_live and callable(self.result_observer) and self._pending_report(registry, provider, route):
                         # A failed account-state update must not dispatch using
                         # stale entitlement/quota evidence from before that run.
                         continue
                     if is_live and any(json.loads(dep["result"]).get("simulated") for dep in dependencies):
                         registry.db.execute("UPDATE ai_tasks SET status='blocked',error=? WHERE id=?", (canonical_json({"kind": "simulated_dependency", "message": "A live chain requires non-simulated dependency results"}), row["id"]))
                         continue
-                    profile_id = ("local-heavy" if is_local else task["requested_profile_id"] if task["kind"] == "access_check"
+                    profile_id = (route.profile_id if route else "local-heavy" if is_local else task["requested_profile_id"] if task["kind"] == "access_check"
                                   else settings["selected_profiles"][provider])
                     active = registry.db.execute("SELECT * FROM ai_attempts WHERE status IN ('running','stopping')").fetchall()
                     resource = task["resource_class"]
                     if any(a["profile_id"] == profile_id for a in active):
                         continue
-                    if resource == "cloud" and any(a["provider"] == provider and a["resource_class"] == "cloud" for a in active):
-                        continue
+                    if resource == 'cloud':
+                        provider_active = [a for a in active if a['provider'] == provider and a['resource_class'] == 'cloud']
+                        if route:
+                            active_routes = [self._active_route(registry, a) for a in provider_active]
+                            if any(r is None or r.reservation == route.reservation or r.worker_id == route.worker_id
+                                   for r in active_routes):
+                                continue
+                        elif provider_active:
+                            continue
                     if sum(a["resource_class"] == resource for a in active) >= (3 if resource == "cloud" else 1):
                         continue
                     profile = ({"profile_id": "local-heavy", "provider": "local", "state": "ready", "simulated": False}
                                if is_local else self._profile(registry, provider, profile_id))
+                    if route:
+                        profile = self._profile(registry, provider, profile_id)
+                        if not route.synthetic and profile.get('account_binding') != route.account_binding.model_dump():
+                            registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
+                                (canonical_json({'kind': 'unverified_access', 'code': 'WORKER_ROUTE_STALE',
+                                    'message': 'Host account binding is no longer current'}), row['id']))
+                            continue
                     access_failure = self._access_failure(profile, task["kind"] == "access_check") if is_live else None
                     if access_failure or not is_live and profile["state"] != "ready":
                         registry.db.execute("UPDATE ai_tasks SET status='waiting_access',error=? WHERE id=?",
@@ -694,6 +823,8 @@ class Coordinator:
         simulated = bool(getattr(adapter, "is_simulated", False))
         task["attempt_id"] = attempt_id
         task["run_id"] = attempt_id
+        if task.get('worker_route'):
+            task['account_binding'] = task['worker_route']['account_binding']
         if getattr(adapter, "is_live", False) and not simulated:
             task["account_binding"] = json.loads(canonical_json(profile["account_binding"]))
         now = self.clock()
@@ -766,6 +897,10 @@ class Coordinator:
     def _gate_result(self, registry, attempt, payload, host_metadata):
         try:
             row = registry.db.execute('SELECT * FROM ai_tasks WHERE id=?', (attempt['task_id'],)).fetchone()
+            task = self._task(row)
+            request_path = workspace_path(self.workspace, Path(attempt['result_path']).with_name('request.json').as_posix())
+            self.validate_worker_route(registry, task, attempt, json.loads(request_path.read_text(encoding='utf-8')),
+                historical=row['status'] == 'completed')
             gated = self.result_gate(registry, row, self._task(row), attempt, payload, host_metadata)
             if not isinstance(gated, dict) or any(not isinstance(gated.get(k), dict) for k in
                     ('payload', 'context', 'host_metadata', 'result_metadata')):
@@ -824,6 +959,9 @@ class Coordinator:
         envelope = {"task_id": attempt["task_id"], "attempt_id": attempt["id"],
                     "input_versions": json.loads(attempt["input_versions"]), "payload": result,
                     "payload_sha256": _hash(result), "simulated": bool(result.get("simulated"))}
+        if task.get('worker_route'):
+            self.validate_worker_route(registry, task, attempt, request)
+            envelope['worker_route'] = task['worker_route']
         if gated:
             envelope['host_metadata'] = gated['host_metadata']
         self._atomic_json(workspace_path(self.workspace, attempt["result_path"], for_write=True), envelope)
@@ -852,6 +990,9 @@ class Coordinator:
         request = json.loads(path.with_name("request.json").read_text(encoding="utf-8"))
         if not isinstance(request, dict) or not isinstance(request.get('context'), dict):
             raise StudioError('ARTIFACT_INVALID', 'Persisted request must be an object with context')
+        self.validate_worker_route(registry, task, attempt, request)
+        if envelope.get('worker_route') != task.get('worker_route'):
+            raise StudioError('WORKER_ROUTE_MISMATCH', 'Persisted completion route differs from request')
         # Revalidate on recovery too. A persisted completion is never a gate bypass.
         gated = self._gate_result(registry, attempt, envelope.get('payload'), envelope.get('host_metadata')) if self.result_gate else None
         if gated and (gated['payload'] != envelope.get('payload') or gated['host_metadata'] != envelope.get('host_metadata')):
@@ -918,7 +1059,16 @@ class Coordinator:
             return
         status, delay = "failed", 0
         settings = self._settings(registry)
-        if kind == "quota_exhausted" and attempt["provider"] in PROVIDERS:
+        if task.get('worker_route') and (kind in {'quota_exhausted', 'authentication', 'permissions', 'unverified_access', 'billing'}):
+            from .v2_routes import WorkerRoute
+            route = WorkerRoute.model_validate(task['worker_route'])
+            pauses = settings.get('worker_pauses', {})
+            pauses[route.reservation] = {**failure, 'worker_id': route.worker_id,
+                'profile_id': route.profile_id, 'paused_at': self.clock(),
+                'resume_after': self.clock()+min(max(float(retry_after or 0), 0), 60)}
+            self._setting(registry, 'worker_pauses', pauses)
+            status = 'waiting_access'
+        elif kind == "quota_exhausted" and attempt["provider"] in PROVIDERS:
             status = "waiting_access"
             profile = json.loads(registry.db.execute("SELECT payload FROM ai_profiles WHERE id=?", (attempt["profile_id"],)).fetchone()[0])
             profile["state"] = "waiting_reset"
