@@ -8,6 +8,7 @@ from app.v2_contracts import Brief, Task, Result, Artifact, Review
 from app.editorial import Scene, EditPlan
 from app.v2_run_config import HostRunConfig
 from app.v2_provider_protocol import DualWorkerConfig
+from app.v2_acquisition_contracts import ACQUISITION_OUTPUTS
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     folder.mkdir(exist_ok=True)
     for name, model in {'brief': Brief, 'task': Task, 'result': Result, 'artifact': Artifact,
                         'scene': Scene, 'edit_plan': EditPlan, 'review': Review, 'host_run_config': HostRunConfig,
-                        'dual_worker_config': DualWorkerConfig}.items():
+                        'dual_worker_config': DualWorkerConfig, **ACQUISITION_OUTPUTS}.items():
         (folder / (name + '.schema.json')).write_text(json.dumps(model.model_json_schema(), ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 

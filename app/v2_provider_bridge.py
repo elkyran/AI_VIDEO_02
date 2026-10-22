@@ -82,17 +82,23 @@ def provider_readiness():
 
 class SyntheticTransport:
     """Data-only injected fixtures. Cannot wrap a real client behind a fake flag."""
-    def __init__(self, fixtures):
+    def __init__(self, fixtures=None, *, responder=None):
         import json
         from .registry import canonical_json
-        self._fixtures = json.loads(canonical_json(fixtures))
+        if responder is not None and not callable(responder):
+            raise ValueError('Synthetic responder must be host-injected callable, never a config import')
+        if responder is not None and fixtures is not None:
+            raise ValueError('Choose explicit fixture data or a synthetic transport-boundary responder')
+        self._fixtures = json.loads(canonical_json(fixtures or {}))
+        self._responder = responder
         self.calls = []
 
     def exchange(self, binding, context):
         from .v2_provider_protocol import synthetic_stdout
         from .registry import canonical_json
         import json
-        fixture = self._fixtures[binding.task.task_id]
+        fixture = (self._responder(binding, json.loads(canonical_json(context))) if self._responder is not None
+                   else self._fixtures[binding.task.task_id])
         if set(fixture)-{'payload', 'format', 'failure', 'pending'}:
             raise ValueError('Unknown synthetic fixture field')
         self.calls.append({'binding': binding.model_dump(), 'context': json.loads(canonical_json(context))})
@@ -151,13 +157,14 @@ class DualWorkerBridge:
         # identity, fixture_result, routing rules, file paths or another chat.
         allowed = ('source_text', 'dependency_results', 'revision_dependencies', 'accepted_state',
                    'revision_request', 'project_id', 'scene_id', 'scene_version',
-                   'subject_type', 'subject_id', 'subject_version', 'subject_hash')
+                   'subject_type', 'subject_id', 'subject_version', 'subject_hash', 'acquisition_scope')
         creative = json.loads(canonical_json({key: context[key] for key in allowed if key in context}))
         if len(canonical_json(creative).encode('utf-8')) > self.limits.context_bytes:
             raise StudioError('PROVIDER_BUDGET', 'Input context exceeds the host budget')
         binding = SessionBinding(slot=self.config.slot(contract.role), task=contract,
             attempt_id=task['attempt_id'], context_sha256=fingerprint(creative))
-        if contract.role == 'gemini_story' and contract.capability != 'system_worker_scene':
+        if (contract.role == 'gemini_story' and contract.expected_output_schema == 'scene'
+                and contract.capability not in {'system_worker_scene','system_acquire_scene'}):
             revision = creative.get('revision_request')
             if revision is None:
                 if contract.input_version != 1:

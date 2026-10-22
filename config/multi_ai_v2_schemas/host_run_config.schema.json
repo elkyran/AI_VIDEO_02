@@ -21,6 +21,72 @@
       "title": "AccountBinding",
       "type": "object"
     },
+    "AcquisitionPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_tolerance_ms": {
+          "maximum": 1800000,
+          "minimum": 0,
+          "title": "Duration Tolerance Ms",
+          "type": "integer"
+        },
+        "max_source_bytes": {
+          "default": 262144,
+          "maximum": 8000000,
+          "minimum": 1,
+          "title": "Max Source Bytes",
+          "type": "integer"
+        },
+        "max_text_bytes": {
+          "default": 32768,
+          "maximum": 262144,
+          "minimum": 1,
+          "title": "Max Text Bytes",
+          "type": "integer"
+        },
+        "passage_bytes": {
+          "default": 4096,
+          "maximum": 16384,
+          "minimum": 8,
+          "title": "Passage Bytes",
+          "type": "integer"
+        },
+        "max_passages": {
+          "default": 128,
+          "maximum": 512,
+          "minimum": 1,
+          "title": "Max Passages",
+          "type": "integer"
+        },
+        "director_required": {
+          "default": true,
+          "title": "Director Required",
+          "type": "boolean"
+        },
+        "auto_fix_authorized": {
+          "default": false,
+          "title": "Auto Fix Authorized",
+          "type": "boolean"
+        },
+        "retryable_job_errors": {
+          "items": {
+            "enum": [
+              "TIMEOUT",
+              "PROCESS_FAILED"
+            ],
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Retryable Job Errors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "duration_tolerance_ms"
+      ],
+      "title": "AcquisitionPolicy",
+      "type": "object"
+    },
     "ApprovedInputs": {
       "additionalProperties": false,
       "properties": {
@@ -1051,6 +1117,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/WorkerRoutes"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "acquisition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AcquisitionPolicy"
         },
         {
           "type": "null"

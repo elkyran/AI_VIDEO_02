@@ -79,7 +79,8 @@ class SessionBinding(Contract):
         if (self.task.role, self.task.assigned_worker, self.task.provider_profile_id) != (
                 self.slot.role, self.slot.worker_id, self.slot.profile_id):
             raise ValueError('Host task must pin the exact worker and synthetic profile')
-        allowed = {'gemini_story': {'scene'}, 'gemini_visual': {'review'}}
+        allowed = {'gemini_story': {'canon_bible','story_outline','scene'},
+                   'gemini_visual': {'segment_visuals','review'}}
         if self.task.expected_output_schema not in allowed[self.slot.role]:
             raise ValueError('Creative schema belongs to the other role')
         return self
@@ -114,7 +115,8 @@ class Terminal(Contract):
 
 
 def creative_schema(kind):
-    return {'scene': Scene, 'review': Review}[kind].model_json_schema()
+    from .v2_acquisition_contracts import ACQUISITION_OUTPUTS
+    return {'scene': Scene, 'review': Review, **ACQUISITION_OUTPUTS}[kind].model_json_schema()
 
 
 def _object(pairs):

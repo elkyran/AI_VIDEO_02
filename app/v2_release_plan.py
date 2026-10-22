@@ -106,10 +106,10 @@ def reconcile_inputs(config, *, canon, story, scenes, visuals):
     if any(scene.project_id != config.run_id or scene.simulated != simulation
             or any(n.simulated != simulation for n in scene.narration_segments) for scene in parsed_scenes):
         raise StudioError('RUN_IDENTITY_CHANGED', 'Generated scenes changed run identity or simulation provenance')
-    facts = {f.fact_id for f in bible.facts if f.kind not in {'assumption', 'divergence'}}
-    assumptions = {f.fact_id for f in bible.facts if f.kind in {'assumption', 'divergence'}}
-    if any(set(scene.fact_refs)-facts or set(scene.assumption_refs)-assumptions for scene in parsed_scenes):
-        raise StudioError('CANON_REFERENCE_INVALID', 'Scene cites facts/assumptions absent from accepted Canon')
+    from .v2_acquisition import resolve_refs
+    for scene in parsed_scenes:
+        resolve_refs(bible,scene.fact_refs)
+        resolve_refs(bible,scene.assumption_refs,assumptions=True)
     return ApprovedInputs(version=config.inputs.version, canon=bible, story=story,
         scenes=parsed_scenes, media=config.inputs.media, visuals=mappings)
 

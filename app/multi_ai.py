@@ -391,7 +391,8 @@ class Coordinator:
             _identifier(spec[key], key)
         if spec["role"] not in DEFAULT_ROLES or spec["resource_class"] not in {"cloud", "local_heavy"}:
             raise StudioError("SCHEMA_INVALID", "Unknown role or resource class")
-        if spec["expected_output"] not in {"scene", "edit_plan", "review", "note"}:
+        from .v2_acquisition_contracts import ACQUISITION_OUTPUTS
+        if spec["expected_output"] not in {"scene", "edit_plan", "review", "note", *ACQUISITION_OUTPUTS}:
             raise StudioError("SCHEMA_INVALID", "Unknown expected_output")
         if not isinstance(spec["input_versions"], dict) or not isinstance(spec["context"], dict):
             raise StudioError("SCHEMA_INVALID", "input_versions and context must be objects")
@@ -839,7 +840,7 @@ class Coordinator:
         try:
             if self.result_gate and hasattr(self.result_gate, 'prepare_context'):
                 task['context'].update(self.result_gate.prepare_context(registry, task, attempt_id))
-            if simulated:
+            if simulated and task['expected_output'] in {'scene','edit_plan','review','note'}:
                 task["context"].setdefault("fixture_result", demo_result(task["expected_output"], task["context"]))
             # The exact bounded context is durable and independent of clients' chats.
             self._atomic_json(attempt_dir / "request.json", task)

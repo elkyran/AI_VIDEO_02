@@ -19,6 +19,7 @@ from .v2_narration import profile_spec
 from .v2_sources import CanonBible, Source, source_manifest, verify_sources
 from .v2_visuals import SegmentVisuals
 from .v2_routes import WorkerRoutes
+from .v2_acquisition_contracts import AcquisitionPolicy
 
 OPERATIONS = ('synthesize', 'compile', 'render', 'qa', 'portable', 'deliver')
 
@@ -151,6 +152,7 @@ class HostRunConfig(Contract):
     review_policy: Literal['owner_required'] = 'owner_required'
     drive: DriveConfig | None = None
     worker_routes: WorkerRoutes | None = None
+    acquisition: AcquisitionPolicy | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode='after')
     def consistent(self):
@@ -188,6 +190,8 @@ class HostRunConfig(Contract):
         # before optional worker routes existed.
         if self.worker_routes is None:
             value.pop('worker_routes')
+        if self.acquisition is None:
+            value.pop('acquisition', None)
         value['root'] = str(isolated_root(self.root))
         value['input_root'] = str(no_links(self.input_root))
         return value

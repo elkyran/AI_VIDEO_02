@@ -78,9 +78,11 @@ class OfflineProductionBridge:
                     raise StudioError('ARTIFACT_INVALID','Simulated source research cannot establish a real Scene')
                 source_evidence=verify_sources(self.source_bundle['root'],bible,self.source_bundle['manifest_sha256'])
                 source_evidence['canon_sha256']=fingerprint(bible.model_dump())
-                facts={f'{f.edition}:{f.fact_id}' for f in bible.facts}
+                from .v2_acquisition import resolve_refs
+                resolve_refs(bible, scene.fact_refs)
+                resolve_refs(bible, scene.assumption_refs, assumptions=True)
                 sources={f'{s.edition}:{s.source_id}':s.sha256 for s in bible.sources}
-                if any(ref not in facts for ref in scene.fact_refs) or any(sources.get(k)!=v for k,v in scene.dependencies.items()):
+                if any(sources.get(k)!=v for k,v in scene.dependencies.items()):
                     raise StudioError('SOURCE_REQUIRED','Scene refers to missing or changed source evidence')
             elif scene.fact_refs or scene.dependencies:
                 raise StudioError('SOURCE_REQUIRED','Factual Scene dependencies require a pinned source bundle')
