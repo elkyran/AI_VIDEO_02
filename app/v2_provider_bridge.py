@@ -157,7 +157,7 @@ class DualWorkerBridge:
             raise StudioError('PROVIDER_BUDGET', 'Input context exceeds the host budget')
         binding = SessionBinding(slot=self.config.slot(contract.role), task=contract,
             attempt_id=task['attempt_id'], context_sha256=fingerprint(creative))
-        if contract.role == 'gemini_story':
+        if contract.role == 'gemini_story' and contract.capability != 'system_worker_scene':
             revision = creative.get('revision_request')
             if revision is None:
                 if contract.input_version != 1:
@@ -222,7 +222,8 @@ class DualWorkerBridge:
                 cause = exchange['failure']
                 # Generic task-scoped access pause deliberately avoids core's
                 # provider-wide quota mutation/rotation. Preserve exact cause.
-                return [{'type': 'failed', 'failure': {'kind': 'permissions', 'provider_failure_kind': cause,
+                kind = cause if task.get('worker_route') and cause != 'eligibility' else 'permissions'
+                return [{'type': 'failed', 'failure': {'kind': kind, 'provider_failure_kind': cause,
                     'code': {'quota_exhausted': 'WAITING_QUOTA', 'authentication': 'WAITING_AUTH',
                              'eligibility': 'BLOCKED_ELIGIBILITY'}[cause],
                     'message': 'Synthetic worker task paused; no fallback or rotation', 'retryable': False}}]

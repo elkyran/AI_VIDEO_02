@@ -128,7 +128,15 @@ class SystemPermit:
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'Operation was not authorized')
         if result.payload != node['value'] and node['stage'] == 'scene':
             raise StudioError('STALE_INPUTS', 'Scene payload differs from approved inputs')
-        if node['stage'] != 'scene':
+        if node['stage'] == 'worker_scene' and result.payload != node['value']:
+            raise StudioError('STALE_INPUTS', 'Worker Scene differs from these host-approved inputs')
+        if node['stage'] == 'worker_review':
+            validate_review(result.payload, {'project_id': config.run_id, 'subject_type': 'scene',
+                'subject_id': node['scene_id'], 'subject_version': node['version'],
+                'subject_hash': node['value']['subject_hash'], 'provided_evidence_mode': 'metadata_only'})
+            if result.payload['verdict'] == 'blocked':
+                raise StudioError('EDITORIAL_BLOCKED', 'Accepted creative changes are required before production')
+        if node['schema'] == 'note':
             output = json.loads(result.payload['text'])
             verify_output(self.root, output, simulated=result.simulated)
 
@@ -235,16 +243,70 @@ class StageAdapter:
         return {'status': 'running', 'handle': handle}
 
 
+from .v2_provider_bridge import DualWorkerBridge
+
+
+class PipelineWorkers(DualWorkerBridge):
+    """Same synthetic adapter, with SYSTEM host receipts; no alternate gate."""
+    def __init__(self, *args, pipeline, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pipeline = pipeline
+
+    def poll(self, handle):
+        events = super().poll(handle)
+        for event in events:
+            if event.get('type') == 'completed':
+                result = event['host_metadata']
+                self.pipeline.permit.validate()
+                from .v2_release_flow import save_exact
+                save_exact(self.pipeline.root,
+                    f'host_receipts/{result["task_id"]}/{result["acceptance_key"]}.json', result)
+        return events
+
+    def recover(self, attempt_dir):
+        result = super().recover(attempt_dir)
+        if result.get('status') == 'completed':
+            self.pipeline.permit.validate()
+            host = result['host_metadata']
+            from .v2_release_flow import save_exact
+            save_exact(self.pipeline.root,
+                f'host_receipts/{host["task_id"]}/{host["acceptance_key"]}.json', host)
+        return result
+
+
 class SystemPipeline(MeasuredEngine):
-    def __init__(self, config, *, opt_in=False, authorize=False):
+    def __init__(self, config, *, opt_in=False, authorize=False, drive_host=None, worker_fixtures=None):
         from .multi_ai_v2 import RunCoordinator
         self.config = config
+        from .v2_delivery_host import DriveHostContext
+        if drive_host is not None and type(drive_host) is not DriveHostContext:
+            raise StudioError('WAITING_AUTH', 'Only an explicit host Drive context can resolve authorization')
+        self.drive_host = drive_host
+        if config.worker_routes is not None and config.mode == 'simulation' and type(worker_fixtures) is not dict:
+            raise StudioError('SYNTHETIC_RESULTS_REQUIRED', 'Explicit synthetic worker results are required; there is no fallback')
         self.permit = SystemPermit(config, opt_in=opt_in, authorize=authorize)
         self.root, self.run_id = self.permit.root, config.run_id
         self.engine = self.root/'engine'
         adapter = StageAdapter(self)
         adapters = {'codex': adapter, 'gemini': adapter} if config.mode == 'simulation' else {'local': adapter}
-        self.q = RunCoordinator(self.root/'coordinator', adapters=adapters, system_permit=self.permit)
+        if config.worker_routes is not None and config.mode == 'simulation':
+            from .v2_provider_protocol import WorkerSlot, DualWorkerConfig
+            from .v2_provider_bridge import SyntheticTransport
+            from .v2_storage import ArtifactStore
+            slots = {}
+            for route in config.worker_routes.routes:
+                if route.role not in {'gemini_story', 'gemini_visual'}:
+                    raise StudioError('WORKER_ROUTE_MISMATCH', 'Production stages stay in the existing host engine')
+                slots[route.role] = WorkerSlot(worker_id=route.worker_id, role=route.role, profile_id=route.profile_id,
+                    identity_binding_ref=route.worker_id+'_binding', identity_hash=route.account_binding.identity_hash,
+                    auth_generation=route.account_binding.auth_generation, auth_namespace=route.worker_id+'_auth',
+                    session_namespace=route.worker_id+'_sessions')
+            if set(slots) != {'gemini_story', 'gemini_visual'}:
+                raise StudioError('WORKER_ROUTE_REQUIRED', 'Both fixed Story/Visual routes are required')
+            adapters['gemini'] = PipelineWorkers(DualWorkerConfig(story=slots['gemini_story'], visual=slots['gemini_visual']),
+                SyntheticTransport(worker_fixtures), ArtifactStore(self.root/'coordinator'), pipeline=self)
+        self.q = RunCoordinator(self.root/'coordinator', adapters=adapters, system_permit=self.permit,
+            worker_routes=config.worker_routes)
         self.bridge = OfflineProductionBridge(self.q, self.engine, source_bundle={
             'canon': config.inputs.canon.model_dump(), 'root': Path(config.input_root),
             'manifest_sha256': fingerprint(__import__('app.v2_sources', fromlist=['source_manifest']).source_manifest(config.inputs.canon))})
@@ -277,14 +339,20 @@ class SystemPipeline(MeasuredEngine):
     def enqueue(self, node):
         authority, config, original = self.permit.node(node['task_id'])
         hashes = {'node': fingerprint(node), 'authority': authority, 'profile': config.profile_sha256}
-        contract = Task(task_id=node['task_id'], run_id=self.run_id, scene_id=node['scene_id'], role='python',
+        role = node.get('provider_role', 'python')
+        route = next((r for r in config.worker_routes.routes if r.role == role), None) if config.worker_routes else None
+        contract = Task(task_id=node['task_id'], run_id=self.run_id, scene_id=node['scene_id'], role=role,
             capability='system_'+node['stage'], input_version=node['version'], input_hashes=hashes,
-            depends_on=node['dependencies'], assigned_worker='host', provider_profile_id='simulation' if config.mode == 'simulation' else 'local-heavy',
+            depends_on=node['dependencies'], assigned_worker=route.worker_id if route else 'host',
+            provider_profile_id=route.profile_id if route else 'simulation' if config.mode == 'simulation' else 'local-heavy',
             expected_output_schema=node['schema'], idempotency_key=node['task_id'])
         context = {'project_id': self.run_id, 'v2_contract': contract.model_dump(), 'system_authority': authority}
         if node['scene_id']:
             context.update(scene_id=node['scene_id'], scene_version=node['version'])
-        self.q.queue.enqueue({'task_id': node['task_id'], 'project_id': self.run_id, 'role': 'director',
+        if role != 'python':
+            context['source_text'] = config.brief.topic
+        self.q.queue.enqueue({'task_id': node['task_id'], 'project_id': self.run_id,
+            'role': {'gemini_story': 'writer', 'gemini_visual': 'critic'}.get(role, 'director'),
             'resource_class': 'cloud' if config.mode == 'simulation' else 'local_heavy',
             'expected_output': node['schema'], 'input_versions': hashes, 'depends_on': node['dependencies'],
             'context': context, 'max_attempts': config.budget.attempts})
@@ -645,7 +713,15 @@ class SystemPipeline(MeasuredEngine):
         if 'deliver' not in self.config.operations or not self.config.drive or not self.config.drive.network_write_authorized:
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'Drive requires explicit folder and network write authority')
         if transport is None:
-            raise StudioError('WAITING_AUTH', 'No host-injected official Drive authorization; login is never automatic')
+            host = getattr(self, 'drive_host', None)
+            if host is None:
+                raise StudioError('WAITING_AUTH', 'No host-injected official Drive authorization; login is never automatic')
+            try:
+                transport = host.transport(self.config)
+            except StudioError as exc:
+                if getattr(exc, 'kind', None) == 'auth':
+                    raise StudioError('WAITING_AUTH', 'Host authorization does not match this folder/run/version') from None
+                raise StudioError('BLOCKED_UNSUPPORTED', 'Host delivery binding or private session store is unavailable') from None
         self.drive_transport = transport
         node = delivery_node(self.config)
         self.enqueue(node)
@@ -675,20 +751,36 @@ def system_main(argv):
         'status', 'inspect-artifacts', 'report', 'approve', 'deliver'])
     parser.add_argument('--review')
     parser.add_argument('--ticks', type=int)
+    parser.add_argument('--synthetic-inputs', help='Explicit typed simulation bundle; never a live fallback')
     args = parser.parse_args(argv)
     pipeline = None
     try:
         config = load_config(args.config)
         if args.root and isolated_root(args.root) != isolated_root(config.root):
             raise StudioError('SYSTEM_PERMISSION_REQUIRED', 'CLI root differs from pinned host configuration')
+        worker_fixtures = None
+        if args.synthetic_inputs:
+            from .v2_release_flow import synthetic_handoff
+            config, worker_fixtures = synthetic_handoff(config, args.synthetic_inputs,
+                persist=args.command not in {'plan', 'doctor'} and args.execute_system and args.authorize)
         if args.command in {'plan', 'doctor'}:
             result = plan(config)
             result['providers'] = provider_readiness()
+            from .v2_operator_status import readiness
+            result['readiness'] = readiness(config)
             if args.command == 'doctor':
                 result['storage'] = storage(config)
                 result['write_probe'] = 'NOT_REQUESTED'
+        elif args.command in {'status', 'inspect-artifacts', 'report', 'pause', 'stop'}:
+            from .v2_operator_status import observe, request_control
+            result = (request_control(config, args.command, opt_in=args.execute_system)
+                      if args.command in {'pause', 'stop'} else observe(config))
+        elif args.command in {'prepare', 'create'} and plan(config)['blockers']:
+            from .v2_release_plan import persist_plan
+            result = persist_plan(config, opt_in=args.execute_system and args.authorize)
         else:
-            pipeline = SystemPipeline(config, opt_in=args.execute_system, authorize=args.authorize)
+            pipeline = SystemPipeline(config, opt_in=args.execute_system, authorize=args.authorize,
+                worker_fixtures=worker_fixtures)
             if args.command in {'run', 'resume'}:
                 if args.ticks is not None and args.ticks < 1:
                     raise ValueError('ticks must be positive')
@@ -709,6 +801,7 @@ def system_main(argv):
                 result = pipeline.status()
         print(json.dumps(sanitize(result), ensure_ascii=False, allow_nan=False))
         return {'PLANNED': 0, 'SIMULATION_SUCCEEDED': 0, 'READY_FOR_OWNER_REVIEW': 0, 'OWNER_REVIEW_RECORDED': 0,
+            'RECORDED_LOCAL_PACKAGE': 0, 'RECORDED_PROGRESS': 0, 'STOP_REQUESTED': 0, 'PAUSED': 0,
             'UPLOADED_VERIFIED': 0, 'IN_PROGRESS': 2, 'WAITING_AUTH': 3, 'WAITING_QUOTA': 4, 'BLOCKED_UNSUPPORTED': 5, 'FAILED_RETRYABLE': 6,
             'FAILED_FINAL': 7, 'CANCELLED': 10}.get(result['status'], 9)
     except (ValueError, OSError, StudioError, KeyError) as exc:

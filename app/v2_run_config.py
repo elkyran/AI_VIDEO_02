@@ -10,14 +10,15 @@ from pydantic import Field, model_validator
 from typing import Literal
 
 from .contracts import Identifier, Sha256, relative_path
-from .editorial import Scene
+from .editorial import Scene, Review
 from .registry import StudioError, content_hash, workspace_path
 from .v2_acceptance import fingerprint
 from .v2_contracts import Brief, Contract
 from .v2_ids import derived_id
 from .v2_narration import profile_spec
-from .v2_sources import CanonBible, source_manifest, verify_sources
+from .v2_sources import CanonBible, Source, source_manifest, verify_sources
 from .v2_visuals import SegmentVisuals
+from .v2_routes import WorkerRoutes
 
 OPERATIONS = ('synthesize', 'compile', 'render', 'qa', 'portable', 'deliver')
 
@@ -104,6 +105,28 @@ class ApprovedInputs(Contract):
         return self
 
 
+class BriefInputs(Contract):
+    """Host allowlist for acquisition; a Brief does not contain a written script.
+
+    Sources/media are owner-selected inventory, never paths proposed by a model.
+    This is intentionally distinct from already approved creative inputs.
+    """
+    version: int = Field(ge=1)
+    sources: list[Source] = Field(min_length=1, max_length=128)
+    media: list[InputFile] = Field(default_factory=list, max_length=500)
+    requested_scene_count: int = Field(default=1, ge=1, le=100)
+
+    @model_validator(mode='after')
+    def unique(self):
+        if len({(s.source_id, s.edition) for s in self.sources}) != len(self.sources):
+            raise ValueError('Duplicate source IDs in the same edition')
+        if len({m.asset_id for m in self.media}) != len(self.media):
+            raise ValueError('Duplicate media IDs')
+        if len({(m.sha256, m.kind) for m in self.media}) != len(self.media):
+            raise ValueError('Identical media must share one explicit asset ID')
+        return self
+
+
 class DriveConfig(Contract):
     folder_id: str = Field(min_length=1, max_length=256, pattern=r'^[A-Za-z0-9_-]+$')
     credential_ref: Identifier
@@ -119,7 +142,7 @@ class HostRunConfig(Contract):
     brief: Brief
     root: str
     input_root: str
-    inputs: ApprovedInputs
+    inputs: ApprovedInputs | BriefInputs
     profile_sha256: Sha256
     operations: list[Literal['synthesize', 'compile', 'render', 'qa', 'portable', 'deliver']]
     budget: Budget = Field(default_factory=Budget)
@@ -127,6 +150,7 @@ class HostRunConfig(Contract):
     renderer: Literal['existing_mlt_libx264_crf20_fast_4threads'] = 'existing_mlt_libx264_crf20_fast_4threads'
     review_policy: Literal['owner_required'] = 'owner_required'
     drive: DriveConfig | None = None
+    worker_routes: WorkerRoutes | None = None
 
     @model_validator(mode='after')
     def consistent(self):
@@ -137,11 +161,18 @@ class HostRunConfig(Contract):
             raise ValueError('BLOCKED_UNSUPPORTED: approved voice language is ru')
         if self.brief.output_profile != 'ruslan-local-narration':
             raise ValueError('Unsupported output profile')
-        if self.inputs.canon.simulated != simulation or any(s.simulated != simulation or s.project_id != self.run_id
-                or any(n.simulated != simulation for n in s.narration_segments) for s in self.inputs.scenes):
-            raise ValueError('Mixed run identity or simulation provenance')
+        if isinstance(self.inputs, ApprovedInputs):
+            if self.inputs.canon.simulated != simulation or any(s.simulated != simulation or s.project_id != self.run_id
+                    or any(n.simulated != simulation for n in s.narration_segments) for s in self.inputs.scenes):
+                raise ValueError('Mixed run identity or simulation provenance')
+        elif self.mode == 'approved_input':
+            raise ValueError('Approved-input mode requires the complete owner-approved inputs')
+        elif not simulation and any(s.rights == 'fixture' for s in self.inputs.sources):
+            raise ValueError('Fixture source rights are limited to explicit simulation')
         if len(set(self.operations)) != len(self.operations):
             raise ValueError('Duplicate operations')
+        if self.worker_routes and any(route.synthetic != simulation for route in self.worker_routes.routes):
+            raise ValueError('Worker routes must match explicit simulation provenance')
         allowed_runtime = {'tts_python', 'tts_model', 'melt_path', 'ffmpeg_path', 'ffprobe_path', 'tts_engine',
             'tts_normalization_scope', 'pronunciation_lexicon', 'pronunciation_terms', 'video_encoder', 'render_threads',
             *('tts_'+k for k in profile_spec()['voice']['settings'] if k != 'speaker_id')}
@@ -153,6 +184,10 @@ class HostRunConfig(Contract):
 
     def pinned(self):
         value = self.model_dump()
+        # Preserve byte-for-byte authority hashes of configurations accepted
+        # before optional worker routes existed.
+        if self.worker_routes is None:
+            value.pop('worker_routes')
         value['root'] = str(isolated_root(self.root))
         value['input_root'] = str(no_links(self.input_root))
         return value
@@ -170,15 +205,16 @@ def load_config(path):
 
 def verify_inputs(config):
     root = no_links(config.input_root)
-    total = sum(s.size for s in config.inputs.canon.sources) + sum(m.size for m in config.inputs.media)
+    bible = source_inventory(config)
+    total = sum(s.size for s in bible.sources) + sum(m.size for m in config.inputs.media)
     if total > config.budget.max_input_bytes:
         raise StudioError('INPUT_BUDGET_EXCEEDED', 'Allowed input inventory exceeds read budget')
-    for source in config.inputs.canon.sources:
+    for source in bible.sources:
         if Path(source.path).suffix.lower() not in {'.txt', '.md', '.json'}:
             raise StudioError('SOURCE_KIND_UNSUPPORTED', 'Only approved text/JSON sources may be read')
         no_links(root/source.path)
-    manifest_hash = fingerprint(source_manifest(config.inputs.canon))
-    evidence = verify_sources(root, config.inputs.canon, manifest_hash)
+    manifest_hash = fingerprint(source_manifest(bible))
+    evidence = verify_sources(root, bible, manifest_hash)
     for asset in config.inputs.media:
         path = no_links(root/asset.path)
         if (not path.is_relative_to(root) or not path.is_file() or path.stat().st_size != asset.size
@@ -187,6 +223,14 @@ def verify_inputs(config):
     if fingerprint(profile_spec()) != config.profile_sha256:
         raise StudioError('PROFILE_CHANGED', 'Host configuration must pin the current complete production profile')
     return evidence
+
+
+def source_inventory(config):
+    """Reuse canonical source verification without claiming generated Canon facts."""
+    if isinstance(config.inputs, ApprovedInputs):
+        return config.inputs.canon
+    return CanonBible(version=config.inputs.version, work_id=config.run_id,
+        simulated=config.mode == 'simulation', sources=config.inputs.sources)
 
 
 def storage(config):
@@ -213,12 +257,20 @@ def storage(config):
 
 def graph(config):
     """IDs bind complete input identities; unaffected scenes retain their exact nodes."""
+    if isinstance(config.inputs, BriefInputs):
+        from .v2_release_plan import acquisition_graph
+        return acquisition_graph(config)
     nodes = []
-    def add(stage, value, dependencies=(), scene=None, schema='note'):
+    def add(stage, value, dependencies=(), scene=None, schema='note', provider_role=None):
+        policy = {'operations': config.operations, 'budget': config.budget.model_dump(),
+                  'runtime': config.runtime, 'renderer': config.renderer}
+        if config.worker_routes is not None:
+            policy['worker_routes'] = config.worker_routes.model_dump()
         binding = {'stage': stage, 'value': value, 'dependencies': list(dependencies),
                    'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id,
-                   'host_execution': fingerprint({'operations': config.operations, 'budget': config.budget.model_dump(),
-                                                   'runtime': config.runtime, 'renderer': config.renderer})}
+                   'host_execution': fingerprint(policy)}
+        if provider_role is not None:
+            binding['provider_role'] = provider_role
         identifier = derived_id(config.run_id, stage, 'h'+fingerprint(binding))
         nodes.append({'task_id': identifier, **binding, 'scene_id': scene.scene_id if scene else None,
                       'version': scene.version if scene else 1, 'schema': schema})
@@ -227,7 +279,16 @@ def graph(config):
     story = add('story', {'story': config.inputs.story}, [sources])
     finals = []
     for scene in config.inputs.scenes:
-        admission = add('scene', scene.model_dump(), [story], scene, 'scene')
+        admission_deps = [story]
+        if config.worker_routes is not None:
+            worker_scene = add('worker_scene', scene.model_dump(), [story], scene, 'scene', 'gemini_story')
+            review = Review(project_id=config.run_id, review_id=derived_id('review', scene.scene_id, 'v'+str(scene.version)),
+                subject_type='scene', subject_id=scene.scene_id, subject_version=scene.version,
+                subject_hash=fingerprint(scene.model_dump()), evidence_mode='metadata_only',
+                verdict='needs_review', simulated=config.mode == 'simulation').model_dump()
+            worker_review = add('worker_review', review, [worker_scene], scene, 'review', 'gemini_visual')
+            admission_deps = [worker_review]
+        admission = add('scene', scene.model_dump(), admission_deps, scene, 'scene')
         mappings = [m.model_dump() for m in config.inputs.visuals if m.scene_id == scene.scene_id]
         used = {s['asset_id'] for m in mappings for s in m['shots']}
         candidate = add('candidate', {'mappings': mappings,
@@ -253,9 +314,27 @@ def plan(config):
         raise StudioError('PATH_UNSAFE', 'Input originals and run outputs must be separate trees')
     evidence = verify_inputs(config)
     blockers = []
+    if config.worker_routes is not None:
+        roles = {r.role for r in config.worker_routes.routes}
+        if roles != {'gemini_story', 'gemini_visual'}:
+            blockers.append('HOST_ROUTES_REQUIRED: SYSTEM workers require exactly Story and Visual; production remains in the host engine')
+        if config.mode != 'simulation':
+            blockers.append('BLOCKED_ELIGIBILITY: routed Antigravity workers remain AGE-GATED / DISABLED')
+    if isinstance(config.inputs, BriefInputs):
+        from .v2_release_plan import acquisition_blockers
+        blockers.extend(acquisition_blockers(config))
+    if config.worker_routes is not None:
+        roles = {route.role for route in config.worker_routes.routes}
+        if not {'gemini_story', 'gemini_visual'} <= roles:
+            blockers.append('HOST_ROUTES_REQUIRED: pin both Story and Visual host worker/account bindings')
+        if config.mode != 'simulation':
+            blockers.append('BLOCKED_ELIGIBILITY: configured Story/Visual routes remain disabled outside simulation')
     if config.mode == 'autonomous':
         blockers += ['Story/Visual: Antigravity AGE-GATED / DISABLED; no supported verified route',
                      'Codex director: end-to-end provider capability is not live verified']
+        roles = {route.role for route in config.worker_routes.routes} if config.worker_routes else set()
+        if not {'gemini_story', 'gemini_visual'} <= roles:
+            blockers.append('HOST_ROUTES_REQUIRED: pin both Story and Visual host worker/account bindings')
     if config.mode != 'simulation' and not config.runtime:
         blockers.append('Explicit isolated engine runtime configuration is required')
     return {'status': 'BLOCKED_UNSUPPORTED' if blockers else 'PLANNED', 'run_id': config.run_id,

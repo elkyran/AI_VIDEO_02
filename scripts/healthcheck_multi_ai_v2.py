@@ -32,10 +32,12 @@ def check(mode, root, *, require_runner=False, require_drive=False, write_probe=
         from app.v2_contracts import Brief, Task, Result, Artifact, Review
         from app.editorial import Scene, EditPlan
         from app.v2_run_config import HostRunConfig
+        from app.v2_provider_protocol import DualWorkerConfig
         from app.production_bridge import ProductionBridge
         from app.registry import StudioError
         models = {'brief': Brief,'task': Task,'result': Result,'artifact': Artifact,
-                  'scene': Scene,'edit_plan': EditPlan,'review': Review,'host_run_config': HostRunConfig}
+                  'scene': Scene,'edit_plan': EditPlan,'review': Review,'host_run_config': HostRunConfig,
+                  'dual_worker_config': DualWorkerConfig}
         for name, model in models.items():
             path = ROOT/'config/multi_ai_v2_schemas'/(name+'.schema.json')
             if json.loads(path.read_text(encoding='utf-8')) != model.model_json_schema():

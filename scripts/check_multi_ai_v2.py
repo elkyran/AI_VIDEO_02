@@ -17,6 +17,16 @@ DEFAULT_GROUP_TIMEOUT_SECONDS = 180
 GROUP_TIMEOUT_SECONDS = {'v2': 420, 'contracts': 420}
 
 
+def unittest_counts(log):
+    """Count successful AND failed unittest summaries; exit code decides pass."""
+    counts = list(re.finditer(r'^Ran (\d+) tests? in ', log, re.MULTILINE))
+    if not counts:
+        return None, 0
+    summary = log[counts[-1].end():]
+    skipped = re.search(r'^(?:OK|FAILED)\b[^\n]*\bskipped=(\d+)', summary, re.MULTILINE)
+    return int(counts[-1][1]), int(skipped[1]) if skipped else 0
+
+
 def audit_export():
     """Use the existing scanner read-only; do not overwrite its historical report."""
     from scripts.check_git_export import scan
@@ -52,7 +62,9 @@ def main(argv=None):
     groups['contracts'] = [*groups['contracts'], 'tests.test_v2_sources', 'tests.test_v2_production',
         'tests.test_v2_visuals', 'tests.test_v2_engine_bridge', 'tests.test_v2_offline_qa',
         'tests.test_v2_release', 'tests.test_v2_offline', 'tests.test_v2_bulk_boundaries',
-        'tests.test_v2_local_pilot', 'tests.test_v2_system_delivery', 'tests.test_v2_provider_protocol']
+        'tests.test_v2_local_pilot', 'tests.test_v2_system_delivery', 'tests.test_v2_provider_protocol',
+        'tests.test_v2_release_routes', 'tests.test_v2_release_plan', 'tests.test_v2_release_operator',
+        'tests.test_v2_release_flow']
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/multi_ai_v2/evidence', help='Parent directory only; UTC+UUID child is created exclusively')
     parser.add_argument('--groups', nargs='+', choices=list(groups), default=list(groups))
@@ -76,10 +88,7 @@ def main(argv=None):
                 except subprocess.TimeoutExpired:
                     stream.write(f'\nTimeout {timeout_seconds}s; not passed.\n'); code = 124
             elapsed = round(time.monotonic()-start, 6)
-            count = re.search(r'Ran (\d+) tests?', log.read_text(encoding='utf-8'))
-            count = int(count.group(1)) if count else None
-            skipped = re.search(r'OK \(skipped=(\d+)\)', log.read_text(encoding='utf-8'))
-            skipped = int(skipped.group(1)) if skipped else 0
+            count, skipped = unittest_counts(log.read_text(encoding='utf-8'))
             check = {'group': group, 'status': 'passed' if code == 0 else 'failed', 'exit_code': code,
                      'test_count': count, 'skipped_count': skipped, 'elapsed_seconds': elapsed,
                      'timeout_seconds': timeout_seconds, 'command': command, 'log_ref': log.name, 'truncated': False}

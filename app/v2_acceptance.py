@@ -129,6 +129,8 @@ class V2ResultGate:
             completion = json.loads(workspace_path(self.root, stored['path']).read_text(encoding='utf-8'))
             if completion.get('host_metadata') != result.model_dump():
                 raise StudioError('IDEMPOTENCY_CONFLICT', 'Replay differs from immutable completion metadata')
+            if completion.get('worker_route') != task.get('worker_route'):
+                raise StudioError('WORKER_ROUTE_MISMATCH', 'Replay differs from immutable worker route')
         if full_review:
             self.video.bind_delivery(registry, result.host_review_delivery)
         return {'payload': normalized, 'context': context, 'host_metadata': result.model_dump(),

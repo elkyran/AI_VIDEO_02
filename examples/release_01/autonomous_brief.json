@@ -1,0 +1,60 @@
+{
+  "run_id": "release_example",
+  "key": "stable_key",
+  "version": 1,
+  "parent_sha256": null,
+  "mode": "autonomous",
+  "brief": {
+    "topic": "Как проверяемый локальный архив сохраняет историю проекта",
+    "language": "ru",
+    "target_minutes": 1,
+    "style": "serious",
+    "source_profile": "owner_supplied",
+    "production_mode": "production",
+    "auto_fix_cycles": 1,
+    "output_profile": "ruslan-local-narration",
+    "additional_requirements": null
+  },
+  "root": "C:/AI_VIDEO_RUNS/release_01_autonomous",
+  "input_root": "inputs",
+  "inputs": {
+    "version": 1,
+    "sources": [
+      {
+        "source_id": "source",
+        "edition": "v1",
+        "path": "источник.txt",
+        "sha256": "4570b64d980d7e3deeaa0fc489b265468b18ad61449ff5a7d5451439c1a95809",
+        "size": 93,
+        "rights": "owned"
+      }
+    ],
+    "media": [
+      {
+        "asset_id": "approved_image",
+        "path": "схема.png",
+        "sha256": "b1ff9c8ea3a780bad09b346c423d2d0e46815926879b18e841d928376a946640",
+        "size": 69,
+        "version": 1,
+        "kind": "image",
+        "rights": "owned",
+        "duration_ms": null
+      }
+    ],
+    "requested_scene_count": 2
+  },
+  "profile_sha256": "4fda02f2e97c89995bf603d9637774f00d7d5d2c9e0d33cd56fba37cf2f7f26e",
+  "operations": [],
+  "budget": {
+    "max_output_bytes": 262144000,
+    "reserve_bytes": 4294967296,
+    "max_input_bytes": 33554432,
+    "seconds": 300,
+    "attempts": 2,
+    "external_requests": 0
+  },
+  "runtime": {},
+  "renderer": "existing_mlt_libx264_crf20_fast_4threads",
+  "review_policy": "owner_required",
+  "drive": null
+}

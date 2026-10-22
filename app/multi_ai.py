@@ -491,7 +491,9 @@ class Coordinator:
                     "profiles": profiles, "historical_profiles": historical_profiles,
                     "active_providers": list(ACTIVE_PROVIDERS), "tasks": tasks, "attempts": attempts, "scenes": scenes,
                     "artifacts": [dict(row) for row in registry.db.execute("SELECT * FROM ai_artifacts ORDER BY created")],
-                    "counts": counts, "limits": {"max_cloud_workers": 3, "max_workers_per_provider": 1,
+                    "counts": counts, "limits": {"max_cloud_workers": 3, "max_workers_per_provider": 1 if self.worker_routes is None else None,
+                                                   **({'legacy_max_workers_per_provider': 1, 'max_workers_per_account': 1,
+                                                       'max_workers_per_worker': 1} if self.worker_routes else {}),
                                                    "max_workers_per_profile": 1, "max_local_heavy_jobs": 1},
                     "quality_status": "not_measured", "truncated": False}
 

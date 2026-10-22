@@ -1,5 +1,26 @@
 {
   "$defs": {
+    "AccountBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "identity_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Identity Hash",
+          "type": "string"
+        },
+        "auth_generation": {
+          "minimum": 1,
+          "title": "Auth Generation",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "identity_hash",
+        "auth_generation"
+      ],
+      "title": "AccountBinding",
+      "type": "object"
+    },
     "ApprovedInputs": {
       "additionalProperties": false,
       "properties": {
@@ -127,6 +148,47 @@
         "topic"
       ],
       "title": "Brief",
+      "type": "object"
+    },
+    "BriefInputs": {
+      "additionalProperties": false,
+      "description": "Host allowlist for acquisition; a Brief does not contain a written script.\n\nSources/media are owner-selected inventory, never paths proposed by a model.\nThis is intentionally distinct from already approved creative inputs.",
+      "properties": {
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "maxItems": 128,
+          "minItems": 1,
+          "title": "Sources",
+          "type": "array"
+        },
+        "media": {
+          "items": {
+            "$ref": "#/$defs/InputFile"
+          },
+          "maxItems": 500,
+          "title": "Media",
+          "type": "array"
+        },
+        "requested_scene_count": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Requested Scene Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "version",
+        "sources"
+      ],
+      "title": "BriefInputs",
       "type": "object"
     },
     "Budget": {
@@ -802,6 +864,74 @@
       ],
       "title": "Source",
       "type": "object"
+    },
+    "WorkerRoute": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "gemini_story",
+            "gemini_visual",
+            "codex"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "worker_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Worker Id",
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "gemini",
+            "codex"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "profile_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "account_binding": {
+          "$ref": "#/$defs/AccountBinding"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "role",
+        "worker_id",
+        "provider",
+        "profile_id",
+        "account_binding",
+        "synthetic"
+      ],
+      "title": "WorkerRoute",
+      "type": "object"
+    },
+    "WorkerRoutes": {
+      "additionalProperties": false,
+      "properties": {
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/WorkerRoute"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Routes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "routes"
+      ],
+      "title": "WorkerRoutes",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -856,7 +986,15 @@
       "type": "string"
     },
     "inputs": {
-      "$ref": "#/$defs/ApprovedInputs"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ApprovedInputs"
+        },
+        {
+          "$ref": "#/$defs/BriefInputs"
+        }
+      ],
+      "title": "Inputs"
     },
     "profile_sha256": {
       "pattern": "^[a-f0-9]{64}$",
@@ -902,6 +1040,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/DriveConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "worker_routes": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkerRoutes"
         },
         {
           "type": "null"
