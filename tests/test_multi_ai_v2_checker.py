@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -13,6 +14,46 @@ from scripts import check_multi_ai_v2 as checker
 
 
 class CheckerTimeoutTests(unittest.TestCase):
+    def timing_child(self, source, deadline=5, timeout=10):
+        folder = Path(tempfile.mkdtemp(prefix='closure_timing_'))
+        self.addCleanup(__import__('shutil').rmtree, folder)
+        (folder/'fixture_timing.py').write_text(source, encoding='utf-8')
+        timing, stacks = folder/'timing.jsonl', folder/'stacks.log'
+        command = [sys.executable, '-B', '-X', 'utf8', '-m', 'scripts.timed_unittest',
+            '--telemetry', str(timing), '--stacks', str(stacks), '--deadline', str(deadline),
+            '--', '-m', 'unittest', 'discover', '-s', str(folder), '-p', 'fixture_timing.py']
+        try:
+            result = subprocess.run(command, cwd=Path(__file__).resolve().parents[1],
+                capture_output=True, timeout=timeout)
+            code = result.returncode
+        except subprocess.TimeoutExpired:
+            code = 124
+        return code, [json.loads(line) for line in timing.read_text(encoding='utf-8').splitlines()], stacks.read_text(encoding='utf-8')
+
+    def test_timing_child_records_real_phases_failure_and_skip(self):
+        code, events, stacks = self.timing_child('import unittest\nclass Fixture(unittest.TestCase):\n'
+            ' def test_ok(self): self.assertTrue(True)\n'
+            ' def test_fail(self): self.fail("expected fixture failure")\n'
+            ' @unittest.skip("fixture tests skip accounting")\n def test_skip(self): pass\n')
+        self.assertEqual(code, 1)
+        self.assertEqual(len([e for e in events if e['event']=='start']), 3)
+        self.assertEqual({e['status'] for e in events if e['event']=='finish'}, {'passed','failed','skipped'})
+        self.assertTrue({'_callSetUp','_callTestMethod','_callTearDown'} <=
+                        {e['phase'] for e in events if e['event']=='phase'})
+        summary = next(e for e in events if e['event']=='summary')
+        self.assertEqual((summary['tests'],summary['failures'],summary['skipped']), (3,1,1))
+        self.assertEqual(stacks, '')
+
+    def test_timeout_snapshot_captures_unfinished_actual_child_without_locals(self):
+        code, events, stacks = self.timing_child('import unittest,threading\nclass Fixture(unittest.TestCase):\n'
+            ' def test_wait(self):\n  private_text="AUDIT_PRIVATE_LOCAL_SENTINEL"\n  threading.Event().wait(60)\n',
+            deadline=.4, timeout=2)
+        self.assertEqual(code, 124)
+        snapshot = next(e for e in events if e['event']=='deadline_snapshot')
+        self.assertTrue(any('test_wait' in x for x in snapshot['unfinished']))
+        self.assertIn('test_wait', stacks)
+        self.assertNotIn('AUDIT_PRIVATE_LOCAL_SENTINEL', stacks)
+
     def run_checker(self, groups=None, *, timeout_group=None, failed_group=None):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

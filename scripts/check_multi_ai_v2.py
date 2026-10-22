@@ -81,6 +81,11 @@ def main(argv=None):
                 ('diff_check', ['git', 'diff', '--check'])])
         for group, command in commands:
             timeout_seconds = GROUP_TIMEOUT_SECONDS.get(group, DEFAULT_GROUP_TIMEOUT_SECONDS)
+            if '-m' in command and 'unittest' in command:
+                command = [sys.executable, '-X', 'utf8', '-m', 'scripts.timed_unittest',
+                    '--telemetry', str(run.folder/(group+'.timing.jsonl')),
+                    '--stacks', str(run.folder/(group+'.stacks.log')), '--deadline', str(timeout_seconds),
+                    '--', *command[3:]]
             log = run.folder/(group+'.log'); start = time.monotonic()
             with log.open('x', encoding='utf-8') as stream:
                 try:
