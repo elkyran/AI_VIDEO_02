@@ -46,7 +46,14 @@ class NativeIO:
     def __init__(self):self.commands=[];self.stages=[];self.duration=60;self.vary_text=False
     @contextmanager
     def __call__(self,pipeline,node):
-        self.last_pipeline=pipeline  # Observe the real handler instance at native IO.
+        if pipeline is not None:self.last_pipeline=pipeline
+        with ExitStack() as lifetime:
+            if pipeline is None:
+                folder=lifetime.enter_context(tempfile.TemporaryDirectory(prefix='closure_profile_'))
+                pipeline=SimpleNamespace(root=Path(folder).resolve())
+            yield from self._boundaries(pipeline,node)
+
+    def _boundaries(self,pipeline,node):
         self.stages.append(node['stage']);voice=profile_spec()['voice'];actual_hash=operations.content_hash
         from tests.closure_profile_fixture import profile_fixture
         from app.production_bridge import ProductionBridge
