@@ -1,5 +1,31 @@
 # PROVIDERS-01: два worker, только offline
 
+RELEASE-01 реализует ранее запрошенную host routing границу в существующем
+Coordinator: immutable role→worker→provider→profile→identity/auth_generation.
+Конфигурация `worker_routes` явная; без неё legacy поведение сохраняется.
+Разные личности одного provider допускают две активные задачи при общем cloud=3;
+одна личность под разными профилями/generations делит reservation. Local-heavy=1.
+Неоднозначный/исчезнувший pinned route блокируется без selected-profile fallback.
+Requests/completions, poll/manual/adapter/file recovery и replay используют одну
+проверку host binding и V2ResultGate. Исторические accepted artifacts сохраняются
+при новой generation, незавершённый старый ответ отклоняется.
+
+Quota/auth pause scoped к identity/account; выбранный профиль/модель не меняются.
+Сохраняются причина и bounded resume_after. Явный resume(worker_id) не обходит
+неистёкший deadline и не будит другой аккаунт. Outbox чужого аккаунта не блокирует
+независимый worker. Повреждённый reservation request удерживает lock fail-closed.
+
+Опциональные SYSTEM simulation stages используют exact SyntheticTransport для
+Story Scene и отдельного metadata-only Visual Review, затем существующие host
+handlers. Scene должна точно соответствовать host-approved input (это не rewrite);
+canonical blocked Review останавливает продолжение. Новые interfaces не включают
+live Antigravity и не снимают запрет настоящих клиентов.
+
+Ниже сохранено описание PROVIDERS-01. Его пункт NEEDS_ARCHITECT_REVIEW описывал
+тогдашний разрыв; данный пакет реализует/тестирует ограниченный diff и ожидает
+единый независимый review. Live Canon/outline/SegmentVisuals acquisition всё ещё
+UNVERIFIED/не реализованы текущим transport; frames/MP4 capability не предполагается.
+
 Цель владельца: Antigravity Story/account binding A и Antigravity Visual/account
 binding B, Codex Production, существующий движок и один Python Coordinator.
 Текущий срез: `DUAL_WORKER_OFFLINE_READY_LIVE_BLOCKED_ELIGIBILITY`.

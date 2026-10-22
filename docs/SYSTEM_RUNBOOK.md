@@ -1,5 +1,48 @@
 # SYSTEM-01: общий запуск
 
+RELEASE-01: обычный вход Windows — `studio-v2.cmd --config PATH doctor`, затем
+явные `--execute-system --authorize start` только для разрешённой конфигурации.
+[START_HERE](START_HERE.md) содержит короткую последовательность. Старый studio.cmd
+сохранён. Launcher перед запуском проверяет Python/config и plan/doctor; параметры
+передаются argv, содержимое источников не исполняется. Нового web/server stack нет.
+
+`examples/release_01/autonomous_brief.json` — Brief + owner source inventory без
+готового сценария; live acquisition блокируется до расходов. Разрешённый
+`--execute-system --authorize prepare` сохраняет immutable план и точные blockers,
+не создавая Registry/производственного разрешения. `approved_input.json` показывает
+host-approved входы; локальный runtime владелец указывает отдельно.
+
+`simulation_approved.json` и `synthetic_inputs.json` — явно синтетический пример:
+
+```powershell
+studio-v2.cmd --config examples/release_01/simulation_approved.json --synthetic-inputs examples/release_01/synthetic_inputs.json doctor
+# После выбора нового root вне repo/sync и отдельного разрешения на simulation:
+studio-v2.cmd --config examples/release_01/simulation_approved.json --synthetic-inputs examples/release_01/synthetic_inputs.json --execute-system --authorize start
+```
+
+Без explicit fixtures worker stages не используют FakeAdapter как fallback.
+Brief simulation handoff принимает строгие host fixture inputs/results, сохраняет
+исходный план, reconciliation receipt, synthetic bundle и execution_config в
+исходном root; исполнение использует его отдельный `execution/`. Resume принимает
+тот же bundle и materialized config. Это rehearsal, не реализация live Canon /
+story outline / visual selection. Модель не формирует runtime/permissions.
+
+Status/inspect/report читают существующий Registry через mode=ro, не запускают
+recovery и доступны при исчезнувших originals/runtime. Они явно возвращают
+`NOT_REVALIDATED_READ_ONLY_OBSERVATION`; recorded package не означает новое QA.
+Pause/Stop используют прежние control/attempt states под тем же OS lock, сохраняя
+accepted. Stop не утверждает завершение процесса; adapter recovery должен
+подтвердить cancellation. Синхронная операция держит bounded lock: Stop сообщает
+COORDINATOR_RUNNING и конкретно требует дождаться checkpoint/deadline.
+
+Drive: embedding host передаёт exact `DriveHostContext(DriveHostResolver(...),
+private_session_root, authorized=True)` в SystemPipeline. Resolver содержит только
+явно разрешённые credential_ref/folder/run/version callbacks, не JSON credentials.
+Session URI сохраняется current-user Windows DPAPI вне run/input/repo/sync.
+CLI сам не обнаруживает credentials; без matching callback — WAITING_AUTH.
+Construction/doctor не вызывают supplier/сеть. Remote upload/readback в RELEASE-01
+не разрешались; uploaded=false, remote_sync=UNVERIFIED.
+
 Основной вход — `python -m app.multi_ai_v2`. Исторические create/prepare/status/
 resume/inspect-artifacts/report и `scripts/dispatch_multi_ai_v2.py` сохранены.
 Новый путь выбирается явным `--config`; без него действует прежний протокол.

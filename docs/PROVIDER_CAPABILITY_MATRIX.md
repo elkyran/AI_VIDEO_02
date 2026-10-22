@@ -1,5 +1,14 @@
 # Возможности исполнителей MULTI-AI-V2
 
+RELEASE-01: host-owned worker routes и независимые account reservations теперь
+реализованы в существующей очереди (cloud общий лимит 3, local-heavy 1), с
+generation binding на всех путях acceptance/recovery. SYSTEM simulation может
+явно подключить два synthetic slot через config, без fallback. Это software
+wiring, не реальные Google-аккаунты: live Story/Visual false, AGE-GATED /
+BLOCKED_ELIGIBILITY. Canon/outline/visual selection и фактическая доставка
+image/frame/full-video текущим transport не подтверждены. Drive host resolver и
+приватный session store реализованы, cloud proof остаётся UNVERIFIED.
+
 SYSTEM-01: [актуальная readiness matrix](SYSTEM_READINESS.md) отделяет реализацию,
 offline transport tests, live verification и owner approval. `ProviderBridge`
 использует существующий adapter protocol и не устанавливает launcher/account
