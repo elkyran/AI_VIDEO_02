@@ -43,10 +43,18 @@ class OfflineDirector:
 
 
 class NativeIO:
-    def __init__(self):self.commands=[];self.stages=[];self.duration=60
+    def __init__(self):self.commands=[];self.stages=[];self.duration=60;self.vary_text=False
     @contextmanager
     def __call__(self,pipeline,node):
+        self.last_pipeline=pipeline  # Observe the real handler instance at native IO.
         self.stages.append(node['stage']);voice=profile_spec()['voice'];actual_hash=operations.content_hash
+        from tests.closure_profile_fixture import profile_fixture
+        from app.production_bridge import ProductionBridge
+        proof=profile_fixture(pipeline.root/'offline_profile_fixture')
+        actual_prepare=ProductionBridge.prepare_request
+        def prepare(bridge,*args,**kwargs):
+            kwargs['project_root']=proof
+            return actual_prepare(bridge,*args,**kwargs)
         model=Path(__file__).resolve().parents[1]/voice['model_ref']
         def tool(ctx,name):return str(model) if name=='tts_model' else sys.executable
         def ctx_run(ctx,argv,**kwargs):
@@ -54,7 +62,8 @@ class NativeIO:
             out=Path(request['output']);out.parent.mkdir(parents=True,exist_ok=True)
             with wave.open(str(out),'wb') as stream:
                 stream.setnchannels(1);stream.setsampwidth(2);stream.setframerate(voice['sample_rate_hz'])
-                stream.writeframes(b'\xe8\x03'*(voice['sample_rate_hz']*self.duration))
+                sample=(100+int(hashlib.sha256(request['text'].encode()).hexdigest()[:3],16)%2000).to_bytes(2,'little') if self.vary_text else b'\xe8\x03'
+                stream.writeframes(sample*(voice['sample_rate_hz']*self.duration))
             value={'duration_seconds':self.duration,'cache_hit':False,
                 'text_hash':hashlib.sha256(request['text'].encode()).hexdigest(),'wav_hash':content_hash(out),
                 'model_hash':voice['model_sha256'],'model_config_hash':voice['model_config_sha256'],
@@ -74,6 +83,7 @@ class NativeIO:
             else:stdout.write('mean_volume: -18.0 dB\nmax_volume: -2.0 dB\n')
             return SimpleNamespace(returncode=0)
         with ExitStack() as stack:
+            stack.enter_context(patch.object(ProductionBridge,'prepare_request',new=prepare))
             stack.enter_context(patch('app.production_profile.check_runtime',return_value={}))
             stack.enter_context(patch.object(operations.Context,'tool',new=tool))
             stack.enter_context(patch.object(operations.Context,'run',new=ctx_run))

@@ -222,6 +222,13 @@ API или другой аккаунт. Реальный автономный pa
 
 ## Headless protocol
 
+Адресные Story/Visual revisions и exact spawn recovery описаны в
+[SYSTEM_CLOSURE_02](SYSTEM_CLOSURE_02.md). Host permit разрешает один существующий
+segment, canonical accepted Review и один durable cycle; произвольный Review не
+расширяет права. AMBIGUOUS_PROVIDER_HOLD требует inspect/решения владельца и не
+отправляет внешний запрос повторно. Реальные provider/native/delivery проверки
+по-прежнему требуют отдельного разрешения и пригодных исполнителей.
+
 Stdout — один JSON; status включает completed/total/current_stage/blocker,
 root/results, safe_repeat, owner_action_required, execution mode и честный review.
 Exit codes: 0 planned/completed technical/simulation/recorded owner review;

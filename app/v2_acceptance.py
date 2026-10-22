@@ -226,7 +226,10 @@ class V2ResultGate:
                 raise StudioError('STALE_INPUTS','Revision needs the exact prior candidate and accepted Scene')
             return {'dependency_results':{},'revision_dependencies':payloads,
                     'input_artifacts':artifacts,'accepted_state':accepted_state}
-        return {'dependency_results': payloads, 'input_artifacts': artifacts, 'accepted_state': accepted_state}
+        context={'dependency_results': payloads, 'input_artifacts': artifacts, 'accepted_state': accepted_state}
+        if self.system_permit is not None and task['context'].get('v2_contract',{}).get('capability','').startswith('system_'):
+            context=self.system_permit.worker_context(task,context)
+        return context
 
     def prepare_context(self, registry, task, attempt_id):
         """Per-attempt Context Pack reads only verified immutable completions."""

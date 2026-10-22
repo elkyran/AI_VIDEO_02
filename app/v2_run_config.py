@@ -259,7 +259,7 @@ def storage(config):
     return {'persistent_bytes': size, 'free_bytes': free, **config.budget.model_dump()}
 
 
-def graph(config, *, acquired=False, acquisition_parent=None):
+def graph(config, *, acquired=False, acquisition_parent=None, acquisition_context=None):
     """IDs bind complete input identities; unaffected scenes retain their exact nodes."""
     if isinstance(config.inputs, BriefInputs):
         from .v2_release_plan import acquisition_graph
@@ -271,7 +271,8 @@ def graph(config, *, acquired=False, acquisition_parent=None):
         if config.worker_routes is not None:
             policy['worker_routes'] = config.worker_routes.model_dump()
         if config.acquisition is not None:
-            policy['acquisition'] = config.acquisition.model_dump()
+            from .v2_scoped_fixes import execution_policy
+            policy['acquisition'] = execution_policy(config)
         binding = {'stage': stage, 'value': value, 'dependencies': list(dependencies),
                    'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id,
                    'host_execution': fingerprint(policy)}
@@ -281,11 +282,14 @@ def graph(config, *, acquired=False, acquisition_parent=None):
         nodes.append({'task_id': identifier, **binding, 'scene_id': scene.scene_id if scene else None,
                       'version': scene.version if scene else 1, 'schema': schema})
         return identifier
-    sources = add('sources', config.inputs.canon.model_dump(), [acquisition_parent] if acquisition_parent else [])
+    source_parent=(acquisition_context or {}).get('canon',acquisition_parent)
+    sources = add('sources', config.inputs.canon.model_dump(), [source_parent] if source_parent else [])
     story = add('story', {'story': config.inputs.story}, [sources])
     finals = []
     for scene in config.inputs.scenes:
         admission_deps = [story]
+        if acquisition_context:
+            admission_deps.append(acquisition_context['scenes'][scene.scene_id])
         if config.worker_routes is not None and not acquired:
             worker_scene = add('worker_scene', scene.model_dump(), [story], scene, 'scene', 'gemini_story')
             review = Review(project_id=config.run_id, review_id=derived_id('review', scene.scene_id, 'v'+str(scene.version)),
@@ -299,12 +303,18 @@ def graph(config, *, acquired=False, acquisition_parent=None):
         used = {s['asset_id'] for m in mappings for s in m['shots']}
         candidate = add('candidate', {'mappings': mappings,
             'media': [m.model_dump() for m in config.inputs.media if m.asset_id in used]}, [admission], scene)
-        audio = add('wav', {}, [candidate], scene)
+        speech_candidate=candidate
+        if acquisition_context:
+            # Voice admission retains the original accepted picture metadata;
+            # final editing uses the independently revised visual candidate.
+            speech=acquisition_context['speech'][scene.scene_id]
+            speech_candidate=add('speech_candidate',speech,[admission],scene)
+        audio = add('wav', {}, [speech_candidate], scene)
         edit = add('edit', {}, [candidate, audio], scene)
         if acquired and config.acquisition.director_required:
             director = add('director', {}, [admission, edit], scene, 'edit_plan', 'codex')
             review = add('director_review', {}, [director], scene, 'review', 'gemini_visual')
-            if config.acquisition.auto_fix_authorized and config.brief.auto_fix_cycles == 1:
+            if config.acquisition.auto_fix_authorized and config.brief.auto_fix_cycles == 1 and config.acquisition.scoped_fix is None:
                 director = add('director_fix', {'max_cycles':1}, [admission,edit,director,review], scene, 'edit_plan','codex')
             edit = add('director_apply', {}, [edit, director, review], scene)
         compiled = add('compile', {}, [edit], scene)

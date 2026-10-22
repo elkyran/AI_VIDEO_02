@@ -85,7 +85,15 @@ do not encode a second Antigravity account as Codex. No such core edits or live
 activation are included. Synthetic task-level access pauses are described in
 [DUAL_PROVIDER_INTEGRATION](DUAL_PROVIDER_INTEGRATION.md).
 
-No protected core change was made. No architect approval is claimed. A hard
+SYSTEM-CLOSURE-02-REVIEW-FIX adds the owner's narrow `app/jobs.py` exception:
+trusted exact spawned-object observer plus atomic SYSTEM admission. Other protected
+production files stay unchanged. Offline A05/A07/A08 now have scoped Story/Visual,
+native handle receipt and crash/revision tests; independent exact-SHA CI and live
+acceptance remain external gates. Schema set stays twelve; HostRunConfig adds
+optional ScopedFixPermit. Five new bounded review groups require CI-lane sync;
+see reports/multi_ai_v2/system_closure_02_review_fix/NEEDS_CHATGPT_CHANGE.md.
+
+No general production-core rewrite or live architect approval is claimed. A hard
 limit remains: synchronous engine execution is bounded but cannot be immediately
 interrupted by a second CLI while Coordinator owns its OS lock; use existing job
 inspection/recovery. Full live end-to-end system behavior remains unverified.

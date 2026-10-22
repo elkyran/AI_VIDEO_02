@@ -79,6 +79,17 @@
           "maxItems": 2,
           "title": "Retryable Job Errors",
           "type": "array"
+        },
+        "scoped_fix": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScopedFixPermit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -755,6 +766,42 @@
         "narration_segments"
       ],
       "title": "Scene",
+      "type": "object"
+    },
+    "ScopedFixPermit": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "story",
+            "visual"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "segment_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "max_cycles": {
+          "const": 1,
+          "default": 1,
+          "title": "Max Cycles",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "scene_id",
+        "segment_id"
+      ],
+      "title": "ScopedFixPermit",
       "type": "object"
     },
     "SegmentVisuals": {

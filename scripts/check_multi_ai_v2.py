@@ -71,6 +71,16 @@ def main(argv=None):
     groups['acquisition']=['tests.test_v2_acquisition','tests.test_v2_acquisition_pipeline']
     groups['closure']=['tests.test_v2_closure_handlers','tests.test_v2_closure_integration',
         'tests.test_v2_closure_delivery','tests.test_v2_source_package']
+    groups['review_recovery']=['tests.test_v2_spawn_receipts']
+    # Each addressed revision has its own bounded shard (measured together at
+    # 154.204s locally); retain 180s rather than raising the established limit.
+    groups['review_story']=['tests.test_v2_scoped_fixes.ScopedFixTests.test_story_one_segment_revision_from_ordinary_launcher_preserves_independent_scene_and_replays']
+    groups['review_visual']=['tests.test_v2_scoped_fixes.ScopedFixTests.test_visual_one_mapping_revision_from_ordinary_launcher_reuses_exact_wav_and_replays']
+    groups['review_source_revision']=['tests.test_v2_closure_revision_crashes.CrashRevisionTests.test_authorized_source_edition_revision_restarts_invalidates_dependents_and_preserves_manual_conflict']
+    groups['review_crash']=['tests.test_v2_closure_revision_crashes.CrashRevisionTests.test_completion_acquisition_and_committed_expansion_crashes_reuse_exact_accepted_ids',
+        'tests.test_v2_closure_revision_crashes.CrashRevisionTests.test_portable_publication_before_and_after_manifest_restarts_without_native_reexecution',
+        'tests.test_v2_closure_revision_crashes.CrashRevisionTests.test_response_without_receipt_is_ambiguous_and_never_resent',
+        'tests.test_v2_closure_revision_crashes.ProfileFixtureTests']
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/multi_ai_v2/evidence', help='Parent directory only; UTC+UUID child is created exclusively')
     parser.add_argument('--groups', nargs='+', choices=list(groups), default=list(groups))

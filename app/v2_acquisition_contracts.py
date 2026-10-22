@@ -9,6 +9,13 @@ from .v2_sources import CanonBible
 from .v2_visuals import SegmentVisuals
 
 
+class ScopedFixPermit(Contract):
+    kind: Literal['story','visual']
+    scene_id: Identifier
+    segment_id: Identifier
+    max_cycles: Literal[1] = 1
+
+
 class AcquisitionPolicy(Contract):
     duration_tolerance_ms: int = Field(ge=0, le=1_800_000)
     max_source_bytes: int = Field(default=262144, ge=1, le=8_000_000)
@@ -18,6 +25,7 @@ class AcquisitionPolicy(Contract):
     director_required: bool = True
     auto_fix_authorized: bool = False
     retryable_job_errors: list[Literal['TIMEOUT', 'PROCESS_FAILED']] = Field(default_factory=list, max_length=2)
+    scoped_fix: ScopedFixPermit | None = Field(default=None,exclude_if=lambda value:value is None)
 
 
 class SourcePassage(Contract):

@@ -35,7 +35,8 @@ def acquisition_graph(config):
         if config.worker_routes is not None:
             policy['worker_routes'] = config.worker_routes.model_dump()
         if config.acquisition is not None:
-            policy['acquisition'] = config.acquisition.model_dump()
+            from .v2_scoped_fixes import execution_policy
+            policy['acquisition'] = execution_policy(config)
         binding = {'stage': stage, 'value': value, 'dependencies': list(dependencies),
                    'profile': config.profile_sha256, 'mode': config.mode, 'run_id': config.run_id,
                    'host_execution': fingerprint(policy), 'role': role}
@@ -52,14 +53,30 @@ def acquisition_graph(config):
     outline = add('story_outline', {'brief': config.brief.model_dump(),
         'requested_scene_count': config.inputs.requested_scene_count}, [canon, source] if config.acquisition else [canon],
         role='gemini_story', schema='story_outline')
-    drafts = []
+    drafts = [];fixed=False
     for index in range(config.inputs.requested_scene_count):
         scene_id = derived_id(config.run_id, 'scene', 'n'+str(index+1))
         scene = add('acquire_scene' if config.acquisition else 'scene', {'ordinal': index+1, 'scene_id': scene_id},
             [outline,canon,source] if config.acquisition else [outline],
             role='gemini_story', schema='scene', scene_id=scene_id)
-        drafts.append(add('visual_mapping', {'allowed_media': [m.model_dump() for m in config.inputs.media]},
-            [scene], role='gemini_visual', schema='segment_visuals', scene_id=scene_id))
+        mapping=add('visual_mapping', {'allowed_media': [m.model_dump() for m in config.inputs.media]},
+            [scene], role='gemini_visual', schema='segment_visuals', scene_id=scene_id)
+        fix=config.acquisition.scoped_fix if config.acquisition else None
+        if fix is not None and fix.scene_id==scene_id:
+            fixed=True
+            review=add('scoped_review',fix.model_dump(),[scene,mapping],role='gemini_visual',schema='review',scene_id=scene_id)
+            revised=add('scoped_'+fix.kind,fix.model_dump(),[source,canon,outline,scene,mapping,review],
+                role='gemini_story' if fix.kind=='story' else 'gemini_visual',
+                schema='scene' if fix.kind=='story' else 'segment_visuals',scene_id=scene_id)
+            nodes[-1]['version']=config.inputs.version+1
+            if fix.kind=='story':
+                mapping=add('visual_mapping',{'allowed_media':[m.model_dump() for m in config.inputs.media]},
+                    [revised],role='gemini_visual',schema='segment_visuals',scene_id=scene_id)
+                nodes[-1]['version']=config.inputs.version+1
+            else:mapping=revised
+        drafts.append(mapping)
+    if config.acquisition and config.acquisition.scoped_fix is not None and not fixed:
+        raise StudioError('REVISION_SCOPE','Host fix Scene is outside the requested scene slots')
     add('production_expansion', {'requires': 'accepted_typed_canon_story_scenes_visuals',
         'production_started': False}, drafts)
     return nodes

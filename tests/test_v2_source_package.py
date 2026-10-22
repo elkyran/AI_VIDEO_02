@@ -20,6 +20,7 @@ sys.path.insert(0,str(root))
 from app.v2_source_package import verify
 verify(root)
 for name in ('app.worker','app.operations','app.multi_ai_preview','app.speech_review',
+             'app.v2_scoped_fixes','app.v2_spawn_receipts','app.v2_pipeline',
              'scripts.synthesize_script','scripts.render_project','scripts.speech_model_identity',
              'scripts.transcribe_audio','scripts.check_multi_ai_render'):
     module=importlib.import_module(name)

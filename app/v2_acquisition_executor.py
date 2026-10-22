@@ -32,6 +32,8 @@ def collect(pipeline, config, *, expansion=False):
                 'dependency_results':{d:values[d]['payload'] for d in node['dependencies']}}
             if node['scene_id']:
                 context.update(scene_id=node['scene_id'],scene_version=node['version'])
+            from .v2_scoped_fixes import context as scoped_context
+            context=scoped_context(config,node,context)
             if validate_result(node['schema'],payload,context)!=payload:
                 raise StudioError('ARTIFACT_INVALID','Accepted acquisition output is not canonical')
         values[node['task_id']]={'payload':payload,'value':value}
@@ -61,17 +63,49 @@ def derive_expansion(pipeline, config):
         raise StudioError('ARTIFACT_INVALID','Accepted expansion does not bind the complete accepted acquisition set')
     canon=next(v['value'] for v in values.values() if 'facts' in v['value'])
     outline=next(v['value'] for v in values.values() if 'brief_sha256' in v['value'])
-    scenes=[v['value'] for v in values.values() if 'narration_segments' in v['value']]
-    mapping_results=[v['value'] for v in values.values() if 'scene_sha256' in v['value']]
+    # Ordered original and revised results remain immutable; select the latest
+    # accepted entity for each stable Scene slot, never overwrite its predecessor.
+    scene_values={};scene_tasks={};mapping_values={};original_mappings={}
+    for identifier,v in values.items():
+        value=v['value']
+        if 'narration_segments' in value:
+            scene_values[value['scene_id']]=value;scene_tasks[value['scene_id']]=identifier
+        if 'mappings' in value and 'scene_sha256' in value:
+            mapping_values[value['scene_id']]=value
+            original_mappings.setdefault(value['scene_id'],(identifier,value))
+    scenes=list(scene_values.values());mapping_results=list(mapping_values.values())
     order={s['scene_id']:i for i,s in enumerate(outline['scenes'])}
     scenes.sort(key=lambda s:order[s['scene_id']])
     approved=reconcile_inputs(config,canon=canon,story=outline['summary'],scenes=scenes,
         visuals=[m for result in mapping_results for m in result['mappings']])
     effective=config.model_copy(update={'inputs':approved})
-    production=graph(effective,acquired=True,acquisition_parent=nodes[-1]['task_id'])
+    from copy import deepcopy
+    speech={}
+    for scene in scenes:
+        original_id,original=original_mappings[scene['scene_id']]
+        mappings=deepcopy(original['mappings'])
+        for mapping in mappings:mapping['scene_version']=scene['version']
+        used={s['asset_id'] for m in mappings for s in m['shots']}
+        speech[scene['scene_id']]={'mappings':mappings,'media':[m.model_dump() for m in config.inputs.media if m.asset_id in used],
+            'original_mapping_task':original_id,'original_mapping_sha256':fingerprint(original)}
+    canon_task=next(k for k,v in values.items() if 'facts' in v['value'])
+    production=graph(effective,acquired=True,acquisition_parent=nodes[-1]['task_id'],
+        acquisition_context={'canon':canon_task,'scenes':scene_tasks,'speech':speech})
     record={'run_id':config.run_id,'authority':fingerprint(config.pinned()),'version':config.version,
         'inputs_sha256':fingerprint(approved.model_dump()),'acquisition_receipt_sha256':fingerprint(receipt),
-        'nodes':[{'task_id':n['task_id'],'stage':n['stage'],'scene_id':n['scene_id'],'version':n['version']} for n in production]}
+        'nodes':[{'task_id':n['task_id'],'stage':n['stage'],'scene_id':n['scene_id'],'version':n['version']} for n in production],
+        'entity_lineage':{'scenes':scene_tasks,'mappings':{sid:{'original_task':original_mappings[sid][0],
+            'original_sha256':fingerprint(original_mappings[sid][1]),'current_sha256':fingerprint(value)}
+            for sid,value in mapping_values.items()}}}
+    if config.parent_sha256:
+        with Registry(pipeline.q.root) as db:
+            previous=[__import__('json').loads(r[0]) for r in db.db.execute(
+                "SELECT payload FROM ai_events WHERE kind='system_expansion'")]
+        prior=next((v for v in previous if v['authority']==config.parent_sha256),None)
+        if prior:
+            old={n['task_id'] for n in prior['nodes']};new={n['task_id'] for n in production}
+            record['invalidation']={'parent_authority':config.parent_sha256,'superseded_task_ids':sorted(old-new),
+                'retained_task_ids':sorted(old&new),'historical_completions_preserved':True}
     return effective,production,record
 
 

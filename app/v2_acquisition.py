@@ -158,7 +158,7 @@ def validate_acquisition(kind, payload, context):
     scene = next((v for v in values if 'narration_segments' in v), None)
     model = Scene if kind == 'scene' else ACQUISITION_OUTPUTS[kind]
     result = model.model_validate(payload)
-    version = scope['version']
+    version = context.get('entity_version',scope['version'])
     if result.simulated != scope['simulated'] or result.version != version:
         raise StudioError('STALE_INPUTS', 'Acquisition provenance/version differs from the host request')
     if kind == 'canon_bible':
@@ -217,4 +217,8 @@ def validate_acquisition(kind, payload, context):
                 asset=media.get(shot.asset_id)
                 if not asset or asset['kind']=='image' and shot.source_in_ms or asset['kind']=='video' and shot.source_out_ms>asset['duration_ms']:
                     raise StudioError('ASSET_RANGE_INVALID', 'Mapping exceeds host media inventory/ranges')
-    return result.model_dump()
+    value=result.model_dump()
+    if context.get('scoped_revision'):
+        from .v2_scoped_fixes import validate_delta
+        validate_delta(value,context)
+    return value

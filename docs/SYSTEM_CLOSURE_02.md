@@ -41,16 +41,32 @@ offline integration находится в `tests.test_v2_closure_integration`; �
 subject hash/version, однозначной placement location и отдельным
 `acquisition.auto_fix_authorized=true`, `brief.auto_fix_cycles=1`. Не более одного
 cycle на authority/run; unaffected Scene и accepted history сохраняются.
-Narration и visual-selection issues сейчас возвращают NEEDS_REVIEW с назначенным
-Story/Visual owner. Их автоматическое выполнение — оставшийся software gap.
+Адресная narration/visual-selection правка задаётся отдельно через
+`acquisition.scoped_fix={kind: story|visual, scene_id, segment_id, max_cycles: 1}`.
+Новый host config (version+1, exact parent_sha256) сохраняет inputs.version для
+того же источника. Fixed Story/Visual adapter получает accepted Review и прежние
+Scene/mapping через gate: меняется только один text/mapping и версия сущности.
+Один durable lineage intent запрещает второй цикл с новым task/attempt ID.
+Story пересобирает зависимый WAV/edit; mapping-only сохраняет точный spoken WAV.
+Независимая Scene и исторические файлы сохраняются. Удаление scoped_fix при том
+же source lineage блокируется REVISION_LINEAGE, чтобы не вернуть старую Scene.
 Pinned/manual пользовательские edits не принимаются как auto-fix inputs.
 
 Recovery проверяет requests/job/script binding, invalidation/cancellation,
 retry budget и worker birth receipt. Исторический job без host receipt держится
 в JOB_OWNERSHIP_UNVERIFIED. Unknown/foreign PID не убивается/не дублируется.
 Durable resume intent делает неоднозначный crash fail-closed, требуя inspect.
-Protected JobManager не возвращает birth spawned child: первая запись является
-HOST_OBSERVED_WORKER, а не криптографическим подтверждением владения процессом.
+Узкий trusted optional JobManager observer сохраняет intent до Popen и receipt
+по точному Popen object/Windows handle (PID + native birth). SQL PID не даёт
+ownership. Default None сохраняет legacy поведение. SYSTEM использует отдельный
+per-run engine и допускает ровно один активный job атомарно при enqueue/resume;
+поэтому старый worker не получает вторую pending SYSTEM задачу для continuation.
+Произвольная concurrent legacy запись в этот engine выходит за эту гарантию.
+Неизвестный birth/ранний выход/потерянный receipt дают hold; resume не более одного.
+Atomicity между двумя SQLite не заявляется. До/после receipt/resume crash сохраняет
+intent; чужие процессы не завершаются. Deadline повторно проверяется после intent.
+Provider response без durable receipt сохраняет AMBIGUOUS_PROVIDER_HOLD (exit 9),
+без повторной внешней отправки. Это не обещание exactly-once внешнего запроса.
 
 Drive bootstrap принимает exact `DriveHostContext`. Нет binding → WAITING_AUTH.
 Resolver закреплён к folder/run/version/config и request budget. Synthetic HTTP
@@ -106,7 +122,7 @@ synthesize/compile/render/qa/portable и отдельного разрешени
 ## Prospective general-real acceptance recipe — NOT EXECUTED
 
 Prerequisites: независимый exact-SHA CI после ChatGPT schema/group sync; отдельное
-решение по SG01–SG03; разрешённые официальные изолированные Story/Visual и Codex
+независимая приёмка offline SG01–SG03; разрешённые официальные изолированные Story/Visual и Codex
 bindings с проверенной eligibility; явное разрешение владельца на native media.
 Сейчас autonomous source-only путь блокируется: этот рецепт не обходит live gate.
 

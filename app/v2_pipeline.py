@@ -67,6 +67,15 @@ class SystemPermit:
                         or (parent.run_id, parent.key, parent.mode, parent.root) !=
                            (config.run_id, config.key, config.mode, str(self.root))):
                     raise StudioError('IDEMPOTENCY_CONFLICT', 'Revision must extend its exact host configuration')
+                if parent.acquisition and parent.acquisition.scoped_fix:
+                    from .v2_scoped_fixes import same_source_lineage
+                    if same_source_lineage(parent,config) and (
+                            config.acquisition is None or config.acquisition.scoped_fix!=parent.acquisition.scoped_fix):
+                        raise StudioError('REVISION_LINEAGE','Preserve the accepted scoped revision for this source lineage')
+                if parent.acquisition and config.acquisition:
+                    from .v2_scoped_fixes import same_source_lineage
+                    if not same_source_lineage(parent,config) and config.inputs.version!=parent.inputs.version+1:
+                        raise StudioError('STALE_INPUTS','Changed source identity requires the next explicit input version')
                 old = {s.scene_id: s for s in getattr(parent.inputs,'scenes',[])}
                 for scene in getattr(config.inputs,'scenes',[]):
                     previous = old.get(scene.scene_id)
@@ -154,6 +163,11 @@ class SystemPermit:
             context.update(project_id=config.run_id,scene_id=node['scene_id'],scene_version=node['version'])
             validate_plan(result.payload,context)
             if node['stage']=='director_fix':validate_fix_delta(result.payload,context,config)
+        if node['stage'] in {'scoped_story','scoped_visual','scoped_review'}:
+            with Registry(self.root/'coordinator') as registry:
+                context=self.pipeline.q.result_gate.dependency_context(registry,task)
+            from .editorial import validate_result
+            validate_result(node['schema'],result.payload,{**task['context'],**context})
         if result.payload != node['value'] and node['stage'] == 'scene' and not node.get('acquisition'):
             raise StudioError('STALE_INPUTS', 'Scene payload differs from approved inputs')
         if node['stage'] == 'worker_scene' and result.payload != node['value']:
@@ -167,6 +181,11 @@ class SystemPermit:
         if node['schema'] == 'note':
             output = json.loads(result.payload['text'])
             verify_output(self.root, output, simulated=result.simulated)
+
+    def worker_context(self,task,context):
+        _,config,node=self.node(task['task_id'])
+        from .v2_scoped_fixes import context as scoped_context
+        return scoped_context(config,node,context)
 
 
 def verify_output(root, value, *, simulated):
@@ -281,6 +300,14 @@ class PipelineWorkers(DualWorkerBridge):
         self.pipeline = pipeline
 
     def poll(self, handle):
+        state=self.runs.get(handle)
+        if state is not None:
+            from .v2_scoped_fixes import reserve
+            try:reserve(self.pipeline,state['task'],state['binding'])
+            except StudioError as exc:
+                self.runs.pop(handle,None)
+                return [{'type':'failed','failure':{'kind':'invalid_input','code':exc.code,
+                    'message':str(exc),'retryable':False}}]
         events = super().poll(handle)
         for event in events:
             if event.get('type') == 'completed':
@@ -423,6 +450,7 @@ class SystemPipeline(MeasuredEngine):
         context = {'project_id': self.run_id, 'v2_contract': contract.model_dump(), 'system_authority': authority}
         if node['scene_id']:
             context.update(scene_id=node['scene_id'], scene_version=node['version'])
+            if node['stage']=='scoped_visual':context['scene_version']=config.inputs.version
         if role != 'python':
             context['source_text'] = config.brief.topic
         if node.get('acquisition') and role!='python':
@@ -502,7 +530,7 @@ class SystemPipeline(MeasuredEngine):
             # Revalidate the immutable accepted proposal at the compiler boundary.
             scene=next(s.model_dump() for s in self.config.inputs.scenes if s.scene_id==node['scene_id'])
             if any(i['status']=='open' for i in deps[2]['issues']) and not (self.config.acquisition.auto_fix_authorized
-                    and self.config.brief.auto_fix_cycles == 1):
+                    and self.config.brief.auto_fix_cycles == 1 and self.config.acquisition.scoped_fix is None):
                 raise StudioError('NEEDS_REVIEW','Accepted Review has open issues; host auto-fix permission is absent')
             plan=validate_plan(deps[1],{'dependency_results':{'scene':scene,'proposal':{
                 'schema_version':1,'simulated':self.config.mode=='simulation','text':canonical_json(deps[0])}}})
@@ -523,7 +551,7 @@ class SystemPipeline(MeasuredEngine):
             if remaining < 180:
                 raise StudioError('TIME_BUDGET', 'Existing renderer needs a full 180s slot in the explicit host budget')
         self.engine_ready()
-        if stage == 'candidate':
+        if stage in {'candidate','speech_candidate'}:
             for asset in node['value']['media']:
                 source = no_links(Path(self.config.input_root)/asset['path'])
                 relative = 'approved_media/'+asset['sha256']+source.suffix.lower()
@@ -619,7 +647,7 @@ class SystemPipeline(MeasuredEngine):
             write_generated_json(self.engine, relative, candidate['script'])
         self.register(script_id, relative, 'text')
         from .v2_spawn_receipts import SpawnObserver
-        manager = JobManager(self.engine,spawn_observer=SpawnObserver(self))
+        manager = JobManager(self.engine,spawn_observer=SpawnObserver(self,deadline=deadline))
         from .v2_job_recovery import existing_request, guarded_resume, observe_new_worker
         job=existing_request(self,manager,script_id,candidate,key)
         newly_submitted=job is None
@@ -629,6 +657,8 @@ class SystemPipeline(MeasuredEngine):
             receipt=manager.enqueue(self.run_id,'synthesize',{'script_asset_id':script_id},base,key)
             job=manager.status(receipt['job_id'])
         while True:
+            if time.monotonic()>=deadline:
+                raise StudioError('LOCAL_JOB_TIMEOUT','Existing job is preserved; deadline forbids recovery admission')
             if newly_submitted:
                 observe_new_worker(self,job)
                 if job['state']=='running':newly_submitted=False
@@ -745,9 +775,19 @@ class SystemPipeline(MeasuredEngine):
         current = next((t for t in selected if t['status'] != 'completed'), None)
         ready = current is None and (not self.is_acquisition or self.expanded)
         blocker = current.get('error') if current else None
+        ambiguous=False
+        if current and current['status']=='running' and current.get('current_attempt_id') not in self.q.queue._runs:
+            with Registry(self.q.root) as registry:
+                row=registry.db.execute('SELECT result_path FROM ai_attempts WHERE id=?',(current.get('current_attempt_id'),)).fetchone()
+            if row:
+                folder=workspace_path(self.q.root,row[0]).parent
+                ambiguous=(folder/'provider_send_intent.json').exists() and not (folder/'provider_receipt.json').exists()
+                if ambiguous:blocker={'code':'PROVIDER_RECOVERY_AMBIGUOUS','kind':'ambiguous_external_request',
+                    'message':'Request may have executed; reservation retained; no automatic resend'}
         failures = {'authentication': 'WAITING_AUTH', 'quota_exhausted': 'WAITING_QUOTA', 'interrupted': 'FAILED_RETRYABLE'}
         status = ('SIMULATION_SUCCEEDED' if self.config.mode == 'simulation' else 'READY_FOR_OWNER_REVIEW') if ready else (
             failures.get(blocker.get('kind'), 'FAILED_FINAL') if blocker else 'CANCELLED' if snapshot['control'] == 'stopped' else 'IN_PROGRESS')
+        if ambiguous:status='AMBIGUOUS_PROVIDER_HOLD'
         package = self.accepted(self.nodes[-1]['task_id']) if ready else None
         owner_review, delivery = None, None
         if ready and self.config.mode != 'simulation':
@@ -932,7 +972,7 @@ def system_main(argv, *, host_services=None):
         return {'PLANNED': 0, 'SIMULATION_SUCCEEDED': 0, 'READY_FOR_OWNER_REVIEW': 0, 'OWNER_REVIEW_RECORDED': 0,
             'RECORDED_LOCAL_PACKAGE': 0, 'RECORDED_PROGRESS': 0, 'STOP_REQUESTED': 0, 'PAUSED': 0,
             'UPLOADED_VERIFIED': 0, 'IN_PROGRESS': 2, 'WAITING_AUTH': 3, 'WAITING_QUOTA': 4, 'BLOCKED_UNSUPPORTED': 5, 'FAILED_RETRYABLE': 6,
-            'SIMULATED_DELIVERY_VERIFIED': 0,
+            'SIMULATED_DELIVERY_VERIFIED': 0,'AMBIGUOUS_PROVIDER_HOLD':9,
             'FAILED_FINAL': 7, 'CANCELLED': 10}.get(result['status'], 9)
     except (ValueError, OSError, StudioError, KeyError) as exc:
         code = getattr(exc, 'code', 'ERROR')

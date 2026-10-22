@@ -1,6 +1,7 @@
 """Actual generic handlers; only runtime/native process IO is replaced."""
 from copy import deepcopy
 import json
+import sys
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -21,7 +22,7 @@ class GenericRecoveryTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='closure_recovery_');self.addCleanup(self.temp.cleanup)
         self.p=SystemPipeline.__new__(SystemPipeline);p=self.p
-        p.root=Path(self.temp.name)/'run';p.engine=p.root/'engine';p.run_id='recovery'
+        p.root=Path(self.temp.name).resolve()/'run';p.engine=p.root/'engine';p.run_id='recovery'
         p.config=SimpleNamespace(budget=SimpleNamespace(seconds=1,attempts=2),acquisition=SimpleNamespace(retryable_job_errors=['TIMEOUT']))
         with Registry(p.engine) as registry:
             registry.initialize(ProjectBrief(project_id=p.run_id,title='Fixture',work_title='Owned',character='Guide'))
@@ -120,7 +121,8 @@ class GenericRecoveryTests(unittest.TestCase):
             else:self.state(state='done',worker_pid=None);observed.append('done')
         def spawned(manager,job_id):
             manager.spawn_observer('intent',job_id,None)
-            manager.spawn_observer('spawned',job_id,SimpleNamespace(pid=12345))
+            manager.spawn_observer('spawned',job_id,SimpleNamespace(pid=12345,
+                args=[sys.executable,'-m','app.worker','--workspace',str(manager.root),'--job',job_id]))
         def identity(pid):return False if self.manager.status(identifier)['state']=='failed' else 'current'
         with patch.object(JobManager,'_spawn',autospec=True,side_effect=spawned) as spawn, \
              patch('app.v2_spawn_receipts.spawned_identity',return_value='current'), \
@@ -145,7 +147,7 @@ class GenericRecoveryTests(unittest.TestCase):
 class GenericQATests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='closure_qa_');self.addCleanup(self.temp.cleanup)
-        self.root=Path(self.temp.name);self.engine=MeasuredEngine();self.engine.root=self.root;self.engine.engine=self.root
+        self.root=Path(self.temp.name).resolve();self.engine=MeasuredEngine();self.engine.root=self.root;self.engine.engine=self.root
         (self.root/'runtime.json').write_text(json.dumps({'ffprobe_path':'no-native-ffprobe','ffmpeg_path':'no-native-ffmpeg'}))
         (self.root/'project.mlt').write_text('<mlt><producer><property name="resource">0</property></producer></mlt>')
         (self.root/'edit_plan.json').write_text(json.dumps({'subtitle_events':[{'start_ms':0,'end_ms':1000}]}))

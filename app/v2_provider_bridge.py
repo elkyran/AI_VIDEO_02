@@ -157,7 +157,8 @@ class DualWorkerBridge:
         # identity, fixture_result, routing rules, file paths or another chat.
         allowed = ('source_text', 'dependency_results', 'revision_dependencies', 'accepted_state',
                    'revision_request', 'project_id', 'scene_id', 'scene_version',
-                   'subject_type', 'subject_id', 'subject_version', 'subject_hash', 'acquisition_scope')
+                   'subject_type', 'subject_id', 'subject_version', 'subject_hash', 'acquisition_scope',
+                   'entity_version','scoped_revision','mapping_revision','scoped_review_request')
         creative = json.loads(canonical_json({key: context[key] for key in allowed if key in context}))
         if len(canonical_json(creative).encode('utf-8')) > self.limits.context_bytes:
             raise StudioError('PROVIDER_BUDGET', 'Input context exceeds the host budget')
@@ -173,13 +174,13 @@ class DualWorkerBridge:
                 from .editorial import Scene, Review
                 if (type(revision) is not dict or set(revision) != {'issue_id', 'segment_id', 'instruction',
                         'prior_scene', 'max_revision_cycles'} or type(revision['max_revision_cycles']) is not int
-                        or revision['max_revision_cycles'] != 1 or contract.input_version != 2
+                        or revision['max_revision_cycles'] != 1
                         or type(revision['instruction']) is not str or not 1 <= len(revision['instruction']) <= 2000):
                     raise StudioError('REVISION_LIMIT', 'Only one addressed text revision is permitted')
                 prior = Scene.model_validate(revision['prior_scene'])
                 reviews = [Review.model_validate(value) for value in creative.get('dependency_results', {}).values()
                            if 'review_id' in value]
-                if (not prior.simulated or prior.version != 1 or prior.project_id != contract.run_id
+                if (not prior.simulated or prior.version+1 != contract.input_version or prior.project_id != contract.run_id
                         or prior.scene_id != contract.scene_id or not creative.get('accepted_state')
                         or not any(r.subject_type == 'scene' and r.subject_hash == fingerprint(prior.model_dump())
                             and r.subject_version == prior.version and r.subject_id == prior.scene_id
@@ -221,6 +222,10 @@ class DualWorkerBridge:
                 keep_pending = True
                 return []  # Pending fixture: bounded by host clock, never busy-waits.
             state['sent'] = True
+            if state['attempt_dir'] is not None:
+                relative=state['attempt_dir'].relative_to(self.store.root).as_posix()+'/provider_send_intent.json'
+                write_generated_json(self.store.root,relative,{'binding':binding.model_dump(),
+                    'scope':'request may have executed; absence of receipt is ambiguous'})
             exchange = self.transport.exchange(binding, state['creative'])
             if exchange.get('pending') is True:
                 keep_pending = True
@@ -282,7 +287,11 @@ class DualWorkerBridge:
     def recover(self, attempt_dir):
         try:
             return self._recover_receipt(attempt_dir)
-        except (ValueError, KeyError, TypeError, OSError, StudioError):
+        except StudioError as exc:
+            if exc.code=='PROVIDER_RECOVERY_AMBIGUOUS':raise
+            return {'status':'failed','failure':{'kind':'invalid_input','code':'PROVIDER_RECOVERY_REJECTED',
+                'message':'Synthetic receipt binding rejected','retryable':False}}
+        except (ValueError, KeyError, TypeError, OSError):
             # The exact synthetic transport has no surviving child process.
             # A rejected receipt is terminal; core must not reserve it forever.
             return {'status': 'failed', 'failure': {'kind': 'invalid_input',
@@ -294,7 +303,7 @@ class DualWorkerBridge:
         revision = context.get('revision_request')
         if revision:
             expected = deepcopy(revision['prior_scene'])
-            expected['version'] = 2
+            expected['version'] += 1
             target = [part for part in payload['narration_segments'] if part['segment_id'] == revision['segment_id']]
             prior = [part for part in expected['narration_segments'] if part['segment_id'] == revision['segment_id']]
             if len(target) != 1 or len(prior) != 1:
@@ -313,6 +322,12 @@ class DualWorkerBridge:
         self.runs.pop(binding.session_key, None)  # No synthetic worker survives recovery.
         file = attempt_dir/'provider_receipt.json'
         if not file.exists():
+            intent=attempt_dir/'provider_send_intent.json'
+            if intent.exists():
+                sent=json.loads(intent.read_text(encoding='utf-8'))
+                if SessionBinding.model_validate(sent['binding'])!=binding:
+                    raise StudioError('PROVIDER_SESSION_MISMATCH','Send intent differs from this attempt')
+                raise StudioError('PROVIDER_RECOVERY_AMBIGUOUS','Request may have executed; reservation retained without resend')
             return {'status': 'interrupted'}  # Never silently re-send a request.
         receipt = json.loads(file.read_text(encoding='utf-8'))
         result = Result.model_validate(receipt['result'])
