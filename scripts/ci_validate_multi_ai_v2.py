@@ -306,7 +306,7 @@ def validate_ci_workflow() -> None:
                      "model_requests", "paid_api_requests", "production_started",
                      "$value.status -ne 'passed'", "$checks.status -ne 'passed'",
                      "$checks.test_count", "$expectedGroups", "$observedGroups",
-                     "$expectedTimeout", "$testsRecorded -lt 623", "$skipsRecorded -gt 3", "short-path alias limitation",
+                     "$expectedTimeout", "$testsRecorded -lt 642", "$skipsRecorded -gt 3", "short-path alias limitation",
                      "$check.group -in @('v2', 'contracts')"):
         require(required in envelope_text, f"Evidence envelope check is missing {required}")
 
