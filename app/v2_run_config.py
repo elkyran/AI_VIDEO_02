@@ -301,6 +301,12 @@ def graph(config, *, acquired=False, acquisition_parent=None):
             'media': [m.model_dump() for m in config.inputs.media if m.asset_id in used]}, [admission], scene)
         audio = add('wav', {}, [candidate], scene)
         edit = add('edit', {}, [candidate, audio], scene)
+        if acquired and config.acquisition.director_required:
+            director = add('director', {}, [admission, edit], scene, 'edit_plan', 'codex')
+            review = add('director_review', {}, [director], scene, 'review', 'gemini_visual')
+            if config.acquisition.auto_fix_authorized and config.brief.auto_fix_cycles == 1:
+                director = add('director_fix', {'max_cycles':1}, [admission,edit,director,review], scene, 'edit_plan','codex')
+            edit = add('director_apply', {}, [edit, director, review], scene)
         compiled = add('compile', {}, [edit], scene)
         rendered = add('render', {}, [compiled], scene)
         finals.append(add('qa', {}, [rendered, audio], scene))
@@ -322,6 +328,9 @@ def plan(config):
     blockers = []
     if isinstance(config.inputs, BriefInputs) and config.acquisition and config.worker_routes is None:
         blockers.append('HOST_ROUTES_REQUIRED: acquisition requires fixed Story and Visual routes')
+    if isinstance(config.inputs, BriefInputs) and config.acquisition and config.acquisition.director_required:
+        roles={r.role for r in config.worker_routes.routes} if config.worker_routes else set()
+        if 'codex' not in roles:blockers.append('HOST_ROUTES_REQUIRED: director requires its fixed Codex route')
     if config.worker_routes is not None:
         roles = {r.role for r in config.worker_routes.routes}
         if roles != {'gemini_story', 'gemini_visual'} and not (config.acquisition and

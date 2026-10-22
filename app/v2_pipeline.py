@@ -145,6 +145,9 @@ class SystemPermit:
             scope=acquisition_scope(config,node['provider_role'])
             if any(v['context'].get('acquisition_scope')!=scope for v in (task,requested)):
                 raise StudioError('SYSTEM_PERMISSION_REQUIRED','Acquisition context differs from original host scope')
+        if node['stage'] in {'director','director_fix'}:
+            from .v2_director import validate_plan
+            validate_plan(result.payload,requested['context'])
         if result.payload != node['value'] and node['stage'] == 'scene' and not node.get('acquisition'):
             raise StudioError('STALE_INPUTS', 'Scene payload differs from approved inputs')
         if node['stage'] == 'worker_scene' and result.payload != node['value']:
@@ -309,6 +312,8 @@ class SystemPipeline(MeasuredEngine):
         self.drive_host = drive_host or self.services.drive_host
         if self.is_acquisition and config.mode=='simulation' and self.services.worker_transport is None:
             raise StudioError('HOST_TRANSPORT_REQUIRED','The source-only offline path needs an explicit synthetic host transport; live remains disabled')
+        if self.is_acquisition and config.acquisition.director_required and self.services.director_factory is None:
+            raise StudioError('DIRECTOR_BINDING_REQUIRED','Supply the host-injected director factory; no Python director fallback')
         if not self.is_acquisition and config.worker_routes is not None and config.mode == 'simulation' and type(worker_fixtures) is not dict:
             raise StudioError('SYNTHETIC_RESULTS_REQUIRED', 'Explicit synthetic worker results are required; there is no fallback')
         self.permit = SystemPermit(config, opt_in=opt_in, authorize=authorize)
@@ -316,6 +321,10 @@ class SystemPipeline(MeasuredEngine):
         self.engine = self.root/'engine'
         adapter = StageAdapter(self)
         adapters = {'codex': adapter, 'gemini': adapter} if config.mode == 'simulation' else {'local': adapter}
+        if self.is_acquisition and config.mode=='simulation':
+            from .v2_director import DirectorAdapter, SystemDispatch
+            director=DirectorAdapter(self,self.services.director_factory()) if self.services.director_factory else None
+            adapters['codex']=SystemDispatch(adapter,director)
         if config.worker_routes is not None and config.mode == 'simulation':
             from .v2_provider_protocol import WorkerSlot, DualWorkerConfig
             from .v2_provider_bridge import SyntheticTransport
@@ -426,7 +435,7 @@ class SystemPipeline(MeasuredEngine):
         return unwrapped(payload)
 
     def output_files(self, value, paths):
-        value = {**value, 'simulated': False, 'files': {}}
+        value = {**value, 'simulated': self.config.mode=='simulation', 'files': {}}
         for path in paths:
             path = no_links(path)
             relative = path.relative_to(self.root).as_posix()
@@ -447,6 +456,12 @@ class SystemPipeline(MeasuredEngine):
         elif node.get('acquisition') and node['stage']=='production_expansion':
             from .v2_acquisition_executor import expansion_receipt
             output=expansion_receipt(self,self.config)
+        elif self.config.mode=='simulation' and self.services.handler_io is not None:
+            # Explicit in-process offline harness intercepts only native IO.
+            # There is no JSON switch that can enable tools under simulation.
+            with self.services.handler_io(self,node):
+                output=self.execute_engine(node,dependencies)
+            output={**output,'simulated':True,'tool_io':'stub','production_started':False,'uploaded':False}
         elif self.config.mode == 'simulation':
             output = {'simulated': True, 'stage': node['stage'], 'node_sha256': fingerprint(node),
                       'dependency_hashes': [fingerprint(d) for d in dependencies], 'production_started': False,
@@ -474,6 +489,16 @@ class SystemPipeline(MeasuredEngine):
 
     def execute_engine(self, node, deps):
         stage = node['stage']
+        if stage == 'director_apply':
+            from .v2_director import validate_plan
+            # Revalidate the immutable accepted proposal at the compiler boundary.
+            scene=next(s.model_dump() for s in self.config.inputs.scenes if s.scene_id==node['scene_id'])
+            if any(i['status']=='open' for i in deps[2]['issues']) and not (self.config.acquisition.auto_fix_authorized
+                    and self.config.brief.auto_fix_cycles == 1):
+                raise StudioError('NEEDS_REVIEW','Accepted Review has open issues; host auto-fix permission is absent')
+            plan=validate_plan(deps[1],{'dependency_results':{'scene':scene,'proposal':{
+                'schema_version':1,'simulated':self.config.mode=='simulation','text':canonical_json(deps[0])}}})
+            return {**deps[0],'edit_plan':plan}
         if stage == 'deliver':
             from .v2_drive import deliver_package
             if not self.config.drive or not self.config.drive.network_write_authorized:
@@ -584,16 +609,26 @@ class SystemPipeline(MeasuredEngine):
             write_generated_json(self.engine, relative, candidate['script'])
         self.register(script_id, relative, 'text')
         manager = JobManager(self.engine)
-        with Registry(self.engine) as registry:
-            prior = registry.db.execute('SELECT response FROM requests WHERE project_id=? AND key=?', (self.run_id, key)).fetchone()
-            base = manager.status(json.loads(prior[0])['job_id'])['input_revision']-1 if prior else registry._project(self.run_id)['revision']
-        ProductionBridge(self.engine).prepare_request(self.run_id, 'synthesize', {'script_asset_id': script_id}, base, key)
-        receipt = manager.enqueue(self.run_id, 'synthesize', {'script_asset_id': script_id}, base, key)
-        while manager.status(receipt['job_id'])['state'] in {'pending', 'running'}:
+        from .v2_job_recovery import existing_request, guarded_resume, observe_new_worker
+        job=existing_request(self,manager,script_id,candidate,key)
+        newly_submitted=job is None
+        if job is None:
+            with Registry(self.engine) as registry:base=registry._project(self.run_id)['revision']
+            ProductionBridge(self.engine).prepare_request(self.run_id, 'synthesize', {'script_asset_id': script_id}, base, key)
+            receipt=manager.enqueue(self.run_id,'synthesize',{'script_asset_id':script_id},base,key)
+            job=manager.status(receipt['job_id'])
+        while True:
+            if newly_submitted:
+                observe_new_worker(self,job)
+                if job['state']=='running':newly_submitted=False
+            guarded_resume(self,manager,job)
+            job=manager.status(job['job_id'])
+            if job['state']=='done':break
             if time.monotonic() > deadline:
                 raise StudioError('LOCAL_JOB_TIMEOUT', 'Existing job is preserved; resume the same run/key')
             time.sleep(.25)
-        return verify_audio(self.engine, self.run_id, candidate, receipt['job_id'])
+            job=manager.status(job['job_id'])
+        return verify_audio(self.engine, self.run_id, candidate, job['job_id'])
 
     def command(self, label, command, *, timeout=180):
         remaining = min(self.config.budget.seconds,
@@ -643,6 +678,7 @@ class SystemPipeline(MeasuredEngine):
                 track='voice', timeline_start_ms=start, timeline_end_ms=cursor, source_in_ms=0, source_out_ms=duration))
             subtitles.append(SubtitleEvent(start_ms=start, end_ms=cursor, text=segment['text']))
         edit = EditPlan(project_id=self.run_id, plan_id=derived_id('edit', scene['scene_id'], 'v'+str(scene['version'])),
+            simulated=getattr(self.config,'mode',None)=='simulation',
             scene_id=scene['scene_id'], version=scene['version'], scene_version=scene['version'], voice_version=fingerprint(audio),
             duration_ms=cursor, shot_placements=pictures, voice_placements=voices, subtitle_events=subtitles,
             important_decisions=['Measured verified WAV; only trailing zero PCM aligned; approved media only.',
@@ -719,6 +755,8 @@ class SystemPipeline(MeasuredEngine):
             'system_ready_for_autonomous_episode': False, 'providers': provider_readiness(), 'truncated': False}
 
     def production_started(self):
+        if self.config.mode=='simulation':
+            return False  # Offline handler IO can record jobs, never production tool execution.
         import sqlite3
         from contextlib import closing
         file = self.engine/'registry.sqlite'
@@ -794,7 +832,7 @@ class SystemPipeline(MeasuredEngine):
                     raise StudioError('WAITING_AUTH', 'Host authorization does not match this folder/run/version') from None
                 raise StudioError('BLOCKED_UNSUPPORTED', 'Host delivery binding or private session store is unavailable') from None
         self.drive_transport = transport
-        node = self.delivery_task()
+        node = SystemPipeline.delivery_task(self)
         self.enqueue(node)
         self.q.queue.resume()
         for _ in range(3):
@@ -874,6 +912,7 @@ def system_main(argv, *, host_services=None):
         return {'PLANNED': 0, 'SIMULATION_SUCCEEDED': 0, 'READY_FOR_OWNER_REVIEW': 0, 'OWNER_REVIEW_RECORDED': 0,
             'RECORDED_LOCAL_PACKAGE': 0, 'RECORDED_PROGRESS': 0, 'STOP_REQUESTED': 0, 'PAUSED': 0,
             'UPLOADED_VERIFIED': 0, 'IN_PROGRESS': 2, 'WAITING_AUTH': 3, 'WAITING_QUOTA': 4, 'BLOCKED_UNSUPPORTED': 5, 'FAILED_RETRYABLE': 6,
+            'SIMULATED_DELIVERY_VERIFIED': 0,
             'FAILED_FINAL': 7, 'CANCELLED': 10}.get(result['status'], 9)
     except (ValueError, OSError, StudioError, KeyError) as exc:
         code = getattr(exc, 'code', 'ERROR')

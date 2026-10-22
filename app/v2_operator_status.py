@@ -48,12 +48,19 @@ def observe(config):
     with closing(sqlite3.connect(database.as_uri()+'?mode=ro', uri=True)) as db:
         rows = db.execute('SELECT id,status,result,error FROM ai_tasks WHERE project_id=?', (config.run_id,)).fetchall()
         settings = dict(db.execute('SELECT key,value FROM ai_settings'))
+        expansions = [json.loads(row[0]) for row in db.execute(
+            "SELECT payload FROM ai_events WHERE kind='system_expansion' ORDER BY sequence")]
     wanted = {node['task_id'] for node in graph(config)}
+    final_id=graph(config)[-1]['task_id']
+    matching=[v for v in expansions if v.get('authority')==fingerprint(config.pinned())]
+    if matching:
+        derived=matching[-1]['nodes'];wanted.update(n['task_id'] for n in derived)
+        final_id=derived[-1]['task_id']
     tasks = [{'task_id': identifier, 'status': status, 'blocker': json.loads(error) if error else None}
              for identifier, status, result, error in rows if identifier in wanted]
     completed = sum(task['status'] == 'completed' for task in tasks)
     output = next((json.loads(result)['payload'] for identifier, status, result, error in rows
-                   if identifier == graph(config)[-1]['task_id'] and status == 'completed' and result), None)
+                   if identifier == final_id and status == 'completed' and result), None)
     if output and 'text' in output:
         output = json.loads(output['text'])
     paths = {}

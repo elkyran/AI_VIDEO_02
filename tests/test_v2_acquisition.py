@@ -17,12 +17,17 @@ from app.v2_ids import derived_id
 
 def synthetic_reply(binding, context):
     """A transport-boundary double derives replies from the actual accepted context."""
-    scope=context['acquisition_scope']; values=[unwrapped(v) for v in context['dependency_results'].values()]
+    scope=context.get('acquisition_scope',{}); values=[unwrapped(v) for v in context['dependency_results'].values()]
     extraction=next((v for v in values if 'passages' in v),None)
     canon=next((v for v in values if 'facts' in v),None)
     outline=next((v for v in values if 'brief_sha256' in v),None)
     scene=next((v for v in values if 'narration_segments' in v),None)
     kind=binding.task.expected_output_schema
+    if kind=='review':
+        plan=next(v for v in values if 'plan_id' in v)
+        return {'payload':dict(project_id=plan['project_id'],review_id=derived_id('review',plan['plan_id']),
+            subject_type='edit_plan',subject_id=plan['plan_id'],subject_version=plan['version'],
+            subject_hash=fingerprint(plan),edit_plan_version=plan['version'],simulated=True,verdict='needs_review')}
     if kind=='canon_bible':
         p=extraction['passages'][0]
         payload=dict(work_id=scope['run_id'],version=scope['version'],simulated=True,sources=scope['sources'],
@@ -102,10 +107,19 @@ def source_config(folder, count=1, *, raw=None, suffix='.txt', run='closure_run'
             media=[dict(asset_id='approved_image',path=image.name,sha256=hashlib.sha256(image.read_bytes()).hexdigest(),
                 size=image.stat().st_size,version=1,kind='image',rights='owned')],requested_scene_count=count),
         profile_sha256=fingerprint(profile_spec()),operations=['synthesize','compile','render','qa','portable'],
-        worker_routes=dict(routes=routes),acquisition=dict(duration_tolerance_ms=5000)))
+        worker_routes=dict(routes=routes),acquisition=dict(duration_tolerance_ms=5000,director_required=False)))
 
 
 class ExtractionTests(unittest.TestCase):
+    def test_actual_read_buffer_hash_is_rechecked_after_initial_inventory_verification(self):
+        from unittest.mock import patch
+        config=source_config(self.folder)
+        read=Path.read_bytes
+        def changed(path):
+            return b'changed after manifest verification' if path.name=='source.txt' else read(path)
+        with patch.object(Path,'read_bytes',new=changed):
+            with self.assertRaises(StudioError) as error:extract_sources(config)
+        self.assertEqual(error.exception.code,'SOURCE_CHANGED')
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix='closure_extract_');self.addCleanup(self.temp.cleanup)
         self.folder=Path(self.temp.name)

@@ -390,7 +390,14 @@ class MeasuredEngine:
         audio_stream=next((s for s in data['streams'] if s['codec_type']=='audio'),None)
         if video_stream is None or audio_stream is None:
             raise StudioError('TECHNICAL_QA_FAILED','Decoded MP4 must contain both video and audio')
-        expected=compiled['duration_seconds'];duration=float(data['format']['duration'])
+        import math
+        try:
+            expected=float(compiled['duration_seconds']);duration=float(data['format']['duration'])
+            starts=[float(s.get('start_time',0)) for s in (video_stream,audio_stream)]
+            if not all(math.isfinite(v) and v>0 for v in (expected,duration)) or not all(math.isfinite(v) and v>=0 for v in starts):
+                raise ValueError('Invalid duration/start')
+        except (ValueError,TypeError,KeyError,OverflowError):
+            raise StudioError('TECHNICAL_QA_FAILED','Probe/timeline timing must be finite and within valid bounds') from None
         if (video_stream['width'],video_stream['height'],video_stream['r_frame_rate'])!=(1920,1080,'30/1'):
             raise StudioError('TECHNICAL_QA_FAILED','Decoded format differs from 1920x1080/30')
         if abs(duration-expected)>.1 or abs(float(video_stream.get('start_time',0))-float(audio_stream.get('start_time',0)))>.1:

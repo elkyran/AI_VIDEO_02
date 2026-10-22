@@ -10,6 +10,7 @@ class HostServices:
     worker_transport: object | None = None
     director_factory: Callable | None = None
     drive_host: object | None = None
+    handler_io: Callable | None = None
 
     def __post_init__(self):
         from .v2_provider_bridge import SyntheticTransport
@@ -20,6 +21,8 @@ class HostServices:
             raise StudioError('BLOCKED_ELIGIBILITY', 'Only an exact synthetic worker transport is enabled')
         if self.director_factory is not None and not callable(self.director_factory):
             raise ValueError('Director factory is trusted host code, not an import name')
+        if self.handler_io is not None and not callable(self.handler_io):
+            raise ValueError('Offline tool IO must be trusted in-process host code')
 
 
 def host_services(value):
