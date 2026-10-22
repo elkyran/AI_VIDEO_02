@@ -1,0 +1,78 @@
+{
+  "task_id": "SYSTEM-CLOSURE-02",
+  "status": "SYSTEM_CLOSURE_02_PARTIAL_WITH_NAMED_SOFTWARE_GAPS",
+  "operation_key": "MULTI-AI-V2-SYSTEM-CLOSURE-02",
+  "implementation_base": "16edb1d4f05d981ca35bac179d072f683a779168",
+  "code_tested_sha": "010d30f1e0a5277c7e1cd3c854c136e5c549edc1",
+  "code_tested_tree": "f757615defb58a18828c797b3971c09f1c1930cf",
+  "publication_sha": null,
+  "publication_sha_note": "The final chat identifies the report commit; no self-referential hash is embedded.",
+  "acquisition_executor_implemented": true,
+  "acquisition_e2e_offline_verified": true,
+  "runtime_codex_adapter_path_exercised_with_stub": true,
+  "targeted_fix_controller_exercised_with_stub": true,
+  "targeted_fix_scope": "one metadata-only edit issue per host authority; Story/Visual automatic fixes remain SG01",
+  "generic_job_recovery_verified_offline": true,
+  "worker_identity_scope": "HOST_OBSERVED_WORKER; see SG02",
+  "generic_qa_handler_verified_with_stubbed_io": true,
+  "launcher_drive_bootstrap_verified_with_dummy_host": true,
+  "relocated_source_closure_verified": true,
+  "source_relocation_sha256": "6fada51382b285a9fa855b2c06ffc10ad2d9dc6e5d80fe42da6f2f1728d83e45",
+  "previous_tests_retained": true,
+  "previous_tests": 596,
+  "tests": 623,
+  "failed_groups": [],
+  "skipped": 1,
+  "test_outcomes": {
+    "passed": 622,
+    "skipped": 1
+  },
+  "skip_reasons": {
+    "tests.test_fit_narration.RealPiperTests.test_native_real_wav_fit_preserves_spoken_request_and_source": "Requires installed local Piper"
+  },
+  "source_unchanged_during_checks": true,
+  "local_evidence_dirty": true,
+  "independent_ci_status": "WAITING_CHATGPT_SYNC_AND_EXACT_SHA_CI",
+  "independent_ci_exact_sha": null,
+  "live_story_verified": false,
+  "live_visual_verified": false,
+  "live_codex_verified": false,
+  "actual_media_delivery_verified": false,
+  "generic_real_production_verified": false,
+  "drive_remote_verified": false,
+  "self_hosted_runner_verified": false,
+  "system_ready_for_autonomous_episode": false,
+  "model_requests": 0,
+  "paid_api_requests": 0,
+  "production_started": false,
+  "residual_software_gaps": [
+    {
+      "id": "SG01",
+      "status": "NOT_IMPLEMENTED",
+      "scope": "Narration/Story and Visual-selection automatic targeted fixes",
+      "detail": "Only one edit-only Codex cycle executes. Other issue scopes route to NEEDS_REVIEW; no shell fallback."
+    },
+    {
+      "id": "SG02",
+      "status": "BLOCKED_SCOPE",
+      "scope": "Strong birth identity of the exact child spawned by protected JobManager",
+      "detail": "The core does not expose a spawn receipt. Caller records HOST_OBSERVED_WORKER and holds unknown/historical ownership. Minimal protected proposal is supplied, not applied."
+    },
+    {
+      "id": "SG03",
+      "status": "UNVERIFIED_ACCEPTANCE",
+      "scope": "Complete source-only acceptance/publication crash and source/Scene revision invalidation matrix",
+      "detail": "Same-version tampering, rollback inside accepted expansion and director receipt-before-completion replay are covered. Before-Canon-acceptance and after-expansion-publication crash injection, automatic narration/media replanning and all cross-version crash cases are not proven."
+    }
+  ],
+  "external_gates": [
+    "ChatGPT reviews/applies proposed CI-lane schema/group synchronization; run independent GitHub-hosted CI on the exact integrated SHA.",
+    "Story and Visual live eligibility and supported isolated official routes remain BLOCKED_ELIGIBILITY / DISABLED.",
+    "Live Codex capability/identity and actual media delivery need separately authorized verification; this package used a stub.",
+    "Owner supplies matching installed Ruslan/runtime/tools plus the exact existing production-profile provenance files listed in SOURCE_CLOSURE.json, and an owned manifest for a separately authorized general-real acceptance.",
+    "Real Drive binding/folder/readback and any self-hosted runner require separate owner authorization."
+  ],
+  "external_evidence_manifest_sha256": "a47d9e738c976b7c0e23dbe12a4106bc6489bfd53559ff39e556806ef0476fad",
+  "source_zip_sha256": "e82952eeb35c6b985ea8b22a09fb817822d2746536d1d2bbf7d8d1de60d29c9d",
+  "source_zip_bytes": 390894
+}

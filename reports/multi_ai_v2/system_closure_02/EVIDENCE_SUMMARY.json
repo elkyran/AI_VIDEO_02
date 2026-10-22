@@ -1,0 +1,130 @@
+{
+  "code_tested_sha": "010d30f1e0a5277c7e1cd3c854c136e5c549edc1",
+  "code_tested_tree": "f757615defb58a18828c797b3971c09f1c1930cf",
+  "canonical_manifest_sha256": "455560a38b77e43277c64985bfed661b6300ae46a2cf691ebcee7b7adb6ea329",
+  "external_manifest_sha256": "a47d9e738c976b7c0e23dbe12a4106bc6489bfd53559ff39e556806ef0476fad",
+  "checks": [
+    {
+      "group": "v2",
+      "status": "passed",
+      "test_count": 111,
+      "skipped_count": 0,
+      "elapsed_seconds": 276.157,
+      "timeout_seconds": 420,
+      "exit_code": 0
+    },
+    {
+      "group": "contracts",
+      "status": "passed",
+      "test_count": 174,
+      "skipped_count": 0,
+      "elapsed_seconds": 170.61,
+      "timeout_seconds": 420,
+      "exit_code": 0
+    },
+    {
+      "group": "queue",
+      "status": "passed",
+      "test_count": 50,
+      "skipped_count": 0,
+      "elapsed_seconds": 10.141,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "adapters",
+      "status": "passed",
+      "test_count": 16,
+      "skipped_count": 0,
+      "elapsed_seconds": 0.343,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "mai05",
+      "status": "passed",
+      "test_count": 108,
+      "skipped_count": 0,
+      "elapsed_seconds": 27.938,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "panel",
+      "status": "passed",
+      "test_count": 12,
+      "skipped_count": 0,
+      "elapsed_seconds": 2.703,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "legacy",
+      "status": "passed",
+      "test_count": 127,
+      "skipped_count": 1,
+      "elapsed_seconds": 9.984,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "acquisition",
+      "status": "passed",
+      "test_count": 13,
+      "skipped_count": 0,
+      "elapsed_seconds": 91.75,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "closure",
+      "status": "passed",
+      "test_count": 12,
+      "skipped_count": 0,
+      "elapsed_seconds": 102.281,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "compileall",
+      "status": "passed",
+      "test_count": null,
+      "skipped_count": 0,
+      "elapsed_seconds": 0.969,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "check_git_export",
+      "status": "passed",
+      "test_count": null,
+      "skipped_count": 0,
+      "elapsed_seconds": 3.078,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    },
+    {
+      "group": "diff_check",
+      "status": "passed",
+      "test_count": null,
+      "skipped_count": 0,
+      "elapsed_seconds": 0.062,
+      "timeout_seconds": 180,
+      "exit_code": 0
+    }
+  ],
+  "source_unchanged_during_checks": true,
+  "tests": 623,
+  "skipped": 1,
+  "test_outcomes": {
+    "passed": 622,
+    "skipped": 1
+  },
+  "skip_reasons": {
+    "tests.test_fit_narration.RealPiperTests.test_native_real_wav_fit_preserves_spoken_request_and_source": "Requires installed local Piper"
+  },
+  "retained_ids": 596,
+  "current_ids": 623,
+  "new_outputs_bytes": 21027294,
+  "free_bytes_at_seal": 85711065088
+}
