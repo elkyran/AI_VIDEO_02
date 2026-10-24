@@ -52,7 +52,7 @@ class ProductionCandidateTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='bulk_fixture_')
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.q = RunCoordinator(self.root/'queue')
         self.addCleanup(self.q.close)
         self.run_id = self.q.create({'topic': 'Original offline fixture'}, 'fixture')['run_id']
