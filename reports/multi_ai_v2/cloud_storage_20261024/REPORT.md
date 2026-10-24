@@ -24,7 +24,7 @@ Story/Visual пока оставить выключенными. Облачно�
 [Папка результатов](https://drive.google.com/drive/folders/1PAAs7C6uD_FDfsBahkQCfpffUuoJtuc9).
 [Проверенный облачный отчёт](https://docs.google.com/document/d/1AEKqO1uEQF-J-08SOJxUWcpibuQNtzOs1pd9LxOOl3g/edit).
 
-Архив GitHub Artifact12554791132 был получен серверным GitHub-коннектором как
+Архив GitHub Artifact 12554791132 был получен серверным GitHub-коннектором как
 file reference. Попытка передать structured reference Drive upload_file выявила
 ограничение локального-path интерфейса. После ошибки содержимое папки проверено:
 ZIP отсутствовал. Две одинаковые ошибки сохранены в истории этого сеанса; этот
@@ -42,13 +42,13 @@ ZIP отсутствовал. Две одинаковые ошибки сохр�
 - [40077604785](https://github.com/elkyran/AI_VIDEO_02/actions/runs/40077604785);
 - [40078748459](https://github.com/elkyran/AI_VIDEO_02/actions/runs/40078748459).
 
-Каждый:642 tests=640 passed+2 existing environment skips, failures/errors=0.
+Каждый: 642 tests = 640 passed + 2 existing environment skips, failures/errors=0.
 В этом пакете меняются только документация и облачный отчёт.
 Неизменённый Python-код без основания не пересобирался и не тестировался повторно.
 
 ## Новый подтверждённый внешний gate
 
-Проверено по официальному FAQ24октября2026:
+Проверено по официальному FAQ 24 октября 2026:
 agy -p предназначен для прямых скриптов и CI, но wrapping agy внутри сторонних
 coding agents/applications и account rotation не поддерживаются consumer plans.
 Для стороннего coding agent Google рекомендует Gemini Enterprise или AI Studio API key.
