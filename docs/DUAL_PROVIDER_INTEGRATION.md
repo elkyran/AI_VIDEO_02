@@ -1,5 +1,17 @@
 # PROVIDERS-01: два worker, только offline
 
+## Проверка официального маршрута — 2026-10-24
+
+По текущему [официальному FAQ Google](https://www.antigravity.google/docs/faq/#can-i-use-antigravity-cli-headless-mode-in-third-party-coding-agents-or-automate-account-switching),
+headless CLI допускает прямые скрипты/CI, но wrapping agy внутри сторонних coding
+agents/applications и account rotation не поддерживаются consumer plans.
+Для сторонних coding agents Google рекомендует Gemini Enterprise или AI Studio API key.
+Обычный вход в Google и наличие подписки не доказывают допустимость данного adapter.
+Существующая offline реализация не активируется автоматически. Владелец подтвердил:
+Story/Visual пока выключены; работа только в GitHub/облаке, без локальных файлов;
+облачного Windows-host пока нет. [Результаты проверки Drive](../reports/multi_ai_v2/cloud_storage_20261024/REPORT.md).
+Исторические срезы ниже сохранены как история, а не live approval.
+
 SYSTEM-CLOSURE-02: тот же fixed two-account transport теперь принимает CanonBible,
 StoryOutline, Scene и SegmentVisuals wrapper; реальные accepted dependencies
 попадают в context. Исполнение/границы описаны в SYSTEM_CLOSURE_02.md. Codex
