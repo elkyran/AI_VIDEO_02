@@ -166,7 +166,7 @@ jobs:
           # Passing status is insufficient if a checker accidentally omits groups
           # or marks new tests as skipped. Keep the approved baseline intact.
           $expectedGroups = @('v2', 'contracts', 'queue', 'adapters', 'mai05',
-                              'panel', 'legacy', 'compileall', 'check_git_export', 'diff_check')
+                              'panel', 'legacy', 'acquisition', 'closure', 'review_recovery', 'review_story', 'review_visual', 'review_source_revision', 'review_crash', 'compileall', 'check_git_export', 'diff_check')
           $observedGroups = @($checks.checks | ForEach-Object { $_.group })
           if (($expectedGroups -join ',') -ne ($observedGroups -join ',')) {
             throw "Core checker group mismatch: $($observedGroups -join ',')"
@@ -177,15 +177,15 @@ jobs:
             if ($check.status -ne 'passed' -or [int]$check.exit_code -ne 0) {
               throw "Required checker group failed: $($check.group)"
             }
-            $expectedTimeout = if ($check.group -eq 'v2') { 420 } else { 180 }
+            $expectedTimeout = if ($check.group -in @('v2', 'contracts')) { 420 } else { 180 }
             if ([int]$check.timeout_seconds -ne $expectedTimeout) {
               throw "Unexpected bounded timeout for group $($check.group)"
             }
             $testsRecorded += [int]$check.test_count
             $skipsRecorded += [int]$check.skipped_count
           }
-          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 455) {
-            throw "Test count mismatch or regression below 455: $testsRecorded"
+          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 642) {
+            throw "Test count mismatch or regression below 642: $testsRecorded"
           }
           # Windows can legitimately lack an 8.3 short-path alias. In that case
           # one additional test skips, but its exact identity must be in the log.

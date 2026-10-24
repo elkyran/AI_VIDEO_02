@@ -1,20 +1,22 @@
-# Multi-AI V2: параллельная работа ChatGPT и Codex
+# Multi-AI V2: разделение работы и release gate
 
-Этот файл фиксирует непересекающиеся зоны работы, чтобы два исполнителя могли
-работать параллельно без потери изменений и конкурирующих источников истины.
+## Цель и сохранность
 
-## Общая база
+Сохраняем существующий AI_VIDEO_02: Ruslan, отдельные WAV/cache, Timeline/MLT,
+JobManager, Registry, исходные материалы и ручные правки. Не создаём второй
+scheduler, AccountManager, production Registry или renderer.
 
-- Базовая ветка: `feature/multi-ai-coordinator-v2`.
-- Защищённый baseline: `baseline-before-multi-ai-v2`.
-- `main` не изменяется до независимого review и зелёного GitHub-hosted CI.
-- Production, TTS, рендер, live Gemini и self-hosted runner пока не запускаются.
+Порядок владельца: завершить функциональные соединения, затем отдельным
+заданием один содержательный выпуск, затем улучшение голоса/музыки/стиля.
+Тестовые данные не доказывают живую работу исполнителей или качество видео.
 
-## Дорожка A — ChatGPT / GitHub safety
+## Дорожка A — ChatGPT / независимый CI и review
 
-Ветка: `assistant/review-fix-ci-runner-safety`.
+Текущая ветка: `assistant/providers-01-ci-sync` (PR #9 в feature).
+Предыдущая `assistant/review-fix-ci-runner-safety` исторически интегрирована
+через PR #1; её старый HEAD не использовать как базу новых core изменений.
 
-ChatGPT владеет только следующими файлами в этом пакете:
+ChatGPT владеет:
 
 - `.github/workflows/ci-multi-ai-v2.yml`;
 - `.github/workflows/new-video.yml`;
@@ -22,72 +24,78 @@ ChatGPT владеет только следующими файлами в эт�
 - `docs/GITHUB_CI_AND_RUNNER.md`;
 - `development/multi_ai_v2/COLLABORATION.md`.
 
-Задачи:
+Обязанности: читать настоящий diff; согласовать девять canonical schemas и
+ограничения времени; проверять полный GitHub-hosted Windows CI на точном
+временном merge SHA; проверять manifest/file hashes, tree SHA, dirty=false и
+source_unchanged_during_checks=true. Не ослаблять ошибки, test coverage,
+ограничения self-hosted workflow или offline-происхождение результатов.
 
-1. Независимый GitHub-hosted offline CI.
-2. Проверка Python, PowerShell, workflow policy, JSON Schema и regression-групп.
-3. Защита self-hosted workflow от запуска кода из feature-веток.
-4. Чистый точный checkout без сохранения GitHub credentials.
-5. Диагностические CI-логи и immutable evidence artifact для точной передачи дефектов Codex.
-6. Проверка clean evidence: `dirty=false`, exact `GITHUB_SHA`, zero model/API/production operations.
-7. Никаких изменений Coordinator, contracts, evidence implementation, storage или production.
+## Дорожка B — Codex / функциональный Python
 
-## Дорожка B — Codex / core correctness
+Ветка: `feature/multi-ai-coordinator-v2`.
+Codex меняет только файлы, разрешённые конкретным заданием владельца.
+Пять файлов дорожки A не меняет. Требования к ним сообщает как
+`NEEDS_CHATGPT_CHANGE`, не дублирует патч и не выполняет merge/cherry-pick.
 
-Codex владеет функциональными Python-границами Multi-AI v2, связанными тестами и
-документацией, кроме файлов дорожки A.
+RELEASE-01 опубликован на `64905d00016c406d437d9f5b2c0eb2c1c60f7752`.
+Его авторский отчёт: 596 тестов, 595 passed, 1 прежний skip.
+Это локальное свидетельство, не независимое одобрение.
+Функциональное приращение: host-owned worker routes, reservations/recovery,
+Windows process-tree cleanup, operator CLI, bounded Drive host interface и
+source-only поставка. Реальная автономность не заявляется.
 
-Review Fix Pack 2 (`68c1d2a3953bdfabd509e71ec004d1cb50cafc30`) и Fix Pack 3
-прошли адресные независимые PR CI на своих временных объединениях.
-После Review Fix Pack 4 Codex опубликовал ограниченный Phase A пакет:
-feature HEAD `3cfd455b640ca36c9840a76778810ae721583d67`.
-Локальный отчёт Phase A заявляет 411 тестов (410 passed, 1 skip), но это
-не clean proof текущего PR merge commit. Следующая проверка — новый точный
-temporary merge двух дорожек и Windows CI evidence до любого merge.
+## Текущий gate — RELEASE-01
 
-По новому поручению владельца Codex может выполнять только ограниченные
-адресные исправления из отдельного точного промпта с проверкой exact HEAD.
-Он не изменяет файлы дорожки A. Production, providers, runner и merge запрещены.
+Срез перед review (после каждого push проверять заново):
 
-## Правила синхронизации
+- feature: `64905d00016c406d437d9f5b2c0eb2c1c60f7752`;
+- main: `7a1e4058df09dbb66448a3624e0250129eaf7aa0`;
+- PR #9: CI-sync -> feature; PR #6: feature -> main; оба отдельные gates.
 
-1. Перед каждым push проверять remote head своей ветки.
-2. Не force-push, не reset --hard, не clean.
-3. Не создавать два решения одной и той же проблемы в разных модулях.
-4. Не менять существующий Coordinator и Registry без адресного доказательства.
-5. После каждого пакета — отдельный commit и короткий отчёт.
-6. ChatGPT PR направляется в `feature/multi-ai-coordinator-v2`, не в `main`.
-7. PR-CI проверяет временный merge обеих дорожек; красный статус блокирует merge.
-   Изолированная ChatGPT ветка не запускает core push-CI: core assertions
-   проверяются на temporary merge PR и в объединённых `main`/feature.
-   Это не разрешает пропускать, ослаблять или скрывать красный PR-CI.
-8. Владелец файла исправляет найденный дефект в своей ветке.
-9. CI evidence хранится GitHub Artifact, а не коммитится как самоссылочный release-proof.
-10. Финальный merge в `main` возможен только после зелёного CI и повторного review.
+Следующий независимый запуск должен включать текущий release core и изменения
+CI-sync вместе. Старый CI на PROVIDERS-01 не является доказательством RELEASE-01.
+Ожидаемый текущий тестовый состав: v2=109, contracts=174, queue=50, adapters=16,
+mai05=108, panel=12, legacy=127; всего 596 до последующих адресных дополнений.
+Проверить фактический набор/числа и причины skips в скачанном evidence, а не
+ограничиваться минимальным порогом workflow. Новые пропуски без причины запрещены.
+Бюджеты v2/contracts=420s, остальные группы=180s; genuine timeout остаётся failure.
+Девять schemas включают HostRunConfig и DualWorkerConfig; полный drift-check строгий.
 
-## Текущий review gate
+CI выполняется на GitHub-hosted Windows, без provider credentials, реального
+TTS/render, Drive или пользовательского self-hosted runner. Существующие fake19
+и offline Scene->MLT->release smokes должны пройти без ложного production claim.
 
-Draft PR №1 направлен из ChatGPT security lane в Codex feature, не в main.
-Предыдущие CI на отдельных temporary merges не доказывают текущий Phase A HEAD.
-Для нового gate требуется temporary merge, чей первый parent равен текущему
-feature HEAD, а второй — текущему ChatGPT lane HEAD. Проверить оба SHA, tree,
-точный test set, manifest hashes и независимый GitHub-hosted Windows CI.
-До owner sign-off PR остаётся Draft, merge запрещён.
+Прежние неуспешные CI и их artifacts сохраняются. Их нельзя объявлять зелёными
+задним числом. После любого нового core push актуальность approval проверяется
+по commit/tree и полному набору изменений.
 
-Пока этот merge-state CI не завершён успешно:
+## Правила синхронизации и интеграции
 
-- PR остаётся draft;
-- merge запрещён;
-- новый этап live-подключения, production или runner не начинается;
-- provider, runner и production остаются выключенными.
+1. Перед изменением и push проверить актуальные refs и рабочее дерево.
+2. Никаких force-push, reset --hard, git clean, rebase опубликованной истории,
+   слепого git add -A, изменения baseline tags или удаления старых evidence.
+3. Независимые файлы не переписывать и не заменять параллельной реализацией.
+4. Красный CI запрещает merge; не повторять запуск до случайного успеха.
+5. PR #9 интегрируется только после review и зелёного точного merge-state CI;
+   feature -> main проверяется отдельно через PR #6.
+6. Ранее данное разрешение владельца на интеграцию не отменяет CI/security gates.
+   Codex не выполняет merge самостоятельно; main не менять прямым commit.
+7. Self-hosted workflow остаётся private/main-only/manual/fake-only с exact SHA,
+   clean checkout и persist-credentials=false. Его protected команды не меняются.
+8. Сведения для review хранятся в небольших отчётах; большие evidence и медиа
+   не коммитятся. Активные SQLite/WAL остаются вне Git/Drive/OneDrive.
 
-## Текущие запреты
+## Доступы и readiness
 
-До следующего разрешения владельца нельзя:
+Два Antigravity работника Story/Visual с раздельными привязками остаются целевым
+требованием. Тестовые identities и раздельные reservations не доказывают
+реальные аккаунты, квоты, медиа-возможности или право использования сервиса.
+Текущий live доступ остаётся BLOCKED_ELIGIBILITY / DISABLED. Не выполнять
+login, перенос credentials, ротацию аккаунтов, обход ограничений или молчаливый
+fallback Story/Visual на Codex. Не выводить autonomous_ready=true по mock-тестам.
 
-- устанавливать или подключать `agy`;
-- подключать второй Gemini;
-- регистрировать self-hosted runner;
-- включать production option удалённого workflow;
-- запускать TTS, рендер или video QA;
-- сливать feature-ветку в `main`.
+Drive host interface и локальная копия не доказывают cloud upload; до реального
+разрешённого remote readback uploaded=false, remote_sync=UNVERIFIED.
+Runner registration, Windows services/users, внешние расходы и публикация не
+включаются этим review. Нельзя начинать новый выпуск или менять качество голоса.
+Исторический реальный PILOT-01 остаётся доказательством только своего scope.
