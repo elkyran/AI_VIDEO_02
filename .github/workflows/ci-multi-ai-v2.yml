@@ -1,0 +1,327 @@
+name: Multi-AI V2 CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - feature/multi-ai-coordinator-v2
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/multi_ai_v2_schemas/**'
+      - '.github/workflows/**'
+      - 'development/multi_ai_v2/**'
+      - 'docs/GITHUB_CI_AND_RUNNER.md'
+      - 'pyproject.toml'
+      - '.env.example'
+  push:
+    branches:
+      - main
+      - 'feature/multi-ai-coordinator-v2'
+    paths:
+      - 'app/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/multi_ai_v2_schemas/**'
+      - '.github/workflows/**'
+      - 'development/multi_ai_v2/**'
+      - 'docs/GITHUB_CI_AND_RUNNER.md'
+      - 'pyproject.toml'
+      - '.env.example'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: multi-ai-v2-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-regression:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install bounded test dependencies
+        shell: powershell
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -m pip install --disable-pip-version-check PyYAML==6.0.3 jsonschema==4.26.0
+
+      - name: Validate workflow policy and checked-in schemas
+        shell: powershell
+        run: python -X utf8 scripts/ci_validate_multi_ai_v2.py
+
+      - name: Validate PowerShell syntax
+        shell: powershell
+        run: |
+          $hadErrors = $false
+          foreach ($file in Get-ChildItem -Path scripts -Recurse -Filter *.ps1) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $file.FullName,
+              [ref]$tokens,
+              [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $hadErrors = $true
+              Write-Error ("PowerShell parse failure in {0}: {1}" -f $file.FullName, ($parseErrors -join '; '))
+            }
+          }
+          if ($hadErrors) { throw 'PowerShell parser found errors' }
+
+      - name: Run clean revision-bound core checker
+        shell: powershell
+        env:
+          CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
+        run: |
+          if (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT) {
+            throw 'Unexpected pre-existing CI evidence directory'
+          }
+          python -X utf8 scripts/check_multi_ai_v2.py --output $env:CI_EVIDENCE_ROOT
+          $code = $LASTEXITCODE
+          if ($code -ne 0 -and (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
+            Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter *.log | ForEach-Object {
+              Write-Host "===== $($_.FullName) ====="
+              Get-Content -LiteralPath $_.FullName
+            }
+          }
+          exit $code
+
+      - name: Verify immutable evidence envelope
+        if: ${{ always() }}
+        shell: powershell
+        env:
+          CI_EVIDENCE_ROOT: ${{ runner.temp }}/multi-ai-v2-evidence
+        run: |
+          if (-not (Test-Path -LiteralPath $env:CI_EVIDENCE_ROOT)) {
+            throw 'Core checker did not create an evidence directory'
+          }
+          $manifests = @(Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter manifest.json)
+          if ($manifests.Count -ne 1) {
+            throw "Expected exactly one manifest.json, found $($manifests.Count)"
+          }
+          $manifest = $manifests[0]
+          $value = Get-Content -LiteralPath $manifest.FullName -Raw | ConvertFrom-Json
+
+          if ($value.status -ne 'passed') { throw 'Evidence manifest did not report passed' }
+          if ($value.dirty -ne $false) { throw 'Published CI evidence must have dirty=false' }
+          if ($value.git_commit_sha -ne $env:GITHUB_SHA) {
+            throw "Evidence commit $($value.git_commit_sha) does not match GITHUB_SHA $env:GITHUB_SHA"
+          }
+          $actualTree = (git rev-parse "HEAD^{tree}").Trim()
+          if ($value.git_tree_sha -ne $actualTree) {
+            throw "Evidence tree $($value.git_tree_sha) does not match checked-out tree $actualTree"
+          }
+          if ($value.model_requests -ne 0 -or $value.paid_api_requests -ne 0 -or $value.production_started -ne $false) {
+            throw 'Offline CI evidence unexpectedly reports a model/API/production operation'
+          }
+
+          foreach ($property in $value.files.PSObject.Properties) {
+            $relative = $property.Name
+            $record = $property.Value
+            $file = Join-Path $manifest.DirectoryName $relative
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+              throw "Evidence file is missing: $relative"
+            }
+            $item = Get-Item -LiteralPath $file
+            if ($item.Length -ne [int64]$record.bytes) {
+              throw "Evidence size mismatch: $relative"
+            }
+            $hash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($hash -ne ([string]$record.sha256).ToLowerInvariant()) {
+              throw "Evidence SHA-256 mismatch: $relative"
+            }
+          }
+
+          $checksFiles = @(Get-ChildItem -LiteralPath $env:CI_EVIDENCE_ROOT -Recurse -Filter checks.json)
+          if ($checksFiles.Count -ne 1) {
+            throw "Expected exactly one checks.json, found $($checksFiles.Count)"
+          }
+          $checks = Get-Content -LiteralPath $checksFiles[0].FullName -Raw | ConvertFrom-Json
+          if ($checks.status -ne 'passed') { throw 'Canonical checks did not report passed' }
+          if ([int]$checks.test_count -le 0) { throw 'Canonical checks must record tests' }
+          if ($checks.source_unchanged_during_checks -ne $true) {
+            throw 'Source changed while regression checks were running'
+          }
+          if ($checks.git_commit_sha -ne $env:GITHUB_SHA -or $checks.git_tree_sha -ne $actualTree) {
+            throw 'checks.json is not bound to the checked-out revision'
+          }
+
+          # Passing status is insufficient if a checker accidentally omits groups
+          # or marks new tests as skipped. Keep the approved baseline intact.
+          $expectedGroups = @('v2', 'contracts', 'queue', 'adapters', 'mai05',
+                              'panel', 'legacy', 'acquisition', 'closure', 'review_recovery', 'review_story', 'review_visual', 'review_source_revision', 'review_crash', 'compileall', 'check_git_export', 'diff_check')
+          $observedGroups = @($checks.checks | ForEach-Object { $_.group })
+          if (($expectedGroups -join ',') -ne ($observedGroups -join ',')) {
+            throw "Core checker group mismatch: $($observedGroups -join ',')"
+          }
+          $testsRecorded = 0
+          $skipsRecorded = 0
+          foreach ($check in $checks.checks) {
+            if ($check.status -ne 'passed' -or [int]$check.exit_code -ne 0) {
+              throw "Required checker group failed: $($check.group)"
+            }
+            $expectedTimeout = if ($check.group -in @('v2', 'contracts')) { 420 } else { 180 }
+            if ([int]$check.timeout_seconds -ne $expectedTimeout) {
+              throw "Unexpected bounded timeout for group $($check.group)"
+            }
+            $testsRecorded += [int]$check.test_count
+            $skipsRecorded += [int]$check.skipped_count
+          }
+          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 642) {
+            throw "Test count mismatch or regression below 642: $testsRecorded"
+          }
+          # Windows can legitimately lack an 8.3 short-path alias. In that case
+          # one additional test skips, but its exact identity must be in the log.
+          if ([int]$checks.skipped_count -ne $skipsRecorded -or $skipsRecorded -gt 3) {
+            throw "Unexpected skipped tests: $skipsRecorded"
+          }
+          if ($skipsRecorded -eq 3) {
+            $contractsLog = Join-Path $manifest.DirectoryName 'contracts.log'
+            $contractsText = Get-Content -LiteralPath $contractsLog -Raw
+            if ($contractsText -notmatch 'test_cache_prediction_matches_windows_short_and_long_path_aliases.*skipped') {
+              throw 'Third skip is not the expected Windows short-path alias limitation'
+            }
+          }
+
+          $manifestHash = (Get-FileHash -LiteralPath $manifest.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          @(
+            '## Multi-AI V2 offline CI',
+            '',
+            "- Checked commit: ``$env:GITHUB_SHA``",
+            "- Checked tree: ``$actualTree``",
+            "- Evidence status: **$($value.status)**",
+            "- Tests recorded: $($checks.test_count)",
+            "- Skipped tests: $($checks.skipped_count)",
+            "- Model requests: $($value.model_requests)",
+            "- Paid API requests: $($value.paid_api_requests)",
+            "- Production started: $($value.production_started)",
+            "- Manifest SHA-256: ``$manifestHash``"
+          ) | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Verify one-topic hosted fake dispatch and same-run replay
+        shell: powershell
+        env:
+          LOCAL_RUN_ROOT: ${{ runner.temp }}/multi-ai-v2-hosted-fake
+          VIDEO_REQUEST_JSON: '{"topic":"Hosted CI synthetic story","language":"ru","target_minutes":1,"style":"technical","production_mode":"fake"}'
+        run: |
+          if (Test-Path -LiteralPath $env:LOCAL_RUN_ROOT) {
+            throw 'Hosted fake root already exists; proof requires a fresh workspace'
+          }
+          $healthText = & python -X utf8 scripts/healthcheck_multi_ai_v2.py --mode fake --root $env:LOCAL_RUN_ROOT
+          if ($LASTEXITCODE -ne 0) { throw 'Hosted fake healthcheck failed' }
+          $health = $healthText | ConvertFrom-Json
+          if ($health.status -ne 'SUCCEEDED' -or $health.model_requests -ne 0 -or
+              $health.paid_api_requests -ne 0 -or $health.production_started -ne $false) {
+            throw 'Hosted healthcheck did not prove offline fake-only mode'
+          }
+          $firstText = & python -X utf8 scripts/dispatch_multi_ai_v2.py
+          if ($LASTEXITCODE -ne 0) { throw 'First hosted fake dispatch failed' }
+          $first = $firstText | ConvertFrom-Json
+          if ($first.status -ne 'SIMULATION_SUCCEEDED' -or $first.simulated -ne $true -or
+              $first.ready_for_user -ne $false -or $first.drive_result_link -ne $null -or
+              [string]$first.manifest_sha256 -notmatch '^[0-9a-f]{64}$') {
+            throw 'First hosted fake dispatch claimed unsupported readiness'
+          }
+          $secondText = & python -X utf8 scripts/dispatch_multi_ai_v2.py
+          if ($LASTEXITCODE -ne 0) { throw 'Hosted fake replay failed' }
+          $second = $secondText | ConvertFrom-Json
+          if ($second.run_id -ne $first.run_id -or $second.manifest_sha256 -ne $first.manifest_sha256 -or
+              $second.status -ne 'SIMULATION_SUCCEEDED') {
+            throw 'Hosted fake replay changed accepted run identity or manifest'
+          }
+          $stateText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT status --run-id $first.run_id
+          if ($LASTEXITCODE -ne 0) { throw 'Hosted fake status read failed' }
+          $state = $stateText | ConvertFrom-Json
+          if ($state.status -ne 'SIMULATION_SUCCEEDED' -or $state.model_requests -ne 0 -or
+              $state.video_qa -ne 'NOT_RUN' -or $state.editorial_qa -ne 'NOT_RUN' -or
+              @($state.tasks).Count -ne 19 -or
+              @($state.tasks | Where-Object { $_.status -ne 'SUCCEEDED' }).Count -ne 0) {
+            throw 'Hosted fake graph is incomplete or claims real QA'
+          }
+          Write-Host "HOSTED_FAKE_DISPATCH_VERIFIED run=$($first.run_id) stages=19 manifest=$($first.manifest_sha256)"
+
+      - name: Verify offline Scene to editable MLT and release replay
+        shell: powershell
+        env:
+          LOCAL_RUN_ROOT: ${{ runner.temp }}/multi-ai-v2-bridge-fixture
+        run: |
+          if (Test-Path -LiteralPath $env:LOCAL_RUN_ROOT) {
+            throw 'Offline bridge smoke requires a fresh local fixture root'
+          }
+          $oneText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT prepare --brief examples/bulk_01/brief.json --key hosted_bulk_01 --fixture-demo
+          if ($LASTEXITCODE -ne 0) { throw 'One-brief offline bridge preparation failed' }
+          $one = $oneText | ConvertFrom-Json
+          if ($one.status -ne 'SIMULATION_SUCCEEDED' -or $one.offline_status -ne 'VERIFIED' -or
+              $one.simulated -ne $true -or $one.ready_for_user -ne $false -or
+              $one.production_started -ne $false -or $one.uploaded -ne $false -or
+              $one.remote_sync -ne 'UNVERIFIED' -or $one.model_requests -ne 0 -or
+              $one.paid_api_requests -ne 0 -or
+              $one.technical_qa.full_video_creative_qa -ne 'NOT_RUN' -or
+              $one.technical_qa.scope -ne 'prepared_files_and_declared_timeline_only' -or
+              $one.delivery.uploaded -ne $false -or $one.delivery.cloud_receipt -ne $null) {
+            throw 'Offline bridge claimed unproven production, model, creative QA or cloud delivery'
+          }
+          if ([string]$one.release.sha256 -notmatch '^[0-9a-f]{64}$' -or
+              [string]$one.manifest_artifact.sha256 -notmatch '^[0-9a-f]{64}$' -or
+              [string]$one.mlt.sha256 -notmatch '^[0-9a-f]{64}$') {
+            throw 'Offline bridge did not produce immutable manifest hashes'
+          }
+          $twoText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT resume --run-id $one.run_id
+          if ($LASTEXITCODE -ne 0) { throw 'Offline bridge restart/resume failed' }
+          $two = $twoText | ConvertFrom-Json
+          if ($two.run_id -ne $one.run_id -or
+              $two.manifest_artifact.sha256 -ne $one.manifest_artifact.sha256 -or
+              $two.release.sha256 -ne $one.release.sha256 -or
+              $two.mlt.sha256 -ne $one.mlt.sha256 -or
+              $two.offline_status -ne 'VERIFIED') {
+            throw 'Offline bridge changed accepted artifacts after process restart'
+          }
+          $inspectText = & python -X utf8 -m app.multi_ai_v2 --root $env:LOCAL_RUN_ROOT inspect-artifacts --run-id $one.run_id
+          if ($LASTEXITCODE -ne 0) { throw 'Offline bridge artifact inspection failed' }
+          $inspect = $inspectText | ConvertFrom-Json
+          if ($inspect.manifest_artifact.sha256 -ne $one.manifest_artifact.sha256) {
+            throw 'Offline bridge inspection lost its accepted manifest'
+          }
+          $attemptCount = & python -X utf8 -c "import os,sqlite3;from pathlib import Path;p=Path(os.environ['LOCAL_RUN_ROOT'])/'registry.sqlite';db=sqlite3.connect(p);print(db.execute('SELECT COUNT(*) FROM ai_attempts').fetchone()[0]);db.close()"
+          if ($LASTEXITCODE -ne 0 -or [int]$attemptCount -ne 19) {
+            throw "Offline fixture replay created duplicate attempts: $attemptCount"
+          }
+          Write-Host "HOSTED_BULK_OFFLINE_BRIDGE_VERIFIED run=$($one.run_id) stages=19 release=$($one.release.sha256)"
+
+      - name: Upload immutable CI evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: multi-ai-v2-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/multi-ai-v2-evidence
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Verify clean, whitespace-safe checkout
+        if: ${{ always() }}
+        shell: powershell
+        run: |
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = git status --porcelain --untracked-files=all
+          if ($dirty) {
+            Write-Host $dirty
+            throw 'CI checks modified tracked or untracked repository files'
+          }

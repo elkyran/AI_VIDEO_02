@@ -296,6 +296,10 @@ def _dependency_context(context: dict) -> dict:
 def validate_result(expected_output: str, payload: dict, context: dict | None = None) -> dict:
     """Return a normalized payload or raise ValidationError/StudioError; no storage or execution."""
     context = _dependency_context(context or {})
+    from .v2_acquisition_contracts import ACQUISITION_OUTPUTS
+    if expected_output in ACQUISITION_OUTPUTS or expected_output == 'scene' and context.get('acquisition_scope'):
+        from .v2_acquisition import validate_acquisition
+        return validate_acquisition(expected_output, payload, context)
     classes = {'scene': Scene, 'edit_plan': EditPlan, 'review': Review, 'note': Note}
     if expected_output not in classes:
         raise StudioError('SCHEMA_INVALID', f'Unsupported expected output: {expected_output}')

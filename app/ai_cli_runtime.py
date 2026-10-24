@@ -29,6 +29,8 @@ from .multi_ai_preview import process_identity
 MAX_OUTPUT_BYTES = 2 * 1024 * 1024
 MAX_PROMPT_BYTES = 256 * 1024
 SCHEMAS = {"scene": Scene, "edit_plan": EditPlan, "review": Review, "note": Note}
+from .v2_acquisition_contracts import ACQUISITION_OUTPUTS
+SCHEMAS.update(ACQUISITION_OUTPUTS)
 
 
 def _write(path, value):

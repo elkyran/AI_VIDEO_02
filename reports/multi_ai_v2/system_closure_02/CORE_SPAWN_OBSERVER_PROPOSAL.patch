@@ -1,0 +1,12 @@
+--- a/app/jobs.py
++++ b/app/jobs.py
+@@ -37 +37,2 @@
+-    def __init__(self, root: str | Path):
++    def __init__(self, root: str | Path, *, spawn_observer=None):
++        self.spawn_observer = spawn_observer
+@@ -84 +85 @@
+-            subprocess.Popen([sys.executable,'-m','app.worker','--workspace',str(self.root),'--job',job_id],
++            process = subprocess.Popen([sys.executable,'-m','app.worker','--workspace',str(self.root),'--job',job_id],
+@@ -86,0 +88,2 @@
++        if self.spawn_observer is not None:
++            self.spawn_observer(job_id, process.pid)

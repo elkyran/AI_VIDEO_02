@@ -1,0 +1,17 @@
+{
+  "status": "BLOCKED_UNSUPPORTED",
+  "cursor_gemini": {
+    "status": "BLOCKED_UNSUPPORTED",
+    "official_headless_documented": true,
+    "local_cli_found": false
+  },
+  "billing_route": "UNVERIFIED",
+  "second_antigravity_profile": "UNVERIFIED",
+  "independence": "INDEPENDENCE_UNVERIFIED",
+  "enabled": false,
+  "model": null,
+  "account_fingerprint": null,
+  "quota_source": null,
+  "model_requests": 0,
+  "checked_at": "2026-10-20T13:16:40.660171+00:00"
+}

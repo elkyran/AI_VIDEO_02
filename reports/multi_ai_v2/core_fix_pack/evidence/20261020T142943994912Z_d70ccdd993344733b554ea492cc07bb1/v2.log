@@ -1,0 +1,32 @@
+test_active_db_cannot_be_synced (tests.test_multi_ai_v2.V2Tests.test_active_db_cannot_be_synced) ... ok
+test_artifact_hash_and_drive_copy (tests.test_multi_ai_v2.V2Tests.test_artifact_hash_and_drive_copy) ... ok
+test_artifact_run_and_result_provenance (tests.test_multi_ai_v2.V2Tests.test_artifact_run_and_result_provenance) ... ok
+test_artifact_symlink_escape (tests.test_multi_ai_v2.V2Tests.test_artifact_symlink_escape) ... ok
+test_cli_exit_status_and_run_ownership (tests.test_multi_ai_v2.V2Tests.test_cli_exit_status_and_run_ownership) ... ok
+test_cli_non_success_statuses_are_nonzero (tests.test_multi_ai_v2.V2Tests.test_cli_non_success_statuses_are_nonzero) ... ok
+test_corrupt_and_missing_artifacts (tests.test_multi_ai_v2.V2Tests.test_corrupt_and_missing_artifacts) ... ok
+test_drive_fallback_and_partial_cleanup (tests.test_multi_ai_v2.V2Tests.test_drive_fallback_and_partial_cleanup) ... ok
+test_drive_unavailable_and_path_allowlist (tests.test_multi_ai_v2.V2Tests.test_drive_unavailable_and_path_allowlist) ... ok
+test_existing_artifact_is_not_overwritten (tests.test_multi_ai_v2.V2Tests.test_existing_artifact_is_not_overwritten) ... ok
+test_fake_and_production_healthcheck_modes (tests.test_multi_ai_v2.V2Tests.test_fake_and_production_healthcheck_modes) ... ok
+test_full_fake_graph_and_context (tests.test_multi_ai_v2.V2Tests.test_full_fake_graph_and_context) ... ok
+test_full_source_binding_scope (tests.test_multi_ai_v2.V2Tests.test_full_source_binding_scope) ... ok
+test_idempotent_run_and_no_duplicate_dispatch (tests.test_multi_ai_v2.V2Tests.test_idempotent_run_and_no_duplicate_dispatch) ... ok
+test_legacy_queue_not_repurposed (tests.test_multi_ai_v2.V2Tests.test_legacy_queue_not_repurposed) ... ok
+test_no_traversal_or_secret_in_context (tests.test_multi_ai_v2.V2Tests.test_no_traversal_or_secret_in_context) ... ok
+test_pause_and_stop_cannot_control_another_run (tests.test_multi_ai_v2.V2Tests.test_pause_and_stop_cannot_control_another_run) ... ok
+test_production_is_fail_closed (tests.test_multi_ai_v2.V2Tests.test_production_is_fail_closed) ... ok
+test_quota_pause_no_rotation (tests.test_multi_ai_v2.V2Tests.test_quota_pause_no_rotation) ... ok
+test_remote_entrypoint_process_restart (tests.test_multi_ai_v2.V2Tests.test_remote_entrypoint_process_restart) ... ok
+test_repeated_immutable_checker_and_probe (tests.test_multi_ai_v2.V2Tests.test_repeated_immutable_checker_and_probe) ... ok
+test_restart_reconciles_and_reuses_completed_results (tests.test_multi_ai_v2.V2Tests.test_restart_reconciles_and_reuses_completed_results) ... ok
+test_restart_retains_active_run_id (tests.test_multi_ai_v2.V2Tests.test_restart_retains_active_run_id) ... ok
+test_schema_drift_without_rewriting_sources (tests.test_multi_ai_v2.V2Tests.test_schema_drift_without_rewriting_sources) ... ok
+test_single_active_run_and_terminal_release (tests.test_multi_ai_v2.V2Tests.test_single_active_run_and_terminal_release) ... ok
+test_strict_contracts_and_honest_review (tests.test_multi_ai_v2.V2Tests.test_strict_contracts_and_honest_review) ... ok
+test_trusted_review_rejects_self_attestation_and_missing_probe (tests.test_multi_ai_v2.V2Tests.test_trusted_review_rejects_self_attestation_and_missing_probe) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 41.727s
+
+OK

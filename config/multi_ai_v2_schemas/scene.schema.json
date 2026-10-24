@@ -1,0 +1,160 @@
+{
+  "$defs": {
+    "NarrationSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "segment_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 3000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "segment_id",
+        "text"
+      ],
+      "title": "NarrationSegment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "simulated": {
+      "default": false,
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "scene_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Scene Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "start_state": {
+      "minLength": 1,
+      "title": "Start State",
+      "type": "string"
+    },
+    "cause": {
+      "minLength": 1,
+      "title": "Cause",
+      "type": "string"
+    },
+    "goal": {
+      "minLength": 1,
+      "title": "Goal",
+      "type": "string"
+    },
+    "obstacle": {
+      "minLength": 1,
+      "title": "Obstacle",
+      "type": "string"
+    },
+    "decision_or_action": {
+      "minLength": 1,
+      "title": "Decision Or Action",
+      "type": "string"
+    },
+    "consequence": {
+      "minLength": 1,
+      "title": "Consequence",
+      "type": "string"
+    },
+    "end_state": {
+      "minLength": 1,
+      "title": "End State",
+      "type": "string"
+    },
+    "characters": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Characters",
+      "type": "array"
+    },
+    "emotional_intent": {
+      "minLength": 1,
+      "title": "Emotional Intent",
+      "type": "string"
+    },
+    "narration_segments": {
+      "items": {
+        "$ref": "#/$defs/NarrationSegment"
+      },
+      "minItems": 1,
+      "title": "Narration Segments",
+      "type": "array"
+    },
+    "fact_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Fact Refs",
+      "type": "array"
+    },
+    "assumption_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assumption Refs",
+      "type": "array"
+    },
+    "dependencies": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "object"
+    }
+  },
+  "required": [
+    "project_id",
+    "scene_id",
+    "version",
+    "start_state",
+    "cause",
+    "goal",
+    "obstacle",
+    "decision_or_action",
+    "consequence",
+    "end_state",
+    "characters",
+    "emotional_intent",
+    "narration_segments"
+  ],
+  "title": "Scene",
+  "type": "object"
+}

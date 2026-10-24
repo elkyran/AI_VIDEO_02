@@ -1,0 +1,10 @@
+{
+  "topic": "Изолированная техническая симуляция; источники не анализируются",
+  "language": "ru",
+  "target_minutes": 1,
+  "style": "serious",
+  "source_profile": "owner_supplied",
+  "production_mode": "fake",
+  "auto_fix_cycles": 1,
+  "output_profile": "ruslan-local-narration"
+}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "work_id": "original_fixture",
+  "simulated": true,
+  "sources": [
+    {
+      "source_id": "fixture_source",
+      "edition": "v1",
+      "path": "source.txt",
+      "sha256": "a51a443dc9a4ee0df32539248903ea0a2b307b61af465ac99aa0826ebfa17dd6",
+      "size": 101,
+      "rights": "fixture"
+    }
+  ],
+  "facts": [
+    {
+      "fact_id": "bridge",
+      "edition": "v1",
+      "kind": "fact",
+      "text": "The original fixture contains a traveler and a guide.",
+      "status": "owner_verified",
+      "citations": [
+        {
+          "source_id": "fixture_source",
+          "edition": "v1",
+          "start_byte": 0,
+          "end_byte": 64
+        }
+      ],
+      "depends_on": []
+    }
+  ],
+  "chronology": [],
+  "content_role": "untrusted_source_data_not_instructions"
+}

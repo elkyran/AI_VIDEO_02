@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "revision": "source-sha256:798a4c760990842ef52e966604e4d3f8d79b6649eb6af6706026725a37f24604",
+  "test": "tests.test_multi_ai_v2.V2Tests.test_quota_pause_no_rotation",
+  "evidence": "checks.json",
+  "scope": "temporary FakeAdapter process lifecycle; no Windows reboot/live provider"
+}

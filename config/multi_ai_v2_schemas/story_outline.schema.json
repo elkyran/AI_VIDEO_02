@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "OutlineScene": {
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "ordinal": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "goal": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "cause": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Cause",
+          "type": "string"
+        },
+        "consequence": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Consequence",
+          "type": "string"
+        },
+        "after": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "After",
+          "type": "array"
+        },
+        "fact_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Fact Refs",
+          "type": "array"
+        },
+        "assumption_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Assumption Refs",
+          "type": "array"
+        },
+        "estimated_duration_ms": {
+          "exclusiveMinimum": 0,
+          "maximum": 1800000,
+          "title": "Estimated Duration Ms",
+          "type": "integer"
+        },
+        "word_budget": {
+          "exclusiveMinimum": 0,
+          "maximum": 6000,
+          "title": "Word Budget",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scene_id",
+        "ordinal",
+        "title",
+        "goal",
+        "cause",
+        "consequence",
+        "estimated_duration_ms",
+        "word_budget"
+      ],
+      "title": "OutlineScene",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "work_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Work Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "simulated": {
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "brief_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Brief Sha256",
+      "type": "string"
+    },
+    "canon_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Canon Sha256",
+      "type": "string"
+    },
+    "requested_duration_ms": {
+      "maximum": 1800000,
+      "minimum": 60000,
+      "title": "Requested Duration Ms",
+      "type": "integer"
+    },
+    "style": {
+      "maxLength": 500,
+      "title": "Style",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 12000,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "scenes": {
+      "items": {
+        "$ref": "#/$defs/OutlineScene"
+      },
+      "maxItems": 100,
+      "minItems": 1,
+      "title": "Scenes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "work_id",
+    "version",
+    "simulated",
+    "brief_sha256",
+    "canon_sha256",
+    "requested_duration_ms",
+    "style",
+    "summary",
+    "scenes"
+  ],
+  "title": "StoryOutline",
+  "type": "object"
+}

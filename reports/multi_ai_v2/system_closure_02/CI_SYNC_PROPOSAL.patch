@@ -1,0 +1,19 @@
+--- a/scripts/ci_validate_multi_ai_v2.py
++++ b/scripts/ci_validate_multi_ai_v2.py
+@@ -20,0 +21 @@
++from app.v2_acquisition_contracts import ACQUISITION_OUTPUTS
+@@ -308 +309 @@
+-                     "$expectedTimeout", "$testsRecorded -lt 541", "$skipsRecorded -gt 3", "short-path alias limitation",
++                     "$expectedTimeout", "$testsRecorded -lt 623", "$skipsRecorded -gt 3", "short-path alias limitation",
+@@ -332,0 +334 @@
++        **ACQUISITION_OUTPUTS,
+--- a/.github/workflows/ci-multi-ai-v2.yml
++++ b/.github/workflows/ci-multi-ai-v2.yml
+@@ -169 +169 @@
+-                              'panel', 'legacy', 'compileall', 'check_git_export', 'diff_check')
++                              'panel', 'legacy', 'acquisition', 'closure', 'compileall', 'check_git_export', 'diff_check')
+@@ -187,2 +187,2 @@
+-          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 541) {
+-            throw "Test count mismatch or regression below 541: $testsRecorded"
++          if ([int]$checks.test_count -ne $testsRecorded -or $testsRecorded -lt 623) {
++            throw "Test count mismatch or regression below 623: $testsRecorded"

@@ -1,0 +1,1199 @@
+{
+  "$defs": {
+    "AccountBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "identity_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Identity Hash",
+          "type": "string"
+        },
+        "auth_generation": {
+          "minimum": 1,
+          "title": "Auth Generation",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "identity_hash",
+        "auth_generation"
+      ],
+      "title": "AccountBinding",
+      "type": "object"
+    },
+    "AcquisitionPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_tolerance_ms": {
+          "maximum": 1800000,
+          "minimum": 0,
+          "title": "Duration Tolerance Ms",
+          "type": "integer"
+        },
+        "max_source_bytes": {
+          "default": 262144,
+          "maximum": 8000000,
+          "minimum": 1,
+          "title": "Max Source Bytes",
+          "type": "integer"
+        },
+        "max_text_bytes": {
+          "default": 32768,
+          "maximum": 262144,
+          "minimum": 1,
+          "title": "Max Text Bytes",
+          "type": "integer"
+        },
+        "passage_bytes": {
+          "default": 4096,
+          "maximum": 16384,
+          "minimum": 8,
+          "title": "Passage Bytes",
+          "type": "integer"
+        },
+        "max_passages": {
+          "default": 128,
+          "maximum": 512,
+          "minimum": 1,
+          "title": "Max Passages",
+          "type": "integer"
+        },
+        "director_required": {
+          "default": true,
+          "title": "Director Required",
+          "type": "boolean"
+        },
+        "auto_fix_authorized": {
+          "default": false,
+          "title": "Auto Fix Authorized",
+          "type": "boolean"
+        },
+        "retryable_job_errors": {
+          "items": {
+            "enum": [
+              "TIMEOUT",
+              "PROCESS_FAILED"
+            ],
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Retryable Job Errors",
+          "type": "array"
+        },
+        "scoped_fix": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScopedFixPermit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "duration_tolerance_ms"
+      ],
+      "title": "AcquisitionPolicy",
+      "type": "object"
+    },
+    "ApprovedInputs": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "canon": {
+          "$ref": "#/$defs/CanonBible"
+        },
+        "story": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Story",
+          "type": "string"
+        },
+        "scenes": {
+          "items": {
+            "$ref": "#/$defs/Scene"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Scenes",
+          "type": "array"
+        },
+        "media": {
+          "items": {
+            "$ref": "#/$defs/InputFile"
+          },
+          "maxItems": 500,
+          "title": "Media",
+          "type": "array"
+        },
+        "visuals": {
+          "items": {
+            "$ref": "#/$defs/SegmentVisuals"
+          },
+          "maxItems": 500,
+          "title": "Visuals",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "canon",
+        "story",
+        "scenes"
+      ],
+      "title": "ApprovedInputs",
+      "type": "object"
+    },
+    "Brief": {
+      "additionalProperties": false,
+      "properties": {
+        "topic": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Topic",
+          "type": "string"
+        },
+        "language": {
+          "default": "ru",
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Language",
+          "type": "string"
+        },
+        "target_minutes": {
+          "default": 1,
+          "maximum": 30,
+          "minimum": 1,
+          "title": "Target Minutes",
+          "type": "integer"
+        },
+        "style": {
+          "default": "serious",
+          "maxLength": 500,
+          "title": "Style",
+          "type": "string"
+        },
+        "source_profile": {
+          "default": "owner_supplied",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Source Profile",
+          "type": "string"
+        },
+        "production_mode": {
+          "default": "fake",
+          "enum": [
+            "fake",
+            "production"
+          ],
+          "title": "Production Mode",
+          "type": "string"
+        },
+        "auto_fix_cycles": {
+          "default": 1,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Auto Fix Cycles",
+          "type": "integer"
+        },
+        "output_profile": {
+          "default": "ruslan-local-narration",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Output Profile",
+          "type": "string"
+        },
+        "additional_requirements": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Additional Requirements"
+        }
+      },
+      "required": [
+        "topic"
+      ],
+      "title": "Brief",
+      "type": "object"
+    },
+    "BriefInputs": {
+      "additionalProperties": false,
+      "description": "Host allowlist for acquisition; a Brief does not contain a written script.\n\nSources/media are owner-selected inventory, never paths proposed by a model.\nThis is intentionally distinct from already approved creative inputs.",
+      "properties": {
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "maxItems": 128,
+          "minItems": 1,
+          "title": "Sources",
+          "type": "array"
+        },
+        "media": {
+          "items": {
+            "$ref": "#/$defs/InputFile"
+          },
+          "maxItems": 500,
+          "title": "Media",
+          "type": "array"
+        },
+        "requested_scene_count": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Requested Scene Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "version",
+        "sources"
+      ],
+      "title": "BriefInputs",
+      "type": "object"
+    },
+    "Budget": {
+      "additionalProperties": false,
+      "properties": {
+        "max_output_bytes": {
+          "default": 262144000,
+          "minimum": 1,
+          "title": "Max Output Bytes",
+          "type": "integer"
+        },
+        "reserve_bytes": {
+          "default": 4294967296,
+          "minimum": 0,
+          "title": "Reserve Bytes",
+          "type": "integer"
+        },
+        "max_input_bytes": {
+          "default": 33554432,
+          "maximum": 262144000,
+          "minimum": 1,
+          "title": "Max Input Bytes",
+          "type": "integer"
+        },
+        "seconds": {
+          "default": 300,
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Seconds",
+          "type": "integer"
+        },
+        "attempts": {
+          "default": 2,
+          "maximum": 2,
+          "minimum": 1,
+          "title": "Attempts",
+          "type": "integer"
+        },
+        "external_requests": {
+          "default": 0,
+          "maximum": 10000,
+          "minimum": 0,
+          "title": "External Requests",
+          "type": "integer"
+        }
+      },
+      "title": "Budget",
+      "type": "object"
+    },
+    "CanonBible": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "work_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Work Id",
+          "type": "string"
+        },
+        "simulated": {
+          "default": true,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "maxItems": 128,
+          "minItems": 1,
+          "title": "Sources",
+          "type": "array"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/CanonFact"
+          },
+          "maxItems": 2000,
+          "title": "Facts",
+          "type": "array"
+        },
+        "chronology": {
+          "items": {
+            "$ref": "#/$defs/CanonEvent"
+          },
+          "maxItems": 2000,
+          "title": "Chronology",
+          "type": "array"
+        },
+        "content_role": {
+          "const": "untrusted_source_data_not_instructions",
+          "default": "untrusted_source_data_not_instructions",
+          "title": "Content Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "work_id",
+        "sources"
+      ],
+      "title": "CanonBible",
+      "type": "object"
+    },
+    "CanonEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "at": {
+          "title": "At",
+          "type": "integer"
+        },
+        "fact_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "after": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+            "type": "string"
+          },
+          "title": "After",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_id",
+        "edition",
+        "at",
+        "fact_id"
+      ],
+      "title": "CanonEvent",
+      "type": "object"
+    },
+    "CanonFact": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "kind": {
+          "default": "fact",
+          "enum": [
+            "fact",
+            "relationship",
+            "world_rule",
+            "assumption",
+            "divergence"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "status": {
+          "default": "unconfirmed",
+          "enum": [
+            "unconfirmed",
+            "owner_verified"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "maxItems": 64,
+          "title": "Citations",
+          "type": "array"
+        },
+        "depends_on": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Depends On",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fact_id",
+        "edition",
+        "text"
+      ],
+      "title": "CanonFact",
+      "type": "object"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "start_byte": {
+          "minimum": 0,
+          "title": "Start Byte",
+          "type": "integer"
+        },
+        "end_byte": {
+          "exclusiveMinimum": 0,
+          "title": "End Byte",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "source_id",
+        "edition",
+        "start_byte",
+        "end_byte"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "DriveConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "folder_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Folder Id",
+          "type": "string"
+        },
+        "credential_ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Credential Ref",
+          "type": "string"
+        },
+        "network_write_authorized": {
+          "default": false,
+          "title": "Network Write Authorized",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "folder_id",
+        "credential_ref"
+      ],
+      "title": "DriveConfig",
+      "type": "object"
+    },
+    "InputFile": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size": {
+          "minimum": 1,
+          "title": "Size",
+          "type": "integer"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "video"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "rights": {
+          "enum": [
+            "owned",
+            "permission",
+            "public_domain"
+          ],
+          "title": "Rights",
+          "type": "string"
+        },
+        "duration_ms": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Ms"
+        }
+      },
+      "required": [
+        "asset_id",
+        "path",
+        "sha256",
+        "size",
+        "version",
+        "kind",
+        "rights"
+      ],
+      "title": "InputFile",
+      "type": "object"
+    },
+    "NarrationSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "segment_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 3000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "segment_id",
+        "text"
+      ],
+      "title": "NarrationSegment",
+      "type": "object"
+    },
+    "Scene": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "project_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "start_state": {
+          "minLength": 1,
+          "title": "Start State",
+          "type": "string"
+        },
+        "cause": {
+          "minLength": 1,
+          "title": "Cause",
+          "type": "string"
+        },
+        "goal": {
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "obstacle": {
+          "minLength": 1,
+          "title": "Obstacle",
+          "type": "string"
+        },
+        "decision_or_action": {
+          "minLength": 1,
+          "title": "Decision Or Action",
+          "type": "string"
+        },
+        "consequence": {
+          "minLength": 1,
+          "title": "Consequence",
+          "type": "string"
+        },
+        "end_state": {
+          "minLength": 1,
+          "title": "End State",
+          "type": "string"
+        },
+        "characters": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Characters",
+          "type": "array"
+        },
+        "emotional_intent": {
+          "minLength": 1,
+          "title": "Emotional Intent",
+          "type": "string"
+        },
+        "narration_segments": {
+          "items": {
+            "$ref": "#/$defs/NarrationSegment"
+          },
+          "minItems": 1,
+          "title": "Narration Segments",
+          "type": "array"
+        },
+        "fact_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fact Refs",
+          "type": "array"
+        },
+        "assumption_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumption Refs",
+          "type": "array"
+        },
+        "dependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "object"
+        }
+      },
+      "required": [
+        "project_id",
+        "scene_id",
+        "version",
+        "start_state",
+        "cause",
+        "goal",
+        "obstacle",
+        "decision_or_action",
+        "consequence",
+        "end_state",
+        "characters",
+        "emotional_intent",
+        "narration_segments"
+      ],
+      "title": "Scene",
+      "type": "object"
+    },
+    "ScopedFixPermit": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "story",
+            "visual"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "segment_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "max_cycles": {
+          "const": 1,
+          "default": 1,
+          "title": "Max Cycles",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "scene_id",
+        "segment_id"
+      ],
+      "title": "ScopedFixPermit",
+      "type": "object"
+    },
+    "SegmentVisuals": {
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "scene_version": {
+          "minimum": 1,
+          "title": "Scene Version",
+          "type": "integer"
+        },
+        "segment_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "duration_ms": {
+          "exclusiveMinimum": 0,
+          "maximum": 3600000,
+          "title": "Duration Ms",
+          "type": "integer"
+        },
+        "shots": {
+          "items": {
+            "$ref": "#/$defs/ShotCandidate"
+          },
+          "maxItems": 80,
+          "minItems": 1,
+          "title": "Shots",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scene_id",
+        "scene_version",
+        "segment_id",
+        "duration_ms",
+        "shots"
+      ],
+      "title": "SegmentVisuals",
+      "type": "object"
+    },
+    "ShotCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "shot_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Shot Id",
+          "type": "string"
+        },
+        "asset_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "source_in_ms": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Source In Ms",
+          "type": "integer"
+        },
+        "source_out_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Source Out Ms",
+          "type": "integer"
+        },
+        "visual_purpose": {
+          "default": "illustration",
+          "enum": [
+            "illustration",
+            "atmosphere",
+            "explanation"
+          ],
+          "title": "Visual Purpose",
+          "type": "string"
+        },
+        "emotional_task": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Emotional Task",
+          "type": "string"
+        },
+        "continuity": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Continuity",
+          "type": "string"
+        },
+        "reuse_reason": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reuse Reason"
+        },
+        "evidence_mode": {
+          "const": "metadata_only",
+          "default": "metadata_only",
+          "title": "Evidence Mode",
+          "type": "string"
+        },
+        "observed_content": {
+          "default": null,
+          "title": "Observed Content",
+          "type": "null"
+        }
+      },
+      "required": [
+        "shot_id",
+        "asset_id",
+        "source_out_ms",
+        "emotional_task"
+      ],
+      "title": "ShotCandidate",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size": {
+          "maximum": 8000000,
+          "minimum": 1,
+          "title": "Size",
+          "type": "integer"
+        },
+        "rights": {
+          "enum": [
+            "owned",
+            "permission",
+            "public_domain",
+            "fixture"
+          ],
+          "title": "Rights",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "edition",
+        "path",
+        "sha256",
+        "size",
+        "rights"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "WorkerRoute": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "gemini_story",
+            "gemini_visual",
+            "codex"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "worker_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Worker Id",
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "gemini",
+            "codex"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "profile_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "account_binding": {
+          "$ref": "#/$defs/AccountBinding"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "role",
+        "worker_id",
+        "provider",
+        "profile_id",
+        "account_binding",
+        "synthetic"
+      ],
+      "title": "WorkerRoute",
+      "type": "object"
+    },
+    "WorkerRoutes": {
+      "additionalProperties": false,
+      "properties": {
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/WorkerRoute"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Routes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "routes"
+      ],
+      "title": "WorkerRoutes",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "key": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Key",
+      "type": "string"
+    },
+    "version": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "parent_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Sha256"
+    },
+    "mode": {
+      "enum": [
+        "simulation",
+        "approved_input",
+        "autonomous"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "brief": {
+      "$ref": "#/$defs/Brief"
+    },
+    "root": {
+      "title": "Root",
+      "type": "string"
+    },
+    "input_root": {
+      "title": "Input Root",
+      "type": "string"
+    },
+    "inputs": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ApprovedInputs"
+        },
+        {
+          "$ref": "#/$defs/BriefInputs"
+        }
+      ],
+      "title": "Inputs"
+    },
+    "profile_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Profile Sha256",
+      "type": "string"
+    },
+    "operations": {
+      "items": {
+        "enum": [
+          "synthesize",
+          "compile",
+          "render",
+          "qa",
+          "portable",
+          "deliver"
+        ],
+        "type": "string"
+      },
+      "title": "Operations",
+      "type": "array"
+    },
+    "budget": {
+      "$ref": "#/$defs/Budget"
+    },
+    "runtime": {
+      "additionalProperties": true,
+      "title": "Runtime",
+      "type": "object"
+    },
+    "renderer": {
+      "const": "existing_mlt_libx264_crf20_fast_4threads",
+      "default": "existing_mlt_libx264_crf20_fast_4threads",
+      "title": "Renderer",
+      "type": "string"
+    },
+    "review_policy": {
+      "const": "owner_required",
+      "default": "owner_required",
+      "title": "Review Policy",
+      "type": "string"
+    },
+    "drive": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DriveConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "worker_routes": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkerRoutes"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "acquisition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AcquisitionPolicy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "run_id",
+    "key",
+    "mode",
+    "brief",
+    "root",
+    "input_root",
+    "inputs",
+    "profile_sha256",
+    "operations"
+  ],
+  "title": "HostRunConfig",
+  "type": "object"
+}

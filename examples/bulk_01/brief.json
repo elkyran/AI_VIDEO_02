@@ -1,0 +1,9 @@
+{
+  "topic": "Original synthetic traveler and guide fixture",
+  "language": "ru",
+  "target_minutes": 1,
+  "style": "offline integration fixture",
+  "source_profile": "owner_supplied",
+  "production_mode": "fake",
+  "additional_requirements": "No real source analysis, models, TTS, rendering or cloud upload."
+}

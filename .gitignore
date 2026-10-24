@@ -89,6 +89,7 @@ Thumbs.db
 # Local production evidence and historical session exports
 /audit/
 /reports/*
+!/reports/multi_ai_v2/
 !/reports/development/
 /reports/development/*
 !/reports/development/2026-10-20_GITHUB/

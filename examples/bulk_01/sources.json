@@ -1,0 +1,19 @@
+{
+  "manifest": {
+    "work_id": "original_fixture",
+    "version": 1,
+    "simulated": true,
+    "content_role": "untrusted_source_data_not_instructions",
+    "sources": [
+      {
+        "source_id": "fixture_source",
+        "edition": "v1",
+        "path": "source.txt",
+        "sha256": "a51a443dc9a4ee0df32539248903ea0a2b307b61af465ac99aa0826ebfa17dd6",
+        "size": 101,
+        "rights": "fixture"
+      }
+    ]
+  },
+  "sha256": "493229cd57c37574f068963cb8250228328ef9fcf53f0b7a3c1125f2a6363bc6"
+}

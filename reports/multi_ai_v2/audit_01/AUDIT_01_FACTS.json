@@ -1,0 +1,2419 @@
+{
+  "operation": "MULTI-AI-V2-AUDIT-01",
+  "audit_status": "AUDIT_01_COMPLETE_READY_FOR_ARCHITECT_PLAN",
+  "audit_time": "2026-10-22T15:48:13.143606+00:00",
+  "timezone": "UTC+05:00 Asia/Qyzylorda (same offset as requested Asia/Almaty)",
+  "audited_commit": "64905d00016c406d437d9f5b2c0eb2c1c60f7752",
+  "audited_tree": "087df53d8ec7e85bdf9e3cf1b8401609e6400bce",
+  "repository": "elkyran/AI_VIDEO_02",
+  "local_refs": {
+    "branch": "feature/multi-ai-coordinator-v2",
+    "head": "64905d00016c406d437d9f5b2c0eb2c1c60f7752",
+    "tree": "087df53d8ec7e85bdf9e3cf1b8401609e6400bce",
+    "status_porcelain": [
+      "?? reports/multi_ai_v2/review_fix_pack_2_full_local/",
+      "?? reports/multi_ai_v2/review_fix_pack_2_local/",
+      "?? reports/multi_ai_v2/review_fix_pack_3_full_local/",
+      "?? reports/multi_ai_v2/review_fix_pack_3_local/"
+    ],
+    "tracked_diff": "",
+    "index_diff": "",
+    "remote_tracking": {
+      "feature": "64905d00016c406d437d9f5b2c0eb2c1c60f7752",
+      "main": "7a1e4058df09dbb66448a3624e0250129eaf7aa0",
+      "ci_lane": "c8b4a252d064c8a67512a8777c5b8db9d5e54920"
+    },
+    "diff_check_exit": 0
+  },
+  "remote_refs": {
+    "feature": "64905d00016c406d437d9f5b2c0eb2c1c60f7752",
+    "main": "7a1e4058df09dbb66448a3624e0250129eaf7aa0",
+    "ci_lane": "c8b4a252d064c8a67512a8777c5b8db9d5e54920"
+  },
+  "remote_refs_fresh_ls_remote_verified": true,
+  "dirty_before": true,
+  "dirty_after": true,
+  "dirty_scope": "Only the same four historical untracked evidence directories; tracked/index clean before and after.",
+  "status_before": [
+    "?? reports/multi_ai_v2/review_fix_pack_2_full_local/",
+    "?? reports/multi_ai_v2/review_fix_pack_2_local/",
+    "?? reports/multi_ai_v2/review_fix_pack_3_full_local/",
+    "?? reports/multi_ai_v2/review_fix_pack_3_local/"
+  ],
+  "status_after": [
+    "?? reports/multi_ai_v2/review_fix_pack_2_full_local/",
+    "?? reports/multi_ai_v2/review_fix_pack_2_local/",
+    "?? reports/multi_ai_v2/review_fix_pack_3_full_local/",
+    "?? reports/multi_ai_v2/review_fix_pack_3_local/"
+  ],
+  "requirements": [
+    {
+      "id": "R01",
+      "stage": "Brief/run",
+      "implementation": "IMPLEMENTED",
+      "evidence_level": "TESTED_SYNTHETIC",
+      "availability": "AVAILABLE",
+      "scope": "Explicit HostRunConfig/roots/authority; topic-only cannot execute acquisition.",
+      "file_symbols": [
+        "app/v2_run_config.py:108-225",
+        "app/v2_pipeline.py:740-812"
+      ],
+      "test_ids": [
+        "tests.test_v2_system.SystemTests.test_plan_is_readonly_and_default_never_invokes_engine_or_provider"
+      ],
+      "evidence_refs": [
+        "E02",
+        "E12"
+      ]
+    },
+    {
+      "id": "R02",
+      "stage": "Source extraction",
+      "implementation": "PARTIAL",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CODE",
+      "scope": "Source inventory, edition, rights, hashes/ranges exist; no bounded source-text extraction into worker context. source_text=topic.",
+      "file_symbols": [
+        "app/v2_sources.py:27-121",
+        "app/v2_pipeline.py:352-353"
+      ],
+      "test_ids": [
+        "tests.test_v2_release_plan.ReleasePlanTests.test_source_text_is_untrusted_data_even_when_it_contains_host_commands"
+      ],
+      "evidence_refs": [
+        "E03",
+        "E06"
+      ]
+    },
+    {
+      "id": "R03",
+      "stage": "CanonBible",
+      "implementation": "PARTIAL",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CODE",
+      "scope": "Typed Canon/citations/facts/assumptions exist as supplied inputs; no accepted worker output/handler. Scene refs lose edition qualification.",
+      "file_symbols": [
+        "app/v2_sources.py:27-100",
+        "app/v2_release_plan.py:45-59,83-114",
+        "app/editorial.py:40-42"
+      ],
+      "test_ids": [
+        "tests.test_v2_release_plan.ReleasePlanTests.test_typed_reconciliation_returns_only_inputs_and_preserves_host_inventory"
+      ],
+      "evidence_refs": [
+        "E03",
+        "E04",
+        "E06"
+      ]
+    },
+    {
+      "id": "R04",
+      "stage": "Outline/story",
+      "implementation": "PARTIAL",
+      "evidence_level": "STATIC_ONLY",
+      "availability": "BLOCKED_CODE",
+      "scope": "Planned story_outline label and supplied story string; no typed outline result or executor.",
+      "file_symbols": [
+        "app/v2_run_config.py:72-78",
+        "app/v2_release_plan.py:48-50"
+      ],
+      "test_ids": [
+        "tests.test_v2_release_plan.ReleasePlanTests.test_distinct_briefs_and_one_two_five_scene_plans_have_dynamic_host_nodes"
+      ],
+      "evidence_refs": [
+        "E03",
+        "E04"
+      ]
+    },
+    {
+      "id": "R05",
+      "stage": "Dynamic Scene/narration",
+      "implementation": "PARTIAL",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CODE",
+      "scope": "Scene contract accepted; current SYSTEM worker must echo preapproved Scene; acquisition expansion absent.",
+      "file_symbols": [
+        "app/v2_pipeline.py:129-138,278-358",
+        "app/v2_release_flow.py:31-74"
+      ],
+      "test_ids": [
+        "tests.test_v2_release_flow.ReleaseFlowTests.test_one_two_five_scene_briefs_run_real_handlers_and_separate_worker_routes"
+      ],
+      "evidence_refs": [
+        "E03",
+        "E04",
+        "E06"
+      ]
+    },
+    {
+      "id": "R06",
+      "stage": "Visual acquisition/mapping/ranges",
+      "implementation": "PARTIAL",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CODE",
+      "scope": "Allowlisted SegmentVisuals/trim validation exists; Visual emits metadata Review, not mapping; no worker media delivery.",
+      "file_symbols": [
+        "app/v2_visuals.py:17-79",
+        "app/v2_provider_bridge.py:137-159"
+      ],
+      "test_ids": [
+        "tests.test_v2_visuals",
+        "tests.test_v2_release_plan.ReleasePlanTests.test_reconciliation_rejects_changed_allowlists_identity_claims_and_unknown_media"
+      ],
+      "evidence_refs": [
+        "E03",
+        "E04",
+        "E06"
+      ]
+    },
+    {
+      "id": "R07",
+      "stage": "Piper/WAV/cache",
+      "implementation": "IMPLEMENTED",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CONFIGURATION",
+      "scope": "General approved-input engine caller wired; complete settings/cache alias tests pass CI. Existing PILOT bytes checked; new general real synthesis NOT_RUN.",
+      "file_symbols": [
+        "app/v2_pipeline.py:448-453,508-529",
+        "app/v2_narration.py:38-80",
+        "app/v2_production.py:289-328"
+      ],
+      "test_ids": [
+        "tests.test_v2_engine_bridge.EngineBridgeTests.test_cache_prediction_matches_existing_synthesize_requests_without_running_tts",
+        "tests.test_v2_engine_bridge.EngineBridgeTests.test_cache_prediction_matches_windows_short_and_long_path_aliases"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E06",
+        "E10",
+        "E12"
+      ]
+    },
+    {
+      "id": "R08",
+      "stage": "Measured timing/EditPlan",
+      "implementation": "IMPLEMENTED",
+      "evidence_level": "STATIC_ONLY",
+      "availability": "BLOCKED_CONFIGURATION",
+      "scope": "Measured WAV, order/mapping, strict trailing nonzero rejection; still can hold, video/multishot requires approved timing. No phoneme alignment. Specific general media handler has no direct runtime coverage found; independent CI covers related helpers only, not this general media execution.",
+      "file_symbols": [
+        "app/v2_pipeline.py:538-584"
+      ],
+      "test_ids": [
+        "tests.test_v2_engine_bridge",
+        "tests.test_v2_production"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "id": "R09",
+      "stage": "MLT/render",
+      "implementation": "IMPLEMENTED",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CONFIGURATION",
+      "scope": "Existing real compiler/render caller; standalone ZIP missing internal scripts; no new general render. Old PILOT byte preservation checked.",
+      "file_symbols": [
+        "app/production_bridge.py:139-305",
+        "app/v2_pipeline.py:488-505"
+      ],
+      "test_ids": [
+        "tests.test_v2_engine_bridge.EngineBridgeTests.test_existing_mlt_compiler_preserves_frames_subtitles_and_replay"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E06",
+        "E09",
+        "E10"
+      ]
+    },
+    {
+      "id": "R10",
+      "stage": "Technical QA",
+      "implementation": "IMPLEMENTED",
+      "evidence_level": "STATIC_ONLY",
+      "availability": "BLOCKED_CONFIGURATION",
+      "scope": "MeasuredEngine has stream/decode/black/silence/MLT/subtitle checks; synthetic unit tests do not establish new media QA. Specific general media handler has no direct runtime coverage found; independent CI covers related helpers only, not this general media execution.",
+      "file_symbols": [
+        "app/v2_production.py:382-418"
+      ],
+      "test_ids": [
+        "tests.test_v2_offline_qa",
+        "tests.test_v2_system"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "id": "R11",
+      "stage": "Creative actual-media Review",
+      "implementation": "PARTIAL",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CAPABILITY",
+      "scope": "Review schema and host-delivery gate exist; current worker metadata_only, actual full-video review NOT_RUN; manual owner review remains.",
+      "file_symbols": [
+        "app/v2_pipeline.py:133-138,649-650,677-710",
+        "app/v2_video.py",
+        "app/v2_acceptance.py"
+      ],
+      "test_ids": [
+        "tests.test_multi_ai_v2.UnifiedAcceptanceTests",
+        "tests.test_v2_system_delivery"
+      ],
+      "evidence_refs": [
+        "E04",
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "id": "R12",
+      "stage": "Targeted fix/invalidation",
+      "implementation": "PARTIAL",
+      "evidence_level": "TESTED_SYNTHETIC",
+      "availability": "BLOCKED_CODE",
+      "scope": "Explicit versioned owner config revision preserves unrelated nodes/cache identities; owner_review returns plan automatic_execution=false; automatic fix worker absent.",
+      "file_symbols": [
+        "app/v2_pipeline.py:63-93,677-710",
+        "app/v2_run_config.py:264-305",
+        "app/v2_offline.py"
+      ],
+      "test_ids": [
+        "tests.test_v2_system.SystemTests.test_targeted_revision_preserves_unaffected_nodes_and_exact_replay"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E07"
+      ]
+    },
+    {
+      "id": "R13",
+      "stage": "Final assembly/portable",
+      "implementation": "IMPLEMENTED",
+      "evidence_level": "STATIC_ONLY",
+      "availability": "BLOCKED_CONFIGURATION",
+      "scope": "Existing host assembly, separate WAV/relative MLT/hash-verified portable. Old PILOT copied bytes are not new general route proof. Specific general media handler has no direct runtime coverage found; independent CI covers related helpers only, not this general media execution.",
+      "file_symbols": [
+        "app/v2_pipeline.py:461-487,586-615",
+        "app/v2_production.py:331-350"
+      ],
+      "test_ids": [
+        "tests.test_v2_release",
+        "tests.test_v2_local_pilot"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E06",
+        "E10"
+      ]
+    },
+    {
+      "id": "R14",
+      "stage": "Drive remote delivery",
+      "implementation": "PARTIAL",
+      "evidence_level": "INDEPENDENT_CI",
+      "availability": "BLOCKED_CODE",
+      "scope": "HTTP/checksum/restart/DPAPI exist; ordinary CLI passes no DriveHostContext. Owner auth/folder and real remote inspection unverified.",
+      "file_symbols": [
+        "app/v2_drive.py:34-275",
+        "app/v2_delivery_host.py:79-217",
+        "app/v2_pipeline.py:715-718,782-799"
+      ],
+      "test_ids": [
+        "tests.test_v2_system_delivery",
+        "tests.test_v2_release_operator.DriveHostTests"
+      ],
+      "evidence_refs": [
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "id": "R15",
+      "stage": "Checkpoint/status/stop/resume",
+      "implementation": "PARTIAL",
+      "evidence_level": "TESTED_SYNTHETIC",
+      "availability": "BLOCKED_CODE",
+      "scope": "Accepted artifacts/replay and ro status wired; stop records states, not verified process kill. Generic dead-running/failed job recovery not wired to existing JobManager.resume (static defect candidate).",
+      "file_symbols": [
+        "app/v2_operator_status.py:31-105",
+        "app/v2_pipeline.py:232-243,519-529,664-674",
+        "app/jobs.py:74-75,113-134"
+      ],
+      "test_ids": [
+        "tests.test_v2_system.SystemTests.test_restart_before_and_after_each_stage_reuses_accepted_checkpoints",
+        "tests.test_v2_release_routes.RouteSchedulerTests.test_crash_after_completion_file_revalidates_route_and_recovers_once"
+      ],
+      "evidence_refs": [
+        "E04",
+        "E05",
+        "E06",
+        "E07"
+      ]
+    }
+  ],
+  "modes": {
+    "simulation": {
+      "implementation": "IMPLEMENTED",
+      "availability": "AVAILABLE",
+      "evidence_level": "TESTED_SYNTHETIC",
+      "first_break": "Brief-only acquisition has no executor/results; complete ApprovedInputs simulation can run.",
+      "missing_inputs": [
+        "full supplied Canon/story/Scenes/mappings/media",
+        "explicit synthetic worker results if routes"
+      ],
+      "actual_side_effects_after_explicit_execution": "isolated queue/checkpoints/metadata Notes only, no engine files"
+    },
+    "approved_input": {
+      "implementation": "IMPLEMENTED",
+      "availability": "BLOCKED_CONFIGURATION",
+      "evidence_level": "STATIC_ONLY",
+      "first_break": "Example has no explicit isolated runtime; general real route not newly executed; standalone ZIP lacks internal scripts.",
+      "missing_inputs": [
+        "complete approved creative data",
+        "profile-consistent runtime paths/settings",
+        "operation authority/budgets/safe roots",
+        "manual canonical owner review",
+        "host Drive context for upload"
+      ],
+      "general_real_render": "UNVERIFIED_NOT_RUN",
+      "workers": "deterministic Python/local StageAdapter; routed live workers are blocked"
+    },
+    "autonomous": {
+      "implementation": "PARTIAL",
+      "availability": "BLOCKED_CODE",
+      "evidence_level": "STATIC_ONLY",
+      "first_break": "source -> executable Canon acquisition missing; live admission separately BLOCKED_ELIGIBILITY",
+      "missing_inputs": [
+        "supported lawful live interfaces/bindings/media proof",
+        "actual source extraction/acquisition handlers/outline contract/accepted expansion",
+        "automatic Codex/fix worker",
+        "runtime/host delivery context"
+      ],
+      "blocked_before_production": true
+    }
+  },
+  "blockers": [
+    {
+      "id": "B01",
+      "kind": "CI",
+      "observed_or_hypothesis": "OBSERVED: group v2 timeout; cause unresolved",
+      "affected_modes": [
+        "all acceptance"
+      ],
+      "affected_paths": [
+        "scripts/check_multi_ai_v2.py:83-94",
+        ".github/workflows/ci-multi-ai-v2.yml"
+      ],
+      "proposed_change": "Add per-test/module monotonic timings and bounded stack/owned process diagnostics; partition/prune redundant setup if demonstrated, retain coverage, no automatic timeout increase.",
+      "dependencies": [],
+      "owner": "ChatGPT",
+      "acceptance": "Fresh independent run with exact checkout/tree; complete >=596 existing tests and explicit skips; both hosted smokes executed; timeout stays failed.",
+      "size": "M: evidence/instrumentation and focused optimization; no root cause proven",
+      "safe_now": "Proposal only; offline instrumentation in later batch, no remote rerun authorized now",
+      "allowed_zones": [
+        "CI/security lane only"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B02",
+      "kind": "CODE",
+      "observed_or_hypothesis": "OBSERVED",
+      "affected_modes": [
+        "autonomous"
+      ],
+      "affected_paths": [
+        "app/v2_sources.py:110-121",
+        "app/v2_pipeline.py:352-353"
+      ],
+      "proposed_change": "Bounded source text/JSON extraction with exact source/edition/byte offsets; deliver untrusted content as data rather than topic-only context.",
+      "dependencies": [],
+      "owner": "Codex",
+      "acceptance": "Changed source/hash/offsets rejected; permitted content/citation offsets reach actual queue request; injection cannot set host authority.",
+      "size": "M: bounded extraction and provenance tests",
+      "safe_now": "Later development only",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B03",
+      "kind": "CODE",
+      "observed_or_hypothesis": "OBSERVED",
+      "affected_modes": [
+        "autonomous"
+      ],
+      "affected_paths": [
+        "app/v2_contracts.py:Task",
+        "app/v2_provider_protocol.py:77-117",
+        "app/multi_ai.py:394-395",
+        "app/editorial.py:296-302",
+        "app/ai_cli_runtime.py:31,59",
+        "scripts/export_multi_ai_v2_schemas.py"
+      ],
+      "proposed_change": "Define bounded outline result; register CanonBible/outline/SegmentVisuals through canonical Task, exporter, queue, validator, protocol and gate. Preserve existing schemas/ordinary short IDs; qualify edition refs without protected core rewrite.",
+      "dependencies": [
+        "B02"
+      ],
+      "owner": "Codex + ChatGPT for protected interfaces only if review requires",
+      "acceptance": "Each schema accepted once through poll/manual/recovery/replay; forged citations/edition/media/host fields rejected; schema export drift CI green.",
+      "size": "L: several existing validation boundaries must agree",
+      "safe_now": "Later development; protected-interface changes need explicit architect allocation",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B04",
+      "kind": "INTEGRATION",
+      "observed_or_hypothesis": "OBSERVED",
+      "affected_modes": [
+        "autonomous",
+        "simulation acquisition"
+      ],
+      "affected_paths": [
+        "app/v2_release_plan.py:20-114",
+        "app/v2_release_flow.py:31-74",
+        "app/v2_pipeline.py:278-365",
+        "app/v2_run_config.py:258-305"
+      ],
+      "proposed_change": "Execute planned acquisition using existing queue; expand only gate-accepted Canon→outline→Scenes→visual mapping into scoped ApprovedInputs/production graph, checkpoint deterministic admission; remove fixture as mandatory source of creative results for this path.",
+      "dependencies": [
+        "B03"
+      ],
+      "owner": "Codex",
+      "acceptance": "Ordinary CLI new Brief+inventory, no prewritten Canon/story/Scenes/mappings: injectable offline workers produce accepted results; 1/2/5 scenes, crash between accept/expand, replay no duplicates; source/media limits cannot expand.",
+      "size": "L: dynamic accepted-artifact graph expansion and authority lineage",
+      "safe_now": "Later development only; synthetic proof must remain labeled",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B05",
+      "kind": "INTEGRATION",
+      "observed_or_hypothesis": "OBSERVED",
+      "affected_modes": [
+        "autonomous"
+      ],
+      "affected_paths": [
+        "app/v2_provider_bridge.py:DualWorkerBridge",
+        "app/v2_pipeline.py:278-358,677-710",
+        "app/v2_offline.py"
+      ],
+      "proposed_change": "Separate bounded live transport adapter contract from exact synthetic rehearsal; wire automatic Codex production/fix worker to existing canonical proposals, queue/gate/authority. Keep all live admission disabled until external gates; do not substitute Codex for Story/Visual.",
+      "dependencies": [
+        "B04",
+        "X01",
+        "X02"
+      ],
+      "owner": "Codex + owner/external client",
+      "acceptance": "Offline request→receipt→acceptance/recovery through ordinary caller; model cannot execute arbitrary shell/set runtime. Future real A/B/Codex identity/session/model/media proof under separate permission.",
+      "size": "L: product worker/capability contract, live interface unknown",
+      "safe_now": "Offline contract/proposals possible later; live verification blocked",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B06",
+      "kind": "CODE",
+      "observed_or_hypothesis": "STATIC_DEFECT_CANDIDATE_HIGH_CONFIDENCE_NOT_REPRODUCED",
+      "affected_modes": [
+        "approved_input",
+        "autonomous production"
+      ],
+      "affected_paths": [
+        "app/v2_pipeline.py:519-529",
+        "app/jobs.py:74-75,113-134"
+      ],
+      "proposed_change": "Connect existing bounded JobManager.resume/liveness/retry under host recovery authority for dead-running/failed/blocked jobs; preserve live worker and stale input checks.",
+      "dependencies": [],
+      "owner": "Codex",
+      "acceptance": "External no-tools integration tests: dead running/failed/blocked recover same authorized job within attempts; live worker no duplicate; stale invalidated denied; interrupted output retained.",
+      "size": "S/M: reuse existing recovery helper",
+      "safe_now": "Later development only; no real crash test now",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B07",
+      "kind": "INTEGRATION",
+      "observed_or_hypothesis": "OBSERVED",
+      "affected_modes": [
+        "approved_input delivery",
+        "autonomous delivery"
+      ],
+      "affected_paths": [
+        "app/v2_pipeline.py:782-799",
+        "app/v2_delivery_host.py:DriveHostContext"
+      ],
+      "proposed_change": "Add agreed host-authorized bootstrap/factory that supplies existing DriveHostContext at ordinary entrypoint without secret files/config credential discovery.",
+      "dependencies": [
+        "X03"
+      ],
+      "owner": "Codex + owner host",
+      "acceptance": "Actual launcher boundary injects dummy approved callback; wrong root/run/version/folder cannot enqueue/network; real remote proof separate.",
+      "size": "M: small host bridge but interface must be owner-approved",
+      "safe_now": "Data-only offline design later; external callback choice pending",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B08",
+      "kind": "CODE",
+      "observed_or_hypothesis": "OBSERVED",
+      "affected_modes": [
+        "standalone source delivery"
+      ],
+      "affected_paths": [
+        "release inventory/ZIP",
+        "app/operations.py:277",
+        "app/production_bridge.py:285"
+      ],
+      "proposed_change": "Include internal transitive execution scripts, notably synthesize_script.py/render_project.py; cover preview/ASR imports if advertised. Document external interpreter/model placement; no bundling model/fonts/DB/credentials.",
+      "dependencies": [],
+      "owner": "Codex",
+      "acceptance": "Relocate source ZIP, assert lazy imports/needed Python script existence, use explicit installed interpreter for plan/doctor; no production required for closure test.",
+      "size": "S: packaging manifest and import/resource closure checks",
+      "safe_now": "Later development only; ZIP must not be edited by audit",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B09",
+      "kind": "TEST",
+      "observed_or_hypothesis": "OBSERVED_UNVERIFIED_GENERAL_REAL_PATH",
+      "affected_modes": [
+        "approved_input"
+      ],
+      "affected_paths": [
+        "tests/test_v2_system.py",
+        "general CLI/engine/external evidence"
+      ],
+      "proposed_change": "After software/CI acceptance and separate owner production permission, validate new general config on isolated permitted inputs, one-line revision and same-run replay, not old PILOT.",
+      "dependencies": [
+        "B01",
+        "B06",
+        "B08",
+        "X04"
+      ],
+      "owner": "Codex + owner",
+      "acceptance": "Real separate WAV/cache receipt→measured EditPlan→relative MLT→MP4 technical QA/portable; changed segment invalidates correctly, neighboring hashes/jobs unchanged; no live models unless separately authorized.",
+      "size": "M: multi-boundary acceptance, no engine rewrite",
+      "safe_now": "No real production now; offline tests possible later",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B10",
+      "kind": "CODE",
+      "observed_or_hypothesis": "OBSERVED_CONTRACT_GAP",
+      "affected_modes": [
+        "autonomous"
+      ],
+      "affected_paths": [
+        "app/v2_contracts.py:15-24",
+        "app/v2_release_plan.py:109-112",
+        "app/editorial.py:40-42"
+      ],
+      "proposed_change": "Define duration/style requirements in acquisition outputs and acceptance; disambiguate Scene fact refs by edition using compatible acquisition metadata or explicit edition pinning.",
+      "dependencies": [
+        "B03"
+      ],
+      "owner": "Codex",
+      "acceptance": "Two editions with same fact_id cannot cross; outline honors target/scene allocation or returns explicit infeasible status; owner style preserved.",
+      "size": "M: acceptance semantics and compatible metadata",
+      "safe_now": "Later development only",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "B11",
+      "kind": "CONFIG",
+      "observed_or_hypothesis": "OBSERVED_STALE_DOC_PARAGRAPHS",
+      "affected_modes": [
+        "operator understanding"
+      ],
+      "affected_paths": [
+        "docs/SYSTEM_READINESS.md:48-85",
+        "docs/DUAL_PROVIDER_INTEGRATION.md:126+",
+        "docs/PROVIDER_CAPABILITY_MATRIX.md:32",
+        "docs/REMOTE_RUNBOOK.md:45-48"
+      ],
+      "proposed_change": "Reconcile current implemented/offline/live/CI scope and package dependencies; preserve historical evidence as historical.",
+      "dependencies": [
+        "B01",
+        "B04",
+        "B07",
+        "B08"
+      ],
+      "owner": "Codex; ChatGPT-owned docs by ChatGPT",
+      "acceptance": "One entrypoint guide matches actual commands/errors; no stale claim of old queue or missing HTTP; no autonomous green without live proof.",
+      "size": "S: documentation consistency",
+      "safe_now": "Later development only",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "X01",
+      "kind": "ELIGIBILITY",
+      "observed_or_hypothesis": "OBSERVED_BLOCKED_ELIGIBILITY_LIVE_UNVERIFIED",
+      "affected_modes": [
+        "autonomous"
+      ],
+      "affected_paths": [
+        "provider admission gate"
+      ],
+      "proposed_change": "Owner may establish lawful service eligibility only through supported service process; no bypass/substitute/credential transfer.",
+      "dependencies": [],
+      "owner": "owner + external service",
+      "acceptance": "Permitted eligibility decision and separate explicit authorization; no identity documents/secrets requested in chat.",
+      "size": "External",
+      "safe_now": "Blocked; no audit action",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "X02",
+      "kind": "CAPABILITY",
+      "observed_or_hypothesis": "UNVERIFIED",
+      "affected_modes": [
+        "autonomous actual workers/media"
+      ],
+      "affected_paths": [
+        "future installed client transport/capability evidence"
+      ],
+      "proposed_change": "After eligibility, verify installed supported client command/output format and distinct StoryA/VisualB auth/session identity, returned model and account-scoped failure/quota; actual image/MP4 delivery receipts with exact hash/coverage.",
+      "dependencies": [
+        "X01"
+      ],
+      "owner": "owner + external service",
+      "acceptance": "Real bounded request/receipt for each worker and media capability; two names/windows/hash fixtures insufficient; unknowns remain if service cannot support required media.",
+      "size": "External",
+      "safe_now": "Live probes forbidden now",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "X03",
+      "kind": "AUTH",
+      "observed_or_hypothesis": "UNVERIFIED",
+      "affected_modes": [
+        "remote delivery"
+      ],
+      "affected_paths": [
+        "approved host Drive interface/private session root"
+      ],
+      "proposed_change": "Owner chooses authorized host callback mechanism, folder, scope and private session root; separately permits tiny bounded remote upload/checksum inspection/restart proof; no tokens supplied in chat.",
+      "dependencies": [],
+      "owner": "owner + host/external service",
+      "acceptance": "HTTP remote identity/parent/key/size/checksum verified, receipt persisted; replay identified as historical remote proof.",
+      "size": "External",
+      "safe_now": "No login/upload now",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "X04",
+      "kind": "OWNER_DECISION",
+      "observed_or_hypothesis": "OBSERVED_FUTURE_PERMISSION_REQUIRED",
+      "affected_modes": [
+        "real local acceptance"
+      ],
+      "affected_paths": [
+        "isolated run/input/model placement/runtime budgets"
+      ],
+      "proposed_change": "Choose immutable approved inputs and profile-consistent runtime, safe outside-sync run/session roots, sufficient storage; separately authorize first general real functional run.",
+      "dependencies": [],
+      "owner": "owner",
+      "acceptance": "No production studio DB/media mutation; output estimate+reserve checks, explicit operations and finite budgets.",
+      "size": "External",
+      "safe_now": "No production now",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    },
+    {
+      "id": "X05",
+      "kind": "OWNER_DECISION",
+      "observed_or_hypothesis": "OBSERVED_MAIN_WORKFLOW_ABSENT_REGISTRATION_UNVERIFIED",
+      "affected_modes": [
+        "future self-hosted fake-run"
+      ],
+      "affected_paths": [
+        ".github/workflows/new-video.yml",
+        "main and runner host"
+      ],
+      "proposed_change": "After green independent review, separately authorize integration to main and runner isolation/registration/start as needed; fake-only credentials-free test; no autonomous scope inferred.",
+      "dependencies": [
+        "B01"
+      ],
+      "owner": "ChatGPT + owner",
+      "acceptance": "Private/main/exact-SHA/clean isolated checkout and fake healthcheck/dispatch, no production/auth; runner registration evidence from permitted scope.",
+      "size": "External",
+      "safe_now": "No merge/registration/workflow launch now",
+      "allowed_zones": [
+        "Codex-owned v2 modules/tests/docs/source packaging"
+      ],
+      "forbidden_zones": [
+        "main mutation during implementation",
+        "ChatGPT CI/security files by Codex",
+        "production-core",
+        "accounts/credentials",
+        "working studio/media/SQLite"
+      ]
+    }
+  ],
+  "workers": {
+    "queue_routes": "IMPLEMENTED_TESTED_SYNTHETIC_IN_INDEPENDENT_CI",
+    "transports": "DualWorkerBridge requires exact SyntheticTransport",
+    "schema_matrix": {
+      "Story": [
+        "scene"
+      ],
+      "Visual": [
+        "review"
+      ]
+    },
+    "generic_schema_registry": [
+      "scene",
+      "edit_plan",
+      "review",
+      "note"
+    ],
+    "planned_but_unsupported_outputs": [
+      "canon_bible",
+      "story_outline",
+      "segment_visuals"
+    ],
+    "typed_outline_exists": false,
+    "actual_two_live_workers": "UNVERIFIED_BLOCKED_ELIGIBILITY",
+    "real_credentials_sessions_models_quotas_independent": "UNVERIFIED",
+    "actual_media_understanding": "UNVERIFIED",
+    "automatic_codex_worker_in_system": "NOT_IMPLEMENTED",
+    "python_local_engine": "IMPLEMENTED",
+    "cloud_limit": 3,
+    "account_worker_profile_limits": 1,
+    "local_heavy_limit": 1,
+    "rotation_fallback": false
+  },
+  "ci": {
+    "run_id": 39798692447,
+    "attempt": 1,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "c8b4a252d064c8a67512a8777c5b8db9d5e54920",
+    "checkout_sha": "ecf9302a1d140a4d3b5b60c571c38065bf53ae85",
+    "tree": "b2e7ee182ae929a1ab4dd2a27a9237d47ef0ab6e",
+    "parents": [
+      "64905d00016c406d437d9f5b2c0eb2c1c60f7752",
+      "c8b4a252d064c8a67512a8777c5b8db9d5e54920"
+    ],
+    "head_sha_is_checkout_sha": false,
+    "groups": [
+      {
+        "group": "v2",
+        "status": "failed",
+        "exit_code": 124,
+        "test_count": null,
+        "skipped_count": 0,
+        "elapsed_seconds": 420.031,
+        "timeout_seconds": 420,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_v2_system",
+          "tests.test_multi_ai_v2",
+          "tests.test_multi_ai_v2_checker"
+        ],
+        "log_ref": "v2.log",
+        "truncated": false
+      },
+      {
+        "group": "contracts",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": 174,
+        "skipped_count": 0,
+        "elapsed_seconds": 332.812,
+        "timeout_seconds": 420,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_editorial",
+          "tests.test_production_bridge",
+          "tests.test_v2_sources",
+          "tests.test_v2_production",
+          "tests.test_v2_visuals",
+          "tests.test_v2_engine_bridge",
+          "tests.test_v2_offline_qa",
+          "tests.test_v2_release",
+          "tests.test_v2_offline",
+          "tests.test_v2_bulk_boundaries",
+          "tests.test_v2_local_pilot",
+          "tests.test_v2_system_delivery",
+          "tests.test_v2_provider_protocol",
+          "tests.test_v2_release_routes",
+          "tests.test_v2_release_plan",
+          "tests.test_v2_release_operator",
+          "tests.test_v2_release_flow"
+        ],
+        "log_ref": "contracts.log",
+        "truncated": false
+      },
+      {
+        "group": "queue",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": 50,
+        "skipped_count": 0,
+        "elapsed_seconds": 51.828,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_multi_ai",
+          "tests.test_multi_ai_configuration"
+        ],
+        "log_ref": "queue.log",
+        "truncated": false
+      },
+      {
+        "group": "adapters",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": 16,
+        "skipped_count": 0,
+        "elapsed_seconds": 0.157,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_ai_adapters"
+        ],
+        "log_ref": "adapters.log",
+        "truncated": false
+      },
+      {
+        "group": "mai05",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": 108,
+        "skipped_count": 1,
+        "elapsed_seconds": 28.343,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_ai_accounts",
+          "tests.test_ai_cli_runtime",
+          "tests.test_multi_ai_accounts_ui",
+          "tests.test_ai_codex_diagnostics",
+          "tests.test_gemini_free_route"
+        ],
+        "log_ref": "mai05.log",
+        "truncated": false
+      },
+      {
+        "group": "panel",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": 12,
+        "skipped_count": 0,
+        "elapsed_seconds": 7.141,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_multi_ai_ui",
+          "tests.test_multi_ai_ui_review",
+          "tests.test_multi_ai_preview"
+        ],
+        "log_ref": "panel.log",
+        "truncated": false
+      },
+      {
+        "group": "legacy",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": 127,
+        "skipped_count": 1,
+        "elapsed_seconds": 38.203,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-X",
+          "utf8",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_core",
+          "tests.test_cli",
+          "tests.test_library",
+          "tests.test_exchange",
+          "tests.test_production_profile",
+          "tests.test_quality",
+          "tests.test_asr",
+          "tests.test_asr_runtime",
+          "tests.test_speech_review",
+          "tests.test_fit_narration",
+          "tests.test_multishot.MultiShotContractTests",
+          "tests.test_multishot.ReviewRightsTests",
+          "tests.test_tts.TTSInputTests",
+          "tests.test_tts.SileroContinuityTests",
+          "tests.test_replace_narration.NarrationValidationTests",
+          "tests.test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds"
+        ],
+        "log_ref": "legacy.log",
+        "truncated": false
+      },
+      {
+        "group": "compileall",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": null,
+        "skipped_count": 0,
+        "elapsed_seconds": 0.125,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-m",
+          "compileall",
+          "-q",
+          "app",
+          "scripts",
+          "tests"
+        ],
+        "log_ref": "compileall.log",
+        "truncated": false
+      },
+      {
+        "group": "check_git_export",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": null,
+        "skipped_count": 0,
+        "elapsed_seconds": 2.094,
+        "timeout_seconds": 180,
+        "command": [
+          "C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python.exe",
+          "-c",
+          "from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())"
+        ],
+        "log_ref": "check_git_export.log",
+        "truncated": false
+      },
+      {
+        "group": "diff_check",
+        "status": "passed",
+        "exit_code": 0,
+        "test_count": null,
+        "skipped_count": 0,
+        "elapsed_seconds": 0.031,
+        "timeout_seconds": 180,
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "log_ref": "diff_check.log",
+        "truncated": false
+      }
+    ],
+    "summary_test_count": 487,
+    "skips": 2,
+    "v2_completed_ok_lines": 82,
+    "v2_summary_test_count": null,
+    "failure": "v2 total-group timeout420.031s, exit124; last recorded test_concurrent_create_has_one_owner; exact cause UNPROVEN",
+    "diagnosis": {
+      "proved": [
+        "group deadline exhausted",
+        "unmodified local concurrent test3/3 passes",
+        "completed CI prefix82/82 passes locally205.375s"
+      ],
+      "hypotheses": [
+        "accumulated filesystem/SQLite/context overhead",
+        "hosted-specific lock/wait/deadlock or lifecycle delay"
+      ],
+      "not_proved": [
+        "last test caused timeout",
+        "random flake",
+        "timeout increase fixes root cause"
+      ],
+      "next_evidence": "per-test/module monotonic timing and bounded stack/owned subprocess diagnostics on independent CI"
+    },
+    "hosted_smokes": "BOTH_SKIPPED_AFTER_FAILURE",
+    "artifact_id": 12435672020,
+    "integrity": {
+      "zip_sha256": "6817893d5efe099f327c7d8e6521fd52789ce76b4b402096f277d1e5537bfe4a",
+      "manifest_sha256": "96940d45e9c276ffb81a5e7775ec46446d566a88034f99f07556d84894f4ad96",
+      "files_checked": [
+        {
+          "path": "adapters.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "check_git_export.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "checks.json",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "compileall.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "contracts.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "diff_check.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "legacy.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "mai05.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "panel.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "queue.log",
+          "hash_matches": true,
+          "size_matches": true
+        },
+        {
+          "path": "v2.log",
+          "hash_matches": true,
+          "size_matches": true
+        }
+      ],
+      "all_passed": true,
+      "audited_source_vs_ci_raw_different": [
+        ".env.example",
+        "app/__init__.py",
+        "app/__main__.py",
+        "app/ai_accounts.py",
+        "app/ai_adapters.py",
+        "app/ai_cli_runtime.py",
+        "app/ai_client_discovery.py",
+        "app/ai_codex_diagnostics.py",
+        "app/cli.py",
+        "app/code_map.py",
+        "app/contracts.py",
+        "app/development.py",
+        "app/editorial.py",
+        "app/exchange.py",
+        "app/gemini_free_route.py",
+        "app/jobs.py",
+        "app/library.py",
+        "app/mcp_server.py",
+        "app/media.py",
+        "app/multi_ai_preview.py",
+        "app/multi_ai_v2.py",
+        "app/operations.py",
+        "app/production_bridge.py",
+        "app/production_profile.py",
+        "app/project_memory.py",
+        "app/registry.py",
+        "app/review.py",
+        "app/speech_review.py",
+        "app/timeline.py",
+        "app/tts.py",
+        "app/v2_acceptance.py",
+        "app/v2_contracts.py",
+        "app/v2_delivery_host.py",
+        "app/v2_drive.py",
+        "app/v2_ids.py",
+        "app/v2_narration.py",
+        "app/v2_offline.py",
+        "app/v2_offline_qa.py",
+        "app/v2_operator_status.py",
+        "app/v2_provider_bridge.py",
+        "app/v2_provider_protocol.py",
+        "app/v2_release.py",
+        "app/v2_release_flow.py",
+        "app/v2_release_plan.py",
+        "app/v2_routes.py",
+        "app/v2_sources.py",
+        "app/v2_storage.py",
+        "app/v2_video.py",
+        "app/v2_visuals.py",
+        "app/worker.py",
+        "pyproject.toml",
+        "scripts/__init__.py",
+        "scripts/bootstrap.ps1",
+        "scripts/check_multi_ai.py",
+        "scripts/check_multi_ai_render.py",
+        "scripts/check_multi_ai_v2.py",
+        "scripts/check_narration.py",
+        "scripts/ci_validate_multi_ai_v2.py",
+        "scripts/dispatch_multi_ai_v2.py",
+        "scripts/export_multi_ai_v2_schemas.py",
+        "scripts/fit_narration.py",
+        "scripts/healthcheck.ps1",
+        "scripts/healthcheck_multi_ai_v2.py",
+        "scripts/install-runner-task.ps1",
+        "scripts/launch_multi_ai_v2.py",
+        "scripts/preflight_speech.py",
+        "scripts/prepare_pilot.py",
+        "scripts/probe_multi_ai_v2.py",
+        "scripts/render_project.py",
+        "scripts/replace_narration.py",
+        "scripts/seed_demo.py",
+        "scripts/setup.ps1",
+        "scripts/speech_model_identity.py",
+        "scripts/start-coordinator.ps1",
+        "scripts/synthesize_pilot.py",
+        "scripts/synthesize_script.py",
+        "scripts/transcribe_audio.py",
+        "scripts/uninstall-runner.ps1",
+        "tests/test_ai_accounts.py",
+        "tests/test_ai_adapters.py",
+        "tests/test_ai_cli_runtime.py",
+        "tests/test_ai_codex_diagnostics.py",
+        "tests/test_asr.py",
+        "tests/test_asr_runtime.py",
+        "tests/test_cli.py",
+        "tests/test_code_map.py",
+        "tests/test_core.py",
+        "tests/test_development.py",
+        "tests/test_editorial.py",
+        "tests/test_exchange.py",
+        "tests/test_fit_narration.py",
+        "tests/test_gemini_free_route.py",
+        "tests/test_jobs.py",
+        "tests/test_library.py",
+        "tests/test_mcp.py",
+        "tests/test_media.py",
+        "tests/test_multi_ai_configuration.py",
+        "tests/test_multi_ai_preview.py",
+        "tests/test_multi_ai_ui.py",
+        "tests/test_multi_ai_ui_review.py",
+        "tests/test_multi_ai_v2.py",
+        "tests/test_multi_ai_v2_checker.py",
+        "tests/test_multishot.py",
+        "tests/test_overlays.py",
+        "tests/test_production_bridge.py",
+        "tests/test_production_profile.py",
+        "tests/test_project_memory.py",
+        "tests/test_quality.py",
+        "tests/test_replace_narration.py",
+        "tests/test_speech_review.py",
+        "tests/test_timeline.py",
+        "tests/test_tts.py",
+        "tests/test_v2_bulk_boundaries.py",
+        "tests/test_v2_engine_bridge.py",
+        "tests/test_v2_local_pilot.py",
+        "tests/test_v2_offline.py",
+        "tests/test_v2_offline_qa.py",
+        "tests/test_v2_production.py",
+        "tests/test_v2_provider_protocol.py",
+        "tests/test_v2_release.py",
+        "tests/test_v2_release_flow.py",
+        "tests/test_v2_release_operator.py",
+        "tests/test_v2_release_plan.py",
+        "tests/test_v2_release_routes.py",
+        "tests/test_v2_sources.py",
+        "tests/test_v2_system.py",
+        "tests/test_v2_system_delivery.py",
+        "tests/test_v2_visuals.py"
+      ]
+    },
+    "source_comparison": {
+      "method": "Exact SHA-256 comparison of measured bytes, LF variant and CRLF variant, without mutating any source. Different entries require code/tree comparison.",
+      "unmatched": [
+        {
+          "path": "scripts/ci_validate_multi_ai_v2.py",
+          "match": "DIFFERENT"
+        }
+      ],
+      "files_compared": 147
+    },
+    "pr_api_base_sha_stale": "1a65eb29bccab7af9953159b0e7fadc0b9916d48; actual merge parents/ref used",
+    "remote_code_changes_vs_feature": [
+      ".github/workflows/ci-multi-ai-v2.yml",
+      "scripts/ci_validate_multi_ai_v2.py",
+      "development/multi_ai_v2/COLLABORATION.md"
+    ],
+    "skipped_tests_exact_log": [
+      {
+        "log": "legacy.log",
+        "line": "test_native_real_wav_fit_preserves_spoken_request_and_source (tests.test_fit_narration.RealPiperTests.test_native_real_wav_fit_preserves_spoken_request_and_source) ... skipped 'Requires installed local Piper'"
+      },
+      {
+        "log": "mai05.log",
+        "line": "Run the installed CLI's actual validator, not a copy of our dict. ... skipped 'Installed Gemini schema is unavailable; no client is installed for this test.'"
+      }
+    ]
+  },
+  "new_checks": {
+    "full_checker": "NOT_RUN",
+    "ci_reproductions": 2,
+    "max_allowed": 3,
+    "concurrent": {
+      "diagnostic": "concurrent",
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-B",
+        "-X",
+        "utf8",
+        "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\evidence\\diagnose_ci.py",
+        "--child",
+        "concurrent"
+      ],
+      "timeout_seconds": 90,
+      "elapsed_seconds": 2.282,
+      "exit_code": 0,
+      "log": "repro_concurrent.log",
+      "log_sha256": "69f3d4855715a4fdd721c604d9874caadf7bf22c116a66ec55abf2e4d59e0e9c",
+      "scope": "existing offline tests, external temp root, bytecode disabled; no checker/production/provider invocation"
+    },
+    "ci_prefix": {
+      "diagnostic": "ci_prefix",
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-B",
+        "-X",
+        "utf8",
+        "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\evidence\\diagnose_ci.py",
+        "--child",
+        "ci_prefix"
+      ],
+      "timeout_seconds": 390,
+      "elapsed_seconds": 205.375,
+      "exit_code": 0,
+      "log": "repro_ci_prefix.log",
+      "log_sha256": "0424ff3eefd858715e6b28636a305de3f9d5ea5e9707d5c6fc4d78795e155af5",
+      "scope": "existing offline tests, external temp root, bytecode disabled; no checker/production/provider invocation"
+    },
+    "timings": {
+      "tests": 82,
+      "summed_seconds": 204.688,
+      "by_class": {
+        "tests.test_v2_system.SystemTests": 132.204,
+        "tests.test_multi_ai_v2.Pack4Tests": 21.64,
+        "tests.test_multi_ai_v2.ReviewFixTests": 11.296999999999999,
+        "tests.test_multi_ai_v2.UnifiedAcceptanceTests": 25.797000000000004,
+        "tests.test_multi_ai_v2.V2Tests": 13.75
+      },
+      "top": [
+        {
+          "id": "tests.test_v2_system.SystemTests.test_one_two_five_scenes_and_long_ids_do_not_use_demo_ids",
+          "seconds": 44.219
+        },
+        {
+          "id": "tests.test_v2_system.SystemTests.test_targeted_revision_preserves_unaffected_nodes_and_exact_replay",
+          "seconds": 18.609
+        },
+        {
+          "id": "tests.test_v2_system.SystemTests.test_two_roots_and_runs_are_isolated",
+          "seconds": 17.469
+        },
+        {
+          "id": "tests.test_v2_system.SystemTests.test_real_cli_plan_run_resume_and_replay",
+          "seconds": 13.641
+        },
+        {
+          "id": "tests.test_v2_system.SystemTests.test_pause_stop_preserve_outputs_and_do_not_claim_quality",
+          "seconds": 11.5
+        },
+        {
+          "id": "tests.test_v2_system.SystemTests.test_model_permission_receipt_and_forged_completion_are_rejected",
+          "seconds": 10.718
+        },
+        {
+          "id": "tests.test_v2_system.SystemTests.test_restart_before_and_after_each_stage_reuses_accepted_checkpoints",
+          "seconds": 10.609
+        },
+        {
+          "id": "tests.test_multi_ai_v2.V2Tests.test_cli_exit_status_and_run_ownership",
+          "seconds": 7.407
+        },
+        {
+          "id": "tests.test_multi_ai_v2.V2Tests.test_cli_non_success_statuses_are_nonzero",
+          "seconds": 6.281
+        },
+        {
+          "id": "tests.test_multi_ai_v2.ReviewFixTests.test_dispatch_subprocess_all_status_exit_codes",
+          "seconds": 5.25
+        },
+        {
+          "id": "tests.test_multi_ai_v2.Pack4Tests.test_full_review_requires_exact_immutable_request_account_binding",
+          "seconds": 4.719
+        },
+        {
+          "id": "tests.test_multi_ai_v2.UnifiedAcceptanceTests.test_delivery_payload_coverage_and_current_plan_are_bound",
+          "seconds": 4.546
+        }
+      ],
+      "ran_line": [
+        "Ran 82 tests in 204.685s"
+      ]
+    },
+    "readonly_cli": [
+      {
+        "name": "simulation_approved",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\simulation_approved.json",
+          "plan"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.969,
+        "status": "PLANNED",
+        "error_code": null,
+        "blockers": [],
+        "run_root_created": false
+      },
+      {
+        "name": "simulation_approved",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\simulation_approved.json",
+          "doctor"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.843,
+        "status": "PLANNED",
+        "error_code": null,
+        "blockers": [],
+        "run_root_created": false
+      },
+      {
+        "name": "simulation_approved",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\simulation_approved.json",
+          "--execute-system",
+          "status"
+        ],
+        "exit_code": 9,
+        "elapsed_seconds": 0.828,
+        "status": "ERROR",
+        "error_code": "SYSTEM_PERMISSION_REQUIRED",
+        "blockers": null,
+        "run_root_created": false
+      },
+      {
+        "name": "approved_input",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\approved_input.json",
+          "plan"
+        ],
+        "exit_code": 5,
+        "elapsed_seconds": 0.813,
+        "status": "BLOCKED_UNSUPPORTED",
+        "error_code": null,
+        "blockers": [
+          "Explicit isolated engine runtime configuration is required"
+        ],
+        "run_root_created": false
+      },
+      {
+        "name": "approved_input",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\approved_input.json",
+          "doctor"
+        ],
+        "exit_code": 5,
+        "elapsed_seconds": 0.766,
+        "status": "BLOCKED_UNSUPPORTED",
+        "error_code": null,
+        "blockers": [
+          "Explicit isolated engine runtime configuration is required"
+        ],
+        "run_root_created": false
+      },
+      {
+        "name": "autonomous_brief",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\autonomous_brief.json",
+          "plan"
+        ],
+        "exit_code": 5,
+        "elapsed_seconds": 0.828,
+        "status": "BLOCKED_UNSUPPORTED",
+        "error_code": null,
+        "blockers": [
+          "CANON_CAPABILITY_UNVERIFIED: CanonBible acquisition is not supported by the current provider transport",
+          "STORY_OUTLINE_CAPABILITY_UNVERIFIED: dynamic story outline acquisition has no verified provider schema",
+          "VISUAL_MAPPING_CAPABILITY_UNVERIFIED: SegmentVisuals selection is not implemented by metadata-only Review",
+          "BLOCKED_ELIGIBILITY: Story and Visual remain AGE-GATED / DISABLED",
+          "IMAGE_DELIVERY_UNVERIFIED: a local image inventory does not prove worker image delivery",
+          "Story/Visual: Antigravity AGE-GATED / DISABLED; no supported verified route",
+          "Codex director: end-to-end provider capability is not live verified",
+          "HOST_ROUTES_REQUIRED: pin both Story and Visual host worker/account bindings",
+          "Explicit isolated engine runtime configuration is required"
+        ],
+        "run_root_created": false
+      },
+      {
+        "name": "autonomous_brief",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\autonomous_brief.json",
+          "doctor"
+        ],
+        "exit_code": 5,
+        "elapsed_seconds": 0.781,
+        "status": "BLOCKED_UNSUPPORTED",
+        "error_code": null,
+        "blockers": [
+          "CANON_CAPABILITY_UNVERIFIED: CanonBible acquisition is not supported by the current provider transport",
+          "STORY_OUTLINE_CAPABILITY_UNVERIFIED: dynamic story outline acquisition has no verified provider schema",
+          "VISUAL_MAPPING_CAPABILITY_UNVERIFIED: SegmentVisuals selection is not implemented by metadata-only Review",
+          "BLOCKED_ELIGIBILITY: Story and Visual remain AGE-GATED / DISABLED",
+          "IMAGE_DELIVERY_UNVERIFIED: a local image inventory does not prove worker image delivery",
+          "Story/Visual: Antigravity AGE-GATED / DISABLED; no supported verified route",
+          "Codex director: end-to-end provider capability is not live verified",
+          "HOST_ROUTES_REQUIRED: pin both Story and Visual host worker/account bindings",
+          "Explicit isolated engine runtime configuration is required"
+        ],
+        "run_root_created": false
+      },
+      {
+        "name": "packaged_default_batch",
+        "command": [
+          "cmd.exe",
+          "/d",
+          "/c",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\release_01\\local_acceptance\\20261022T142845136649Z_dd3aa9ec18fb46d68721e52048ee2bd7\\software\\studio-v2.cmd",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\simulation_approved.json",
+          "doctor"
+        ],
+        "exit_code": 5,
+        "elapsed_seconds": 0.031,
+        "status": "BLOCKED_UNSUPPORTED",
+        "error_code": "PYTHON_REQUIRED",
+        "blockers": null,
+        "run_root_created": null
+      },
+      {
+        "name": "packaged_explicit_python_doctor",
+        "command": [
+          "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+          "-B",
+          "-X",
+          "utf8",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\release_01\\local_acceptance\\20261022T142845136649Z_dd3aa9ec18fb46d68721e52048ee2bd7\\software\\scripts\\launch_multi_ai_v2.py",
+          "--config",
+          "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\AUDIT-01_20261022T202958_c791f956\\readonly_configs\\simulation_approved.json",
+          "doctor"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.86,
+        "status": "PLANNED",
+        "error_code": null,
+        "blockers": [],
+        "run_root_created": null
+      }
+    ],
+    "historical_full_rechecked_not_rerun": {
+      "historical_not_rerun": true,
+      "manifest_sha256": "35bbbf5e9fd9f7ae83a059e2efbe4639e31cd9beaf3701d612aa219643c81d7d",
+      "git_commit_sha": "c881e4cb5f07c11508326dc42cf657f485a50d63",
+      "git_tree_sha": "90f8be76efa63ef357f9e9612a6e4a70d860fe54",
+      "status": "passed",
+      "test_count": 596,
+      "skipped_count": 1,
+      "files_verified": 11,
+      "bad_files": [],
+      "groups": [
+        {
+          "group": "v2",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 109,
+          "skipped_count": 0,
+          "elapsed_seconds": 221.828,
+          "timeout_seconds": 420,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_system",
+            "tests.test_multi_ai_v2",
+            "tests.test_multi_ai_v2_checker"
+          ],
+          "log_ref": "v2.log",
+          "truncated": false
+        },
+        {
+          "group": "contracts",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 174,
+          "skipped_count": 0,
+          "elapsed_seconds": 160.797,
+          "timeout_seconds": 420,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_editorial",
+            "tests.test_production_bridge",
+            "tests.test_v2_sources",
+            "tests.test_v2_production",
+            "tests.test_v2_visuals",
+            "tests.test_v2_engine_bridge",
+            "tests.test_v2_offline_qa",
+            "tests.test_v2_release",
+            "tests.test_v2_offline",
+            "tests.test_v2_bulk_boundaries",
+            "tests.test_v2_local_pilot",
+            "tests.test_v2_system_delivery",
+            "tests.test_v2_provider_protocol",
+            "tests.test_v2_release_routes",
+            "tests.test_v2_release_plan",
+            "tests.test_v2_release_operator",
+            "tests.test_v2_release_flow"
+          ],
+          "log_ref": "contracts.log",
+          "truncated": false
+        },
+        {
+          "group": "queue",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 50,
+          "skipped_count": 0,
+          "elapsed_seconds": 10.281,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_multi_ai",
+            "tests.test_multi_ai_configuration"
+          ],
+          "log_ref": "queue.log",
+          "truncated": false
+        },
+        {
+          "group": "adapters",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 16,
+          "skipped_count": 0,
+          "elapsed_seconds": 0.344,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_ai_adapters"
+          ],
+          "log_ref": "adapters.log",
+          "truncated": false
+        },
+        {
+          "group": "mai05",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 108,
+          "skipped_count": 0,
+          "elapsed_seconds": 27.781,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_ai_accounts",
+            "tests.test_ai_cli_runtime",
+            "tests.test_multi_ai_accounts_ui",
+            "tests.test_ai_codex_diagnostics",
+            "tests.test_gemini_free_route"
+          ],
+          "log_ref": "mai05.log",
+          "truncated": false
+        },
+        {
+          "group": "panel",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 12,
+          "skipped_count": 0,
+          "elapsed_seconds": 2.844,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_multi_ai_ui",
+            "tests.test_multi_ai_ui_review",
+            "tests.test_multi_ai_preview"
+          ],
+          "log_ref": "panel.log",
+          "truncated": false
+        },
+        {
+          "group": "legacy",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": 127,
+          "skipped_count": 1,
+          "elapsed_seconds": 10.469,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_core",
+            "tests.test_cli",
+            "tests.test_library",
+            "tests.test_exchange",
+            "tests.test_production_profile",
+            "tests.test_quality",
+            "tests.test_asr",
+            "tests.test_asr_runtime",
+            "tests.test_speech_review",
+            "tests.test_fit_narration",
+            "tests.test_multishot.MultiShotContractTests",
+            "tests.test_multishot.ReviewRightsTests",
+            "tests.test_tts.TTSInputTests",
+            "tests.test_tts.SileroContinuityTests",
+            "tests.test_replace_narration.NarrationValidationTests",
+            "tests.test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds"
+          ],
+          "log_ref": "legacy.log",
+          "truncated": false
+        },
+        {
+          "group": "compileall",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": null,
+          "skipped_count": 0,
+          "elapsed_seconds": 0.25,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-m",
+            "compileall",
+            "-q",
+            "app",
+            "scripts",
+            "tests"
+          ],
+          "log_ref": "compileall.log",
+          "truncated": false
+        },
+        {
+          "group": "check_git_export",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": null,
+          "skipped_count": 0,
+          "elapsed_seconds": 15.703,
+          "timeout_seconds": 180,
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Р”РѕРєСѓРјРµРЅС‚С‹\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-c",
+            "from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())"
+          ],
+          "log_ref": "check_git_export.log",
+          "truncated": false
+        },
+        {
+          "group": "diff_check",
+          "status": "passed",
+          "exit_code": 0,
+          "test_count": null,
+          "skipped_count": 0,
+          "elapsed_seconds": 0.047,
+          "timeout_seconds": 180,
+          "command": [
+            "git",
+            "diff",
+            "--check"
+          ],
+          "log_ref": "diff_check.log",
+          "truncated": false
+        }
+      ]
+    }
+  },
+  "artifacts": {
+    "source_release": {
+      "zip_sha256": "78abb19e38968195417384a077e45020b1a3a75a61eddfde9a9af44e44040ea7",
+      "zip_testzip": null,
+      "inventory_sha256": "91878866198c1b11b5961168008c7f9da3f68de68706db8392e0431aaca75583",
+      "declared_code_head": "c881e4cb5f07c11508326dc42cf657f485a50d63",
+      "files_count": 82,
+      "all_hash_size_zip_matches": true,
+      "scripts_needed_by_engine": {
+        "scripts/synthesize_script.py": false,
+        "scripts/render_project.py": false
+      },
+      "missing_absolute_local_imports": [
+        {
+          "importer": "app\\multi_ai_preview.py",
+          "line": 188,
+          "module": "scripts.check_multi_ai_render"
+        },
+        {
+          "importer": "app\\production_bridge.py",
+          "line": 285,
+          "module": "scripts.render_project"
+        },
+        {
+          "importer": "app\\speech_review.py",
+          "line": 179,
+          "module": "scripts.transcribe_audio"
+        },
+        {
+          "importer": "app\\v2_local_pilot.py",
+          "line": 181,
+          "module": "scripts.render_project"
+        }
+      ],
+      "venv_in_package": false,
+      "runtime_dependencies": [
+        "Python>=3.11",
+        "pydantic==2.12.5",
+        "numpy==2.4.3",
+        "existing Piper Ruslan, MLT/Shotcut, FFmpeg/ffprobe and separately selected profile-consistent runtime for real production"
+      ],
+      "bad_inventory_entries": []
+    },
+    "pilot_current_bytes": {
+      "manifest_sha256": "bb9ab2315e92011c28c5563707fcf8b6033fdfbcdc6721216d46440f7bee35a7",
+      "final_mp4_sha256": "4f43e8a13452e37674f0ba6d69c681138720beabe9196fde67555354284c5447",
+      "mlt_sha256": "f53e8d678490d1c528ad02ebca841bd12c6e016f80fd60062cc83d17d485790d",
+      "files": [
+        {
+          "path": "edit_plan.json",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 8980
+        },
+        {
+          "path": "final.mp4",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 2257607
+        },
+        {
+          "path": "media/1dfb3591c803f3b66b71536f31ec1148774b47581d15cb0120de12f33df21fa4_3ec73a4e6f42.wav",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 571440
+        },
+        {
+          "path": "media/3b3bcfab4f363cd27d15141cd3d9e336ddffa3490f10ad5c6d7125194e24968f_16b7ee4a14b0.wav",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 437808
+        },
+        {
+          "path": "media/3d5096c5418eb3b0bc2a61a9b010276b71a50f96625e6eb7c4c7784116d1f7e0_dc19b5f48b68.wav",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 511480
+        },
+        {
+          "path": "media/96159396a9c20c0830fe4774d3d0e2e890d6b637cc81a7462105f0d205f4e207_7cefa40f2807.wav",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 478200
+        },
+        {
+          "path": "media/b3be61a979661eb55eb3af9c7203e8bfa480daf8f0fcf51b608d47a7d5c67428_2b0444963769.wav",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 546864
+        },
+        {
+          "path": "media/b80fdc6d3df1540fc31cab4a69e370720add257549608bae8bce3b320beb591e_6ccfc3941df1.wav",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 464432
+        },
+        {
+          "path": "media/scene_37661585c651.mp4",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 793179
+        },
+        {
+          "path": "media/scene_50ef52156e5a.mp4",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 751696
+        },
+        {
+          "path": "media/scene_eee2fdba6e0d.mp4",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 690137
+        },
+        {
+          "path": "project.mlt",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 7645
+        },
+        {
+          "path": "subtitles.srt",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 2140
+        },
+        {
+          "path": "timing.json",
+          "hash_matches": true,
+          "source_copy_identical": true,
+          "size": 3553
+        }
+      ],
+      "wav": [
+        {
+          "path": "media\\1dfb3591c803f3b66b71536f31ec1148774b47581d15cb0120de12f33df21fa4_3ec73a4e6f42.wav",
+          "sha256": "3ec73a4e6f423ef70b2ed7469fe5915b6eb2449de0c6520d0ae219d9dc3482ed",
+          "frames": 285698,
+          "rate": 22050,
+          "channels": 1,
+          "duration": 12.956825396825398,
+          "nonzero": true
+        },
+        {
+          "path": "media\\3b3bcfab4f363cd27d15141cd3d9e336ddffa3490f10ad5c6d7125194e24968f_16b7ee4a14b0.wav",
+          "sha256": "16b7ee4a14b09d5e43802a768317a46af576f959699edaa8bf28363f55ae38e3",
+          "frames": 218882,
+          "rate": 22050,
+          "channels": 1,
+          "duration": 9.926621315192744,
+          "nonzero": true
+        },
+        {
+          "path": "media\\3d5096c5418eb3b0bc2a61a9b010276b71a50f96625e6eb7c4c7784116d1f7e0_dc19b5f48b68.wav",
+          "sha256": "dc19b5f48b689a623995caff6c1091ec8d96c7a19b15f0321f718e3774e2bdbe",
+          "frames": 255718,
+          "rate": 22050,
+          "channels": 1,
+          "duration": 11.59718820861678,
+          "nonzero": true
+        },
+        {
+          "path": "media\\96159396a9c20c0830fe4774d3d0e2e890d6b637cc81a7462105f0d205f4e207_7cefa40f2807.wav",
+          "sha256": "7cefa40f2807bf114c4a19bbb52b40bc091681a6b1de50c081d76b6b9a07b132",
+          "frames": 239078,
+          "rate": 22050,
+          "channels": 1,
+          "duration": 10.842539682539682,
+          "nonzero": true
+        },
+        {
+          "path": "media\\b3be61a979661eb55eb3af9c7203e8bfa480daf8f0fcf51b608d47a7d5c67428_2b0444963769.wav",
+          "sha256": "2b04449637690982eebabe2714e228ef7ab1a5cb6a3501d0ec9b1918b6bf2f99",
+          "frames": 273410,
+          "rate": 22050,
+          "channels": 1,
+          "duration": 12.399546485260771,
+          "nonzero": true
+        },
+        {
+          "path": "media\\b80fdc6d3df1540fc31cab4a69e370720add257549608bae8bce3b320beb591e_6ccfc3941df1.wav",
+          "sha256": "6ccfc3941df17d3cd0b6622d88ae944b48ef60b2e5907f93d5b6013b0e9873d4",
+          "frames": 232194,
+          "rate": 22050,
+          "channels": 1,
+          "duration": 10.530340136054422,
+          "nonzero": true
+        }
+      ],
+      "mlt_resources": [
+        "0",
+        "media/scene_eee2fdba6e0d.mp4",
+        "media/scene_37661585c651.mp4",
+        "media/scene_50ef52156e5a.mp4",
+        "media/96159396a9c20c0830fe4774d3d0e2e890d6b637cc81a7462105f0d205f4e207_7cefa40f2807.wav",
+        "media/3b3bcfab4f363cd27d15141cd3d9e336ddffa3490f10ad5c6d7125194e24968f_16b7ee4a14b0.wav",
+        "media/3d5096c5418eb3b0bc2a61a9b010276b71a50f96625e6eb7c4c7784116d1f7e0_dc19b5f48b68.wav",
+        "media/1dfb3591c803f3b66b71536f31ec1148774b47581d15cb0120de12f33df21fa4_3ec73a4e6f42.wav",
+        "media/b80fdc6d3df1540fc31cab4a69e370720add257549608bae8bce3b320beb591e_6ccfc3941df1.wav",
+        "media/b3be61a979661eb55eb3af9c7203e8bfa480daf8f0fcf51b608d47a7d5c67428_2b0444963769.wav"
+      ],
+      "relative_resources": true,
+      "scope": "Current byte/header/XML recheck of already produced PILOT-01 only; no new render/decode/quality acceptance"
+    },
+    "pilot_run_binding": {
+      "run_id": "pilot_01_20261021_7f91c2e8",
+      "origin": "original_host_authored_manual_assisted",
+      "scope": "historical PILOT portable; current byte/header/XML verification only; no new render or current-head real QA"
+    }
+  },
+  "environment": {
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "os": "Windows-10-10.0.26200-SP0",
+    "dependencies": {
+      "pydantic": "2.12.5",
+      "numpy": "2.4.3",
+      "mcp": "1.30.0",
+      "PyYAML": null,
+      "Pillow": null,
+      "httpx": "0.28.1",
+      "uvicorn": "0.54.0"
+    },
+    "free_bytes": 11031429120,
+    "git": "git version 2.55.0.windows.5",
+    "known_runtime_locator_presence": {
+      "tts_python": {
+        "configured": true,
+        "exists": true
+      },
+      "tts_model": {
+        "configured": true,
+        "exists": true
+      },
+      "melt_path": {
+        "configured": true,
+        "exists": true
+      },
+      "ffmpeg_path": {
+        "configured": true,
+        "exists": true
+      },
+      "ffprobe_path": {
+        "configured": true,
+        "exists": true
+      }
+    },
+    "profile_model_exists": true,
+    "profile_model_config_exists": true,
+    "repository_is_under_OneDrive": true,
+    "audit_root_outside_repo_sync": true,
+    "secrets_or_account_state_inspected": false
+  },
+  "environment_powershell": {
+    "powershell_version": "7.6.5",
+    "STUDIO_PYTHON_configured": false,
+    "STUDIO_PYTHON_exists": null,
+    "registration_checked": false,
+    "installations_performed": false
+  },
+  "external_gates": [
+    "X01",
+    "X02",
+    "X03",
+    "X04",
+    "X05"
+  ],
+  "owner_actions": [
+    "Approve bounded final software scope/ownership and independent CI diagnosis",
+    "Choose separate outside-sync checkout/run/input/session roots, storage/runtime/model placement",
+    "Separately authorize one general functional real production acceptance after software review",
+    "Resolve eligibility lawfully if service allows, otherwise keep disabled; no bypass/account substitution",
+    "After eligibility separately verify supported actual client interface, distinct bindings/sessions, model/quota/media evidence",
+    "Choose approved Drive host callback/folder/private sessions; separately authorize bounded tiny upload/checksum inspection/restart",
+    "Only after independent green review separately authorize main integration and runner isolation/registration/fake-run"
+  ],
+  "recommended_next_batch": {
+    "id": "SYSTEM-CLOSURE-02_PROPOSAL_ONLY",
+    "items": [
+      "B02",
+      "B03",
+      "B04",
+      "B10",
+      "B05 offline contract/caller only until X01/X02",
+      "B06",
+      "B07 dummy approved host interface only until X03",
+      "B08",
+      "B01 owner-lane instrumentation/review",
+      "B11"
+    ],
+    "critical_path": [
+      "B02",
+      "B03",
+      "B04/B10",
+      "B05 offline",
+      "independent CI/software review"
+    ],
+    "parallel": [
+      "B06",
+      "B07",
+      "B08"
+    ],
+    "residual": [
+      "X01",
+      "X02",
+      "X03",
+      "X04",
+      "X05",
+      "B09 real acceptance",
+      "live transport implementation conditional on verified supported interface"
+    ],
+    "not_authorization": true
+  },
+  "do_not_touch": [
+    "Ruslan/model/profile/lexicon/music/style",
+    "working studio registry/media/cache/manual edits",
+    "operations/jobs/Registry/renderer production-core",
+    "canonical Identifier/Scene/Review/EditPlan semantics",
+    "accepted artifacts/history/evidence",
+    "main and ChatGPT-owned security/CI by Codex"
+  ],
+  "post_first_video": [
+    "intonation/timbre/pronunciation/accents",
+    "music",
+    "creative script/visual quality"
+  ],
+  "audit_actions": {
+    "commands": [
+      {
+        "id": "A01",
+        "command": "Get-Content CODEX_AUDIT_01.txt; AGENTS.md; development/HANDOFF.md; tasks.json; INTERFACES.md; targeted DEVELOPMENT_PLAN heading",
+        "exit_code": 0,
+        "side_effects": "none; read instructions/interfaces"
+      },
+      {
+        "id": "A02",
+        "command": "git status --short --branch; git branch --show-current; git rev-parse HEAD; git rev-parse HEAD^{tree}; git diff --check; git diff --stat; git show-ref --heads",
+        "exit_code": 0,
+        "side_effects": "external before log files only"
+      },
+      {
+        "id": "A03",
+        "command": "git fetch origin",
+        "exit_code": 0,
+        "side_effects": "FETCH_HEAD and remote-tracking CI branch updated c6d48c8 -> c8b4a25; no working branch/index change"
+      },
+      {
+        "id": "A04",
+        "command": "git status/HEAD/tree/origin refs/log -12/diff --check/diff --stat; targeted rg and numbered source/docs/test-body reads; git show workflow at feature/main/CI refs",
+        "exit_code": 0,
+        "side_effects": "none; some exploratory reads referenced missing paths, marked corrected; no conclusion depends on missing-path output"
+      },
+      {
+        "id": "A05",
+        "command": "GitHub GET PR9/PR6/run39798692447/jobs/artifacts/logs/latest runs/git commit parents/compare feature->merge; download artifact12435672020",
+        "exit_code": 0,
+        "side_effects": "remote reads only; artifact ZIP saved externally; no CI rerun/comments/repository mutations"
+      },
+      {
+        "id": "A06",
+        "command": "python -B -X utf8 evidence/measure_readonly.py; python -B evidence/compare_ci_source.py",
+        "exit_code": 0,
+        "side_effects": "read source/PILOT/ZIP/dependency metadata/allowlisted runtime locators; external measurement JSON; no model/media tool/client"
+      },
+      {
+        "id": "A07",
+        "command": "python -B -X utf8 evidence/diagnose_ci.py --run concurrent",
+        "exit_code": 0,
+        "side_effects": "unmodified offline test3 repetitions; isolated disposable temp queue/files only; no production or provider",
+        "details": "repro_concurrent.json"
+      },
+      {
+        "id": "A08",
+        "command": "python -B -X utf8 evidence/diagnose_ci.py --run ci_prefix",
+        "exit_code": 0,
+        "side_effects": "82 existing completed-CI-prefix offline tests, external temp roots, no full checker; no production/provider; timed log",
+        "details": "repro_ci_prefix.json"
+      },
+      {
+        "id": "A09",
+        "command": "python -B -X utf8 evidence/readonly_cli.py",
+        "exit_code": 0,
+        "side_effects": "external config/JSON/log files; read-only plan/doctor/status, no run roots created",
+        "details": "readonly_cli.json"
+      },
+      {
+        "id": "A10",
+        "command": "version/path/free-space checks; historical full manifest/files integrity recheck",
+        "exit_code": 0,
+        "side_effects": "read only; initial Pillow metadata query raised PackageNotFoundError, then corrected to nullable measurement; no install"
+      },
+      {
+        "id": "A11",
+        "command": "git ls-remote origin refs/heads/main refs/heads/feature/multi-ai-coordinator-v2 refs/heads/assistant/providers-01-ci-sync",
+        "exit_code": 0,
+        "side_effects": "read only; initial restricted-network attempt failed DNS, authorized retry succeeded"
+      },
+      {
+        "id": "A12",
+        "command": "git status --porcelain=v1; git rev-parse HEAD/tree; git diff/cached --stat; git diff --check; external report/facts/hash manifest generation",
+        "exit_code": 0,
+        "side_effects": "external audit outputs only; repository final state unchanged"
+      }
+    ],
+    "observed_scope": "Only invoked audit commands, not global machine telemetry or Codex developer inference usage",
+    "model_requests": 0,
+    "paid_api_requests": 0,
+    "production_started": false,
+    "provider_account_api_calls": 0,
+    "drive_uploads": 0,
+    "network": "Git fetch/ls-remote plus authorized GitHub GET/artifact download occurred; no provider/account APIs",
+    "installs": 0,
+    "commits": 0,
+    "pushes": 0,
+    "merges": 0,
+    "runner_registration": false,
+    "repository_changes": "Only allowed git remote-tracking/FETCH_HEAD metadata; no tracked/index/studio changes",
+    "external_files_created": true,
+    "disposable_queue_databases": "Temporary synthetic test data only, not included in deliverable hash manifest"
+  },
+  "unknowns": [
+    {
+      "fact": "exact hosted timeout cause",
+      "why": "no per-test timestamps or stack dump in CI artifact; local bounded tests passed",
+      "safe_check": "ChatGPT-owned independent bounded telemetry at exact SHA"
+    },
+    {
+      "fact": "supported installed provider interface/live identity/session/model/quota/media support",
+      "why": "eligibility blocked; live/auth probes forbidden",
+      "safe_check": "lawful eligibility + separately authorized minimal supported-client receipts; no secrets"
+    },
+    {
+      "fact": "actual Drive host authorization/folder readback",
+      "why": "callback not wired in ordinary CLI; upload/account probes forbidden",
+      "safe_check": "owner-approved host bridge then separately authorized tiny transfer/inspection"
+    },
+    {
+      "fact": "runner registration",
+      "why": "no permitted registration inventory evidence collected",
+      "safe_check": "separate owner-approved runner scope/read-only inventory after main/review decision"
+    },
+    {
+      "fact": "new general real output/dead-worker behavior",
+      "why": "new production/crash forbidden",
+      "safe_check": "offline dead-job harness first; separately authorized isolated general real acceptance"
+    }
+  ],
+  "evidence_index": {
+    "E01": "git before/after/ref evidence",
+    "E02": "agent_entry_acquisition.md ENTRY",
+    "E03": "agent_entry_acquisition.md ACQ",
+    "E04": "agent_workers.md",
+    "E05": "agent_engine_delivery.md",
+    "E06": "GitHub snapshot/logs/artifact/CI integrity/source comparison",
+    "E07": "repro logs/json/timing analysis",
+    "E08": "historical_full_integrity.json",
+    "E09": "release_integrity.json",
+    "E10": "pilot_current_bytes.json",
+    "E11": "environment*.json",
+    "E12": "readonly_cli.json",
+    "E13": "targeted existing/original reports/instructions citations in REPORT",
+    "E14": "git_after.json/audit_actions/audit_evidence.json"
+  },
+  "architect_prompt_readiness": "Enough for one bounded final software implementation prompt with explicit conditional external acceptance. Not evidence of unconditional autonomous readiness."
+}

@@ -1,0 +1,19 @@
+test_critical_issue_cannot_be_accepted_and_human_review_requires_authority (tests.test_editorial.EditorialTests.test_critical_issue_cannot_be_accepted_and_human_review_requires_authority) ... ok
+test_demo_chain_is_valid_but_never_claims_creative_acceptance (tests.test_editorial.EditorialTests.test_demo_chain_is_valid_but_never_claims_creative_acceptance) ... ok
+test_dependency_versions_cannot_be_overridden_by_old_context (tests.test_editorial.EditorialTests.test_dependency_versions_cannot_be_overridden_by_old_context) ... ok
+test_director_cannot_upgrade_a_description_to_a_watched_clip (tests.test_editorial.EditorialTests.test_director_cannot_upgrade_a_description_to_a_watched_clip) ... ok
+test_invalid_partial_unknown_and_stale_results_fail (tests.test_editorial.EditorialTests.test_invalid_partial_unknown_and_stale_results_fail) ... ok
+test_scene_result_version_is_bound_to_requested_scene_version (tests.test_editorial.EditorialTests.test_scene_result_version_is_bound_to_requested_scene_version) ... ok
+test_source_repetition_uses_intersections_and_keeps_explanation (tests.test_editorial.EditorialTests.test_source_repetition_uses_intersections_and_keeps_explanation) ... ok
+test_wrong_render_version_and_self_asserted_media_delivery_fail (tests.test_editorial.EditorialTests.test_wrong_render_version_and_self_asserted_media_delivery_fail) ... ok
+test_escape_manual_and_modified_build_are_rejected_before_execution (tests.test_production_bridge.ProductionBridgeTests.test_escape_manual_and_modified_build_are_rejected_before_execution) ... ok
+test_exact_source_ranges_and_independent_voice_placement_survive_mlt (tests.test_production_bridge.ProductionBridgeTests.test_exact_source_ranges_and_independent_voice_placement_survive_mlt) ... ok
+test_picture_gap_is_an_explicit_blank_not_an_accidental_hold (tests.test_production_bridge.ProductionBridgeTests.test_picture_gap_is_an_explicit_blank_not_an_accidental_hold) ... ok
+test_preparation_blocks_profile_drift_active_jobs_and_wrong_dependencies (tests.test_production_bridge.ProductionBridgeTests.test_preparation_blocks_profile_drift_active_jobs_and_wrong_dependencies) ... ok
+test_prepared_synthesis_uses_existing_script_and_profile_without_enqueuing (tests.test_production_bridge.ProductionBridgeTests.test_prepared_synthesis_uses_existing_script_and_profile_without_enqueuing) ... ok
+test_unsupported_effects_and_range_hash_version_errors_publish_nothing (tests.test_production_bridge.ProductionBridgeTests.test_unsupported_effects_and_range_hash_version_errors_publish_nothing) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.336s
+
+OK

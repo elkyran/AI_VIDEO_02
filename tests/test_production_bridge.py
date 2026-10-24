@@ -108,8 +108,16 @@ class ProductionBridgeTests(unittest.TestCase):
         self.assertEqual(descriptor['profile_version'], 3)
         self.assertFalse(descriptor['worker_started'])
         self.assertEqual(before, content_hash(self.root / 'registry.sqlite'))
-        load.assert_called_once_with(self.root)
-        runtime.assert_called_once_with(profile, self.root, self.root)
+        load.assert_called_once()
+        runtime.assert_called_once()
+        self.assertEqual(load.call_args.kwargs, {})
+        self.assertEqual(len(load.call_args.args), 1)
+        self.assertEqual(Path(load.call_args.args[0]).resolve(), self.root.resolve())
+        self.assertEqual(runtime.call_args.kwargs, {})
+        self.assertEqual(len(runtime.call_args.args), 3)
+        self.assertEqual(runtime.call_args.args[0], profile)
+        for path in runtime.call_args.args[1:]:
+            self.assertEqual(Path(path).resolve(), self.root.resolve())
         enqueue.assert_not_called()
         with Registry(self.root) as registry:
             self.assertEqual(registry._project('demo')['revision'], 3)

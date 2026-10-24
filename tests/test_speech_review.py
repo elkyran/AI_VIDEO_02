@@ -12,6 +12,7 @@ import wave
 
 from app.registry import StudioError, content_hash
 from app.speech_review import review_build_speech
+from scripts.transcribe_audio import validate_runtime_options
 
 
 class SpeechCacheTests(unittest.TestCase):
@@ -51,9 +52,10 @@ class SpeechCacheTests(unittest.TestCase):
                 for path in (subtitle,raw):path.write_text('1\n00:00:00,000 --> 00:00:01,500\nРокси рядом.\n',encoding='utf-8')
                 rows=[{'block_id':entry['block_id'],'path':entry['path'],'text':entry['text'],'start_seconds':entry['start_seconds'],
                        'expected_negations':[],'recognized_negations':[],'wer':.25,'warnings':['critical_terms_mismatch']} for entry in data['segments']]
+                execution=validate_runtime_options(self.config.get('asr_device','cpu'),
+                    self.config.get('asr_compute_type','int8'),self.config.get('asr_dll_directories',[]))
                 report.write_text(json.dumps({'model':self.config['asr_model'],'status':'automated_warning','segments':rows,
-                    'device':self.config.get('asr_device','cpu'),'compute_type':self.config.get('asr_compute_type','int8'),
-                    'dll_directories':self.config.get('asr_dll_directories',[]),
+                    **execution,
                     'subtitles':{'path':str(subtitle)},'raw_subtitles':{'path':str(raw)}}),encoding='utf-8')
         self.ctx=Context()
 
@@ -102,6 +104,20 @@ class SpeechCacheTests(unittest.TestCase):
             self.ctx.config.update(changes);result=self.run_review()
             self.assertFalse(result['cache_hit']);self.assertNotEqual(result['cache_key'],previous)
             previous=result['cache_key']
+
+    def test_dll_alias_and_canonical_path_have_identical_execution_evidence(self):
+        (self.root/'alias').mkdir()
+        alias=self.root/'alias'/'..'
+        self.ctx.config={**self.ctx.config,'asr_dll_directories':[str(alias)]}
+        first=self.run_review()
+        evidence=json.loads(first['report'].read_text())
+        self.assertEqual(evidence['dll_directories'],[str(self.root.resolve())])
+        self.ctx.config['asr_dll_directories']=[str(self.root.resolve())]
+        second=self.run_review()
+        self.assertTrue(second['cache_hit'])
+        self.assertEqual(first['cache_key'],second['cache_key'])
+        self.assertEqual(json.loads(second['report'].read_text()),evidence)
+        self.assertEqual(self.ctx.calls,1)
 
     def test_changed_wav_or_audio_manifest_cannot_reuse_old_evidence(self):
         self.run_review()

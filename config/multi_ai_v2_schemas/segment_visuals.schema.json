@@ -1,0 +1,175 @@
+{
+  "$defs": {
+    "SegmentVisuals": {
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "scene_version": {
+          "minimum": 1,
+          "title": "Scene Version",
+          "type": "integer"
+        },
+        "segment_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "duration_ms": {
+          "exclusiveMinimum": 0,
+          "maximum": 3600000,
+          "title": "Duration Ms",
+          "type": "integer"
+        },
+        "shots": {
+          "items": {
+            "$ref": "#/$defs/ShotCandidate"
+          },
+          "maxItems": 80,
+          "minItems": 1,
+          "title": "Shots",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scene_id",
+        "scene_version",
+        "segment_id",
+        "duration_ms",
+        "shots"
+      ],
+      "title": "SegmentVisuals",
+      "type": "object"
+    },
+    "ShotCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "shot_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Shot Id",
+          "type": "string"
+        },
+        "asset_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "source_in_ms": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Source In Ms",
+          "type": "integer"
+        },
+        "source_out_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Source Out Ms",
+          "type": "integer"
+        },
+        "visual_purpose": {
+          "default": "illustration",
+          "enum": [
+            "illustration",
+            "atmosphere",
+            "explanation"
+          ],
+          "title": "Visual Purpose",
+          "type": "string"
+        },
+        "emotional_task": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Emotional Task",
+          "type": "string"
+        },
+        "continuity": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Continuity",
+          "type": "string"
+        },
+        "reuse_reason": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reuse Reason"
+        },
+        "evidence_mode": {
+          "const": "metadata_only",
+          "default": "metadata_only",
+          "title": "Evidence Mode",
+          "type": "string"
+        },
+        "observed_content": {
+          "default": null,
+          "title": "Observed Content",
+          "type": "null"
+        }
+      },
+      "required": [
+        "shot_id",
+        "asset_id",
+        "source_out_ms",
+        "emotional_task"
+      ],
+      "title": "ShotCandidate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One scene result wrapping the existing SegmentVisuals, not another shot schema.",
+  "properties": {
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "scene_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Scene Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "simulated": {
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "scene_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Scene Sha256",
+      "type": "string"
+    },
+    "mappings": {
+      "items": {
+        "$ref": "#/$defs/SegmentVisuals"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Mappings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project_id",
+    "scene_id",
+    "version",
+    "simulated",
+    "scene_sha256",
+    "mappings"
+  ],
+  "title": "VisualMappingResult",
+  "type": "object"
+}

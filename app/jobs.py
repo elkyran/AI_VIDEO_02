@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import uuid
+from contextlib import nullcontext
 
 from .registry import Registry, StudioError, canonical_json
 
@@ -34,7 +35,8 @@ def process_alive(pid: int | None) -> bool:
 
 
 class JobManager:
-    def __init__(self, root: str | Path):
+    def __init__(self, root: str | Path, *, spawn_observer=None):
+        self.spawn_observer = spawn_observer
         self.root = Path(root).resolve()
         with Registry(self.root) as registry:
             registry.db.executescript('''
@@ -67,6 +69,8 @@ class JobManager:
                        'base_revision':base_revision}
             def mutate(new_revision):
                 identifier = 'job_' + uuid.uuid4().hex[:20]
+                if self.spawn_observer is not None:
+                    self.spawn_observer('admit', identifier, None)
                 registry.db.execute('INSERT INTO jobs(id,project_id,operation,parameters,state,created,input_revision) VALUES(?,?,?,?,?,?,?)',
                     (identifier,project_id,operation,canonical_json(parameters),'pending',time.time(),new_revision))
                 return {'job_id':identifier,'state':'pending'}, True
@@ -77,13 +81,17 @@ class JobManager:
 
     def _spawn(self, job_id: str) -> None:
         # Only this installed worker is executable. Model responses cannot choose code.
+        if self.spawn_observer is not None:
+            self.spawn_observer('intent', job_id, None)
         directory = self.root/'jobs'/job_id
         directory.mkdir(parents=True, exist_ok=True)
         with (directory/'worker.log').open('a',encoding='utf-8') as log:
             flags = (subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP) if os.name == 'nt' else 0
-            subprocess.Popen([sys.executable,'-m','app.worker','--workspace',str(self.root),'--job',job_id],
+            process = subprocess.Popen([sys.executable,'-m','app.worker','--workspace',str(self.root),'--job',job_id],
                 cwd=Path(__file__).resolve().parents[1], stdout=log,stderr=log,stdin=subprocess.DEVNULL,
                 close_fds=True,creationflags=flags,start_new_session=(os.name!='nt'))
+        if self.spawn_observer is not None:
+            self.spawn_observer('spawned', job_id, process)
 
     def status(self, job_id: str) -> dict:
         with Registry(self.root) as registry:
@@ -127,9 +135,12 @@ class JobManager:
         if job['attempts']>=3:
             raise StudioError('RETRY_LIMIT','Two retries exhausted; review the error before a new request')
         with Registry(self.root) as registry:
-            changed = registry.db.execute("UPDATE jobs SET state='pending',cancel_requested=0,error=NULL,worker_pid=NULL,message='Resuming saved work' WHERE id=? AND invalidated=0",(job_id,))
-            if not changed.rowcount:
-                raise StudioError('JOB_STALE','Inputs changed while resuming; create a new job from the current script')
+            with registry.transaction() if self.spawn_observer is not None else nullcontext():
+                if self.spawn_observer is not None:
+                    self.spawn_observer('admit', job_id, None)
+                changed = registry.db.execute("UPDATE jobs SET state='pending',cancel_requested=0,error=NULL,worker_pid=NULL,message='Resuming saved work' WHERE id=? AND invalidated=0",(job_id,))
+                if not changed.rowcount:
+                    raise StudioError('JOB_STALE','Inputs changed while resuming; create a new job from the current script')
         self._spawn(job_id)
         return self.status(job_id)
 

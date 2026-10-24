@@ -1,0 +1,62 @@
+{
+  "app/operations.py": {
+    "sha256": "a8ded710b61f42625f8db6d696b3d02486a449fc07137ff9e0f414e09d39e15e",
+    "git_baseline_blob": "d6dc382055a05839578fc67fcf62e5e8d5745ea0",
+    "changed": false
+  },
+  "app/registry.py": {
+    "sha256": "7094f2e1fb406f2f70a74ab435cba3997c68fd7e58255168c549cbd74cb821a1",
+    "git_baseline_blob": "a795c51c1d659ff82a7cdf4e6e901b1ed6a30a30",
+    "changed": false
+  },
+  "app/tts.py": {
+    "sha256": "68e5d6b7eae430c834de9ae76a134d7744f61303821a39903e8197b9525c8422",
+    "git_baseline_blob": "131f991173b58c7f97039e019bebf484995d677b",
+    "changed": false
+  },
+  "app/timeline.py": {
+    "sha256": "6b7f8f550b07505460b57cfe7cb5b77972e00cadb536447473ced3a2981bbd55",
+    "git_baseline_blob": "b68c20754bfc5afb1257d18c225cc4ee99e62d81",
+    "changed": false
+  },
+  "app/worker.py": {
+    "sha256": "8e27f13c95d2da5d8edcd11063a7dce97b119aaa53d20d8f14bbeee87a6d8169",
+    "git_baseline_blob": "1e38c33fd9f56cc774c3b66ae99db9335ed86c0f",
+    "changed": false
+  },
+  "config/production_profile.json": {
+    "sha256": "b7383a73219f5921b7f1420d62bde63fef4df45c59263463d10ab67b9ab31c7f",
+    "git_baseline_blob": "6a8bcc43a554b2e6827b9886d261ce2bce3625d6",
+    "changed": false
+  },
+  "studio.cmd": {
+    "sha256": "7f3c3e7cc84064aabbe15a1d1987430463efd54da43663f268eaa3daaf6af9a1",
+    "git_baseline_blob": "327c03c4d719b477a60783654b0da2a98805c1ae",
+    "changed": false
+  },
+  ".github/workflows/ci-multi-ai-v2.yml": {
+    "sha256": "3871312f382331efee86ae7cdf98e24c660e54bd9020b2ba9a6f2d4267fd4e2d",
+    "git_baseline_blob": "3b621451cb637414c8fb493776c55fee4f07d7c3",
+    "changed": false
+  },
+  ".github/workflows/new-video.yml": {
+    "sha256": "74f534d9735a3e311b5de5e1dbed7214a21cd76229111def3b31b72dac5ba78c",
+    "git_baseline_blob": "b5839784072380559c4c8fadc531e95510bdd920",
+    "changed": false
+  },
+  "scripts/ci_validate_multi_ai_v2.py": {
+    "sha256": "49381314de59848ddebad006cbde59ae2b403a2142ffa9a345df6b8c8e34dba1",
+    "git_baseline_blob": "4ae95afca66118a277dd43348865e902c6aa853b",
+    "changed": false
+  },
+  "docs/GITHUB_CI_AND_RUNNER.md": {
+    "sha256": "9b1a51d2ee3b268643863a522064ae1ef8b3bf2b3692de15fd7f7390b7f09ae0",
+    "git_baseline_blob": "7437e41a1e6d4e71f691d4a46519482d1d62be13",
+    "changed": false
+  },
+  "development/multi_ai_v2/COLLABORATION.md": {
+    "sha256": "cd1fedf7cc3cd4fc9e936055349f48e9c1ee188a687f48534e5d15d18d65474c",
+    "git_baseline_blob": "ba93885ac615b29e4cb456ae50c15c29043c5c69",
+    "changed": false
+  }
+}

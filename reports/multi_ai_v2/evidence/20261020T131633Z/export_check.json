@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "file_count": 1518,
+  "findings": [],
+  "large_files": [],
+  "revision": "source-sha256:798a4c760990842ef52e966604e4d3f8d79b6649eb6af6706026725a37f24604",
+  "scope": "All prospective tracked files; source unchanged since 338 passed tests",
+  "limitations": "Heuristic secret scan; no guarantee for unknown formats"
+}

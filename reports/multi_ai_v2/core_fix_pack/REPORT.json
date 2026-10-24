@@ -1,0 +1,231 @@
+{
+  "package_id": "CORE-FIX-PACK",
+  "status": "passed",
+  "base_commit": "068ff7fbf11ef48072287546955db489e63166f7",
+  "evidence_directory": "reports/multi_ai_v2/core_fix_pack/evidence/20261020T145144384909Z_a3e25ab87d9848eba8ed2e82fa297c34",
+  "manifest_sha256": "ade40d30410ae37e9cb1aad16957f354dbc387efbfd1f0fd5279d03b248e3b18",
+  "git_commit_sha": "abb2552fa40b6d2c8794e4c581ddfe39bf7a503b",
+  "git_tree_sha": "3f910329e75a48df08f3b3fc1cfd3238d43ce510",
+  "dirty": true,
+  "dirty_state": [
+    " M app/multi_ai_v2.py",
+    " M tests/test_multi_ai_v2.py",
+    "?? reports/multi_ai_v2/core_fix_pack/evidence/20261020T142943994912Z_d70ccdd993344733b554ea492cc07bb1/checks.json",
+    "?? reports/multi_ai_v2/core_fix_pack/evidence/20261020T142943994912Z_d70ccdd993344733b554ea492cc07bb1/manifest.json"
+  ],
+  "source_manifest_sha256": "0d3eae67f9e283b1712424cd94673e5acab0c1c145c02f0e2e07ad6220581889",
+  "schema_manifest_sha256": "42a6be7129325f52638f9cc87fd7e4fc1f73befd498d7d71a63857e528a7983b",
+  "checked_at": "2026-10-20T14:51:44.384909+00:00",
+  "commands": [
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai_v2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 41.922,
+      "test_count": 28,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_editorial",
+        "tests.test_production_bridge"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.016,
+      "test_count": 14,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai",
+        "tests.test_multi_ai_configuration"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.625,
+      "test_count": 50,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_ai_adapters"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.453,
+      "test_count": 16,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_ai_accounts",
+        "tests.test_ai_cli_runtime",
+        "tests.test_multi_ai_accounts_ui",
+        "tests.test_ai_codex_diagnostics",
+        "tests.test_gemini_free_route"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.969,
+      "test_count": 107,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai_ui",
+        "tests.test_multi_ai_ui_review",
+        "tests.test_multi_ai_preview"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.594,
+      "test_count": 12,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_core",
+        "tests.test_cli",
+        "tests.test_library",
+        "tests.test_exchange",
+        "tests.test_production_profile",
+        "tests.test_quality",
+        "tests.test_asr",
+        "tests.test_asr_runtime",
+        "tests.test_speech_review",
+        "tests.test_fit_narration",
+        "tests.test_multishot.MultiShotContractTests",
+        "tests.test_multishot.ReviewRightsTests",
+        "tests.test_tts.TTSInputTests",
+        "tests.test_tts.SileroContinuityTests",
+        "tests.test_replace_narration.NarrationValidationTests",
+        "tests.test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.421,
+      "test_count": 126,
+      "model_requests": 0,
+      "skipped_count": 1
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-m",
+        "compileall",
+        "-q",
+        "app",
+        "scripts",
+        "tests"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.266,
+      "test_count": null,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-c",
+        "from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.125,
+      "test_count": null,
+      "model_requests": 0,
+      "skipped_count": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.062,
+      "test_count": null,
+      "model_requests": 0,
+      "skipped_count": 0
+    }
+  ],
+  "test_count": 353,
+  "skipped_count": 1,
+  "elapsed_seconds": 111.453,
+  "exit_code": 0,
+  "model_requests": 0,
+  "paid_api_requests": 0,
+  "production_started": false,
+  "protected_paths_unchanged": [
+    ".github/workflows/ci-multi-ai-v2.yml",
+    ".github/workflows/new-video.yml",
+    "docs/GITHUB_CI_AND_RUNNER.md",
+    "scripts/ci_validate_multi_ai_v2.py",
+    "app/registry.py",
+    "app/multi_ai.py",
+    "app/tts.py",
+    "app/timeline.py",
+    "config/production_profile.json",
+    "development/tasks.json",
+    "reports/multi_ai_v2/evidence/20261020T131633Z"
+  ],
+  "working_databases_preserved": {
+    "studio": true,
+    "multi_ai_live": true
+  },
+  "previous_run_manifests": {
+    "20261020T142943994912Z_d70ccdd993344733b554ea492cc07bb1": "e163076bfa28b681d891dacbe379bf19af5ba702a374b743249407694c1ebd1d",
+    "20261020T145144384909Z_a3e25ab87d9848eba8ed2e82fa297c34": "ade40d30410ae37e9cb1aad16957f354dbc387efbfd1f0fd5279d03b248e3b18"
+  },
+  "blockers": [],
+  "notes": [
+    "Existing real Piper test skipped: Requires installed local Piper.",
+    "Binding records pre-commit HEAD plus truthful dirty state; source/schema SHA cover tested edits.",
+    "scripts/dispatch_multi_ai_v2.py retains legacy 0/2 mapping outside this allowed file scope; Reviewer should account for this in workflow.",
+    "Old VIDEO_REVIEW_PROTOCOL documentation describes the removed model flag; current schema/coordinator and this report supersede that description."
+  ]
+}

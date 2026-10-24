@@ -1,0 +1,12 @@
+{
+  "package_id": "MULTI-AI-V2",
+  "scope": "Connector upload smoke only; no production media",
+  "simulated_video": true,
+  "actual_video_created": false,
+  "codex_schema_smoke": "VERIFIED",
+  "gemini_story": "UNAVAILABLE",
+  "gemini_visual": "BLOCKED_UNSUPPORTED",
+  "runner_count": 0,
+  "secret_material_included": false,
+  "active_sqlite_included": false
+}

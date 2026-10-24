@@ -1,5 +1,6 @@
 """Official-protocol local fixtures only: no login, credentials or model usage."""
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -8,9 +9,11 @@ import tempfile
 import threading
 import time
 import unittest
+from types import SimpleNamespace
+from unittest import mock
 
 from app.ai_accounts import isolated_environment
-from app.ai_codex_diagnostics import diagnose_codex
+from app.ai_codex_diagnostics import _DiagnosticError, _stop, diagnose_codex
 from app.multi_ai_preview import process_identity
 
 
@@ -67,12 +70,19 @@ class CodexDiagnosticsTests(unittest.TestCase):
         trace = self.root / (mode + ".json")
         before = {t.name for t in threading.enumerate()}
         start = time.monotonic()
-        result = diagnose_codex([sys.executable, str(self.script), mode, str(trace)], cwd=self.root, env=self.env, timeout=timeout)
+        with mock.patch("app.ai_codex_diagnostics._stop", wraps=_stop) as cleanup:
+            result = diagnose_codex([sys.executable, str(self.script), mode, str(trace)], cwd=self.root, env=self.env, timeout=timeout)
         self.assertLess(time.monotonic()-start, timeout + 8)
         self.assertFalse([t.name for t in threading.enumerate() if t.name not in before and t.name.startswith("codex-diagnostic-")])
+        cleanup.assert_called_once()
+        process = cleanup.call_args.args[0]
+        self.assertIsNotNone(process.returncode)
+        self.assertTrue(all(pipe.closed for pipe in (process.stdin, process.stdout, process.stderr)))
+        if os.name == "nt":
+            self.assertTrue(process._handle.closed)
         saved = json.loads(trace.read_text()) if trace.exists() else {}
         if saved.get("pid"):
-            self.assertFalse(process_identity(saved["pid"]))
+            self.assertIs(process_identity(saved["pid"]), False)
         encoded = json.dumps(result)
         for secret in ("Person@Example", "private@example", "secret@example", "sk-private", "never-store-this", "never-store-account-id"):
             self.assertNotIn(secret, encoded)
@@ -131,7 +141,36 @@ class CodexDiagnosticsTests(unittest.TestCase):
     def test_orphaned_stdout_child_is_owned_and_terminated(self):
         result, saved = self.run_mode("orphan", timeout=.3)
         self.assertFalse(result["authenticated"])
-        self.assertFalse(process_identity(saved["child_pid"]))
+        self.assertNotEqual(result["error"]["code"], "cleanup_unverified")
+        self.assertIs(process_identity(saved["child_pid"]), False)
+        # No retry or delayed teardown: cwd and inherited pipes must already be free.
+        self.temp.cleanup()
+        self.assertFalse(self.root.exists())
+
+    def test_cleanup_deadline_rejects_an_unterminated_owned_job(self):
+        import ctypes
+
+        class Accounting(ctypes.Structure):
+            _fields_ = [("active", ctypes.c_uint32)]
+
+        def still_active(handle, information, pointer, size, returned):
+            pointer._obj.active = 1
+            return True
+
+        kernel = SimpleNamespace(TerminateJobObject=mock.Mock(return_value=True),
+                                 QueryInformationJobObject=mock.Mock(side_effect=still_active),
+                                 CloseHandle=mock.Mock(return_value=True))
+        process = SimpleNamespace(stdin=io.BytesIO(), stdout=io.BytesIO(), stderr=io.BytesIO(),
+                                  returncode=0, wait=mock.Mock(), _handle=SimpleNamespace(Close=mock.Mock()))
+        started = time.monotonic()
+        with self.assertRaises(_DiagnosticError) as raised:
+            _stop(process, (kernel, 123, Accounting), timeout=.03)
+        self.assertEqual(raised.exception.code, "cleanup_unverified")
+        self.assertLess(time.monotonic() - started, .5)
+        kernel.TerminateJobObject.assert_called_once_with(123, 1)
+        kernel.CloseHandle.assert_called_once_with(123)
+        process.wait.assert_called_once()
+        self.assertTrue(all(pipe.closed for pipe in (process.stdin, process.stdout, process.stderr)))
 
     def test_no_implicit_home_or_api_environment(self):
         result = diagnose_codex([sys.executable], cwd=self.root, env={}, timeout=1)

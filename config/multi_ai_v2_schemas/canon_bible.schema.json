@@ -1,0 +1,249 @@
+{
+  "$defs": {
+    "CanonEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "at": {
+          "title": "At",
+          "type": "integer"
+        },
+        "fact_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "after": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+            "type": "string"
+          },
+          "title": "After",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_id",
+        "edition",
+        "at",
+        "fact_id"
+      ],
+      "title": "CanonEvent",
+      "type": "object"
+    },
+    "CanonFact": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "kind": {
+          "default": "fact",
+          "enum": [
+            "fact",
+            "relationship",
+            "world_rule",
+            "assumption",
+            "divergence"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "status": {
+          "default": "unconfirmed",
+          "enum": [
+            "unconfirmed",
+            "owner_verified"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "maxItems": 64,
+          "title": "Citations",
+          "type": "array"
+        },
+        "depends_on": {
+          "items": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Depends On",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fact_id",
+        "edition",
+        "text"
+      ],
+      "title": "CanonFact",
+      "type": "object"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "start_byte": {
+          "minimum": 0,
+          "title": "Start Byte",
+          "type": "integer"
+        },
+        "end_byte": {
+          "exclusiveMinimum": 0,
+          "title": "End Byte",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "source_id",
+        "edition",
+        "start_byte",
+        "end_byte"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "edition": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Edition",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size": {
+          "maximum": 8000000,
+          "minimum": 1,
+          "title": "Size",
+          "type": "integer"
+        },
+        "rights": {
+          "enum": [
+            "owned",
+            "permission",
+            "public_domain",
+            "fixture"
+          ],
+          "title": "Rights",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "edition",
+        "path",
+        "sha256",
+        "size",
+        "rights"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "work_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Work Id",
+      "type": "string"
+    },
+    "simulated": {
+      "default": true,
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "maxItems": 128,
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/CanonFact"
+      },
+      "maxItems": 2000,
+      "title": "Facts",
+      "type": "array"
+    },
+    "chronology": {
+      "items": {
+        "$ref": "#/$defs/CanonEvent"
+      },
+      "maxItems": 2000,
+      "title": "Chronology",
+      "type": "array"
+    },
+    "content_role": {
+      "const": "untrusted_source_data_not_instructions",
+      "default": "untrusted_source_data_not_instructions",
+      "title": "Content Role",
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "work_id",
+    "sources"
+  ],
+  "title": "CanonBible",
+  "type": "object"
+}

@@ -1,0 +1,1008 @@
+{
+  "schema_version": 1,
+  "operation_key": "MULTI-AI-V2-BULK-OFFLINE-01",
+  "status": "VERIFIED",
+  "scope": "technical_offline_only",
+  "delivery_status": "BULK_01_WAITING_FOR_SINGLE_INDEPENDENT_REVIEW",
+  "initial_head": "3cfd455b640ca36c9840a76778810ae721583d67",
+  "tested_head": "5d1f26ca1e090f2150961efd58eb7921d4c48a34",
+  "tested_tree": "b4641903d644ea0129c0288e1ef95312431c39cd",
+  "final_head_reference": "report/status-only commit; exact SHA in final delivery and Git log",
+  "commits": [
+    "bc0f135ea14041dd8d37bab739f487dcedfe183b Add offline canon and accepted source contracts",
+    "15266d7570cc7fb77b3d7b3634de46d154d02e09 Convert accepted v2 scenes into production script candidates",
+    "7834490388c2c28c53a710817060e00ec8e42982 Add explicit verified visual mapping",
+    "30377d45d09084f39bee3020d18d3488c46f2dac Bridge v2 narration and MLT to existing production interfaces",
+    "89e8ff5827159a5f6b70bca6569999a6293d427f Add scene-scoped offline QA and targeted revision checkpoints",
+    "cba7497ae640fe883f977f8a8ba0adde2c9ee0ff Add immutable offline release manifests and retry-safe fixture delivery",
+    "1e9c34b346894f84af0a12bc7f142fca71ee4205 Add one-brief offline integration entrypoint and pinned revision inputs",
+    "5d1f26ca1e090f2150961efd58eb7921d4c48a34 Add consolidated offline bridge boundary regressions"
+  ],
+  "stages": {
+    "B1": {
+      "status": "VERIFIED",
+      "scope": "offline CanonBible structure, citations, source hashes; canon truth UNVERIFIED"
+    },
+    "B2": {
+      "status": "VERIFIED",
+      "scope": "accepted Scene -> immutable validated_not_registered ProductionScript candidate"
+    },
+    "B3": {
+      "status": "VERIFIED",
+      "scope": "registered permitted visual mapping and canonical EditPlan preparation"
+    },
+    "B4": {
+      "status": "VERIFIED",
+      "scope": "existing synthesize descriptor/cache identity and existing MLT compiler; live execution BLOCKED"
+    },
+    "B5": {
+      "status": "VERIFIED",
+      "scope": "prepared-file QA and scene-scoped fake revision; real creative QA NOT_RUN"
+    },
+    "B6": {
+      "status": "VERIFIED",
+      "scope": "immutable release, restart, retry and temporary local copy; remote UNVERIFIED"
+    },
+    "B7": {
+      "status": "VERIFIED",
+      "scope": "one-brief offline fixture CLI, resume/status/inspect/report"
+    },
+    "B8": {
+      "status": "VERIFIED",
+      "scope": "449-test canonical regression and consolidated evidence"
+    }
+  },
+  "changed_files": [
+    "app/multi_ai_v2.py",
+    "app/v2_acceptance.py",
+    "app/v2_contracts.py",
+    "app/v2_narration.py",
+    "app/v2_offline.py",
+    "app/v2_offline_qa.py",
+    "app/v2_production.py",
+    "app/v2_release.py",
+    "app/v2_sources.py",
+    "app/v2_storage.py",
+    "app/v2_visuals.py",
+    "config/multi_ai_v2_schemas/brief.schema.json",
+    "docs/MULTI_AI_V2_ARCHITECTURE.md",
+    "docs/OFFLINE_PRODUCTION_BRIDGE.md",
+    "examples/bulk_01/brief.json",
+    "examples/bulk_01/canon.json",
+    "examples/bulk_01/source.txt",
+    "examples/bulk_01/sources.json",
+    "scripts/check_multi_ai_v2.py",
+    "tests/test_v2_bulk_boundaries.py",
+    "tests/test_v2_engine_bridge.py",
+    "tests/test_v2_offline.py",
+    "tests/test_v2_offline_qa.py",
+    "tests/test_v2_production.py",
+    "tests/test_v2_release.py",
+    "tests/test_v2_sources.py",
+    "tests/test_v2_visuals.py",
+    "reports/multi_ai_v2/bulk_01/REPORT.md",
+    "reports/multi_ai_v2/bulk_01/STATUS.json"
+  ],
+  "changed_file_hashes": {
+    "app/multi_ai_v2.py": "4ebb92bccfa3dfaba662e0a58e8f3f7533b08e10779b9e3baa4af95862ba537d",
+    "app/v2_acceptance.py": "b027ba6c3b55c47927dce199e5608bba2ea18cf633fa7a13e0c4e25206b146bd",
+    "app/v2_contracts.py": "8a2c0ac00f0acfd8512165011b06ad361457c8ca70d5cebe2321bf79a849d8e1",
+    "app/v2_narration.py": "0462a87fcb61348e957fb9fe2f7a6e3d97c6eb80fb2fefade024a297d611cb66",
+    "app/v2_offline.py": "6c74810bb13e8ed88da0365dcca473324c506ea68f4cf56905009ad369ab00cb",
+    "app/v2_offline_qa.py": "9e8cc99ad6e346bd2bbde844fa3f837fd66cd21d0b0b20e816039cf34c3038b7",
+    "app/v2_production.py": "873ee3b642ee1029d4993cd24c8d0aa2c7dd604bfe4824e0a708444e0283fdff",
+    "app/v2_release.py": "b1a948f5dd200462a9220fd35ccd0ed6325351ffd90a43a531df47a4918cba66",
+    "app/v2_sources.py": "16e319a14e7c4c0479f5398ca52466c5f2654585bbe27cc4e3aecf184a1b1960",
+    "app/v2_storage.py": "06859e4cb1aed858e2718df3087cebe903a4178155e12a7ea43083bfcfd97393",
+    "app/v2_visuals.py": "e032556672d072cc7fd86062d05405d84d4580fb909f237983a62918401168db",
+    "config/multi_ai_v2_schemas/brief.schema.json": "c1c71b958d39b81124df1b5eb0fa805a422a6947eedf5670234d2d91ea9eac81",
+    "docs/MULTI_AI_V2_ARCHITECTURE.md": "e56bb2a91a5b442ba9da2a6fa3104f307aa53cab9ffff01d622092c0b2616538",
+    "docs/OFFLINE_PRODUCTION_BRIDGE.md": "4b8881a89d10381ecc4939e701775f5074cf5e3b2d8406f8316d205070a4e616",
+    "examples/bulk_01/brief.json": "add07fd2fb8329986407466d501218cbc11ed0d3de7cba1a9c0a65a9022a7c8b",
+    "examples/bulk_01/canon.json": "7765e34415b0e317eb09b5d3b5f0ed713528b439ac808d69e327d207a4f318c5",
+    "examples/bulk_01/source.txt": "a51a443dc9a4ee0df32539248903ea0a2b307b61af465ac99aa0826ebfa17dd6",
+    "examples/bulk_01/sources.json": "23e314bd1691d5c993798ae488519b81275a9e0c04282b3e83f68962c83ca1ff",
+    "scripts/check_multi_ai_v2.py": "cd31e27cd44f70c1e4ac726bdff0ad920781887fb536d52dd14a4a74ca08336b",
+    "tests/test_v2_bulk_boundaries.py": "62bc285103783277292a47a5c9ddd662e0e1a3c1945dfc893c5aff25dcffd47b",
+    "tests/test_v2_engine_bridge.py": "6b610405522d6d135084193107dcdafe2cc9b93cb4667219d811efdc03d26e89",
+    "tests/test_v2_offline.py": "698a8edfcbcc4be9acc6de8e2388657fccdce03bc75629303e1e0f6ff83e2a16",
+    "tests/test_v2_offline_qa.py": "2618ab5a07e80a0c2558841d5e4ea21a1494c15b1701cba6127ce5274267d8c7",
+    "tests/test_v2_production.py": "ca42dc01ef4a513ed4d3c428c6826a9614238e879dcf2517930a4d511792c297",
+    "tests/test_v2_release.py": "37be5bad001c2f1e5ab7ad192ae8a2606a076734511ef4bd641134d7a2bc200d",
+    "tests/test_v2_sources.py": "093ea50a944643fad3c3997ecd533af1a8223948aff136a6b09f20158c7e4efd",
+    "tests/test_v2_visuals.py": "7d4d4c32380e43116fd87ad26fab7a7c19a447cc6f1696d51ff07597e2d33e43",
+    "reports/multi_ai_v2/bulk_01/REPORT.md": "d0c612093fabc145e44393557e4e841eb376935db3eed23c3e928c7e33332ec9"
+  },
+  "self_hash_excluded": true,
+  "source_manifest_sha256": "0c187036e85c126a651e3f03ead206667936755650a0fa372a6562f4deb3fd1f",
+  "schema_manifest_sha256": "5789a8002ae79d527a0545fcd4b90ed259620a2ffa30ecf3c6969864ecb68d22",
+  "full_checks": [
+    {
+      "group": "v2",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 85,
+      "skipped_count": 0,
+      "elapsed_seconds": 121.703,
+      "timeout_seconds": 420,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai_v2",
+        "tests.test_multi_ai_v2_checker"
+      ],
+      "log_ref": "v2.log",
+      "truncated": false
+    },
+    {
+      "group": "contracts",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 52,
+      "skipped_count": 0,
+      "elapsed_seconds": 81.047,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_editorial",
+        "tests.test_production_bridge",
+        "tests.test_v2_sources",
+        "tests.test_v2_production",
+        "tests.test_v2_visuals",
+        "tests.test_v2_engine_bridge",
+        "tests.test_v2_offline_qa",
+        "tests.test_v2_release",
+        "tests.test_v2_offline",
+        "tests.test_v2_bulk_boundaries"
+      ],
+      "log_ref": "contracts.log",
+      "truncated": false
+    },
+    {
+      "group": "queue",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 50,
+      "skipped_count": 0,
+      "elapsed_seconds": 12.61,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai",
+        "tests.test_multi_ai_configuration"
+      ],
+      "log_ref": "queue.log",
+      "truncated": false
+    },
+    {
+      "group": "adapters",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 16,
+      "skipped_count": 0,
+      "elapsed_seconds": 0.422,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_ai_adapters"
+      ],
+      "log_ref": "adapters.log",
+      "truncated": false
+    },
+    {
+      "group": "mai05",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 107,
+      "skipped_count": 0,
+      "elapsed_seconds": 37.641,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_ai_accounts",
+        "tests.test_ai_cli_runtime",
+        "tests.test_multi_ai_accounts_ui",
+        "tests.test_ai_codex_diagnostics",
+        "tests.test_gemini_free_route"
+      ],
+      "log_ref": "mai05.log",
+      "truncated": false
+    },
+    {
+      "group": "panel",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 12,
+      "skipped_count": 0,
+      "elapsed_seconds": 3.437,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_multi_ai_ui",
+        "tests.test_multi_ai_ui_review",
+        "tests.test_multi_ai_preview"
+      ],
+      "log_ref": "panel.log",
+      "truncated": false
+    },
+    {
+      "group": "legacy",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": 127,
+      "skipped_count": 1,
+      "elapsed_seconds": 13.047,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_core",
+        "tests.test_cli",
+        "tests.test_library",
+        "tests.test_exchange",
+        "tests.test_production_profile",
+        "tests.test_quality",
+        "tests.test_asr",
+        "tests.test_asr_runtime",
+        "tests.test_speech_review",
+        "tests.test_fit_narration",
+        "tests.test_multishot.MultiShotContractTests",
+        "tests.test_multishot.ReviewRightsTests",
+        "tests.test_tts.TTSInputTests",
+        "tests.test_tts.SileroContinuityTests",
+        "tests.test_replace_narration.NarrationValidationTests",
+        "tests.test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds"
+      ],
+      "log_ref": "legacy.log",
+      "truncated": false
+    },
+    {
+      "group": "compileall",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": null,
+      "skipped_count": 0,
+      "elapsed_seconds": 0.313,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-m",
+        "compileall",
+        "-q",
+        "app",
+        "scripts",
+        "tests"
+      ],
+      "log_ref": "compileall.log",
+      "truncated": false
+    },
+    {
+      "group": "check_git_export",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": null,
+      "skipped_count": 0,
+      "elapsed_seconds": 16.359,
+      "timeout_seconds": 180,
+      "command": [
+        "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+        "-c",
+        "from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())"
+      ],
+      "log_ref": "check_git_export.log",
+      "truncated": false
+    },
+    {
+      "group": "diff_check",
+      "status": "passed",
+      "exit_code": 0,
+      "test_count": null,
+      "skipped_count": 0,
+      "elapsed_seconds": 0.078,
+      "timeout_seconds": 180,
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "log_ref": "diff_check.log",
+      "truncated": false
+    }
+  ],
+  "test_count": 449,
+  "passed": 448,
+  "failed": 0,
+  "skipped": 1,
+  "evidence_root": "C:\\Users\\diffe\\.codex\\visualizations\\2026\\10\\20\\01a158d2-a617-7862-8ff9-5159342bcc27\\bulk_01",
+  "evidence": [
+    {
+      "directory": "B1/20261021T101558664605Z_bb796f55a645417ea08336baa449762c",
+      "manifest_sha256": "be4ea9b2120681cf84b92fea5229a5557c1007ed4353f58198bbec503fa7bc98",
+      "status": "passed",
+      "test_count": 5,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_sources"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.75,
+          "test_count": 5,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B2/20261021T101842741091Z_98ba94caff73428495d5ea6f312ae34b",
+      "manifest_sha256": "8281a8903fba30e32bff79033c7502841568484ed2392269af00c6f110cd64a5",
+      "status": "failed",
+      "test_count": 7,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_production"
+          ],
+          "exit_code": 1,
+          "elapsed_seconds": 11.078,
+          "test_count": 7,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B2/20261021T101921601340Z_81b4d6c8563249a9b5466cbb818741c8",
+      "manifest_sha256": "0e6252ba1835cc11033beda0261cd91f5741ae7a4a56522747b12802568478de",
+      "status": "passed",
+      "test_count": 7,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_production"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 11.516,
+          "test_count": 7,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B3/20261021T102120760067Z_a082094dcd8346da81ccbffb346a3a80",
+      "manifest_sha256": "fcb2a019db810b87944756bd29e78a8d45914717bb7894f023d9ec96dcdb73a9",
+      "status": "passed",
+      "test_count": 3,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_visuals"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 4.875,
+          "test_count": 3,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B3_profile/20261021T102157416936Z_0ad541205a004935ad88eda12f76ea82",
+      "manifest_sha256": "2c58d27e3b1e216892af24fdfebf5702717b3f4e3f2038fba323fe74facf8903",
+      "status": "passed",
+      "test_count": 1,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_visuals.VisualTests.test_multiple_shots_preserve_ranges_purpose_and_exact_coverage"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.25,
+          "test_count": 1,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B4/20261021T102449241781Z_ff2625c4b5824abfaaddd5bc1f82b7fe",
+      "manifest_sha256": "6dabf03942b8f825d6363f5f562b344b41579bdd6c127eacd3571affeea25e66",
+      "status": "passed",
+      "test_count": 4,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_engine_bridge"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 8.109,
+          "test_count": 4,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B5/20261021T102908611264Z_cd2bec62c9724f2bbaba7c7a1267dd28",
+      "manifest_sha256": "9f8e9551e7ef4600593c94581ce83de4e3d0c16b8b95f7e5099d066b09a81c41",
+      "status": "passed",
+      "test_count": 9,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_offline_qa",
+            "tests.test_v2_engine_bridge"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 19.546,
+          "test_count": 9,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B5_audio/20261021T103046834487Z_80840a6066704912bff66fa5f1d1cdbe",
+      "manifest_sha256": "423a515f232f90977641a98c8aed09f03a70f5519972325dd20139ec98f98981",
+      "status": "passed",
+      "test_count": 2,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_offline_qa.OfflineQATests.test_revision_invalidates_only_scene_two_and_preserves_other_wave_files",
+            "tests.test_v2_engine_bridge.EngineBridgeTests.test_existing_mlt_compiler_preserves_frames_subtitles_and_replay"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 8.156,
+          "test_count": 2,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B6/20261021T103319449637Z_775b6b68017e44b69bd6111fb1ccce97",
+      "manifest_sha256": "f451350677198745b9a90c624cfaa311cd5017c82c3aa9e3349cdd99d9bce55e",
+      "status": "passed",
+      "test_count": 4,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_release"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 9.157,
+          "test_count": 4,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B6_guard/20261021T103423750451Z_cba1632306fd48158c91ee787f0fced4",
+      "manifest_sha256": "01e4e9908d7a744301e77de6d5c4236650e1624c45560c9d8718cc1026a47691",
+      "status": "passed",
+      "test_count": 2,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_release.ReleaseTests.test_non_host_release_and_non_temporary_destination_are_rejected",
+            "tests.test_v2_release.ReleaseTests.test_release_restart_and_local_copy_never_claim_remote_upload"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 5.297,
+          "test_count": 2,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B7/20261021T103834049664Z_f57f7c86f96148828d26e565d856500a",
+      "manifest_sha256": "a6d4e66e6f5a3bf50632b80bf2296c591fc2c6656e76e5abcbe9414a2bf53272",
+      "status": "failed",
+      "test_count": 4,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_offline"
+          ],
+          "exit_code": 1,
+          "elapsed_seconds": 15.75,
+          "test_count": 4,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B7/20261021T104122878350Z_b2f2bbf2b615495b892b1603698eb08b",
+      "manifest_sha256": "40012ed5c958dc850244ae3d0607853233ab8d1cbce77cb3036ee36c294cd497",
+      "status": "passed",
+      "test_count": 5,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_offline",
+            "tests.test_v2_offline_qa.OfflineQATests.test_revision_invalidates_only_scene_two_and_preserves_other_wave_files"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 24.219,
+          "test_count": 5,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B8_targeted/20261021T104402415240Z_e312d0aa06e741f9a4140c665b571cb0",
+      "manifest_sha256": "24807d99a889d5931062c5fd2834c1a37d6de7b5275e5f124b11312e6bc90cf8",
+      "status": "failed",
+      "test_count": 17,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_bulk_boundaries",
+            "tests.test_v2_sources",
+            "tests.test_multi_ai_v2_checker",
+            "tests.test_multi_ai_v2.V2Tests.test_schema_drift_without_rewriting_sources",
+            "tests.test_multi_ai_v2.V2Tests.test_full_fake_graph_and_context",
+            "tests.test_multi_ai_v2.UnifiedAcceptanceTests.test_default_coordinator_retains_legacy_completion_behavior"
+          ],
+          "exit_code": 1,
+          "elapsed_seconds": 14.453,
+          "test_count": 17,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "B8_targeted/20261021T104524716274Z_742090b63b074b91a39b96eff95da412",
+      "manifest_sha256": "749f85f18f3bfdaee10d180bbe9e8cac18d7c48c6ff27865601c712c24ebf8f2",
+      "status": "passed",
+      "test_count": 17,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_v2_bulk_boundaries",
+            "tests.test_v2_sources",
+            "tests.test_multi_ai_v2_checker",
+            "tests.test_multi_ai_v2.V2Tests.test_schema_drift_without_rewriting_sources",
+            "tests.test_multi_ai_v2.V2Tests.test_full_fake_graph_and_context",
+            "tests.test_multi_ai_v2.UnifiedAcceptanceTests.test_default_coordinator_retains_legacy_completion_behavior"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 19.594,
+          "test_count": 17,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "demo/20261021T104800956858Z_44b0456042df49f38d1b3c48017b1f24",
+      "manifest_sha256": "0bf1b3bf677e652993487d5fd576c49436e507981de6fe66f9df678efe0e6e02",
+      "status": "passed",
+      "test_count": 0,
+      "skipped_count": 0,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "app.multi_ai_v2",
+            "--root",
+            "C:\\Users\\diffe\\AppData\\Local\\Temp\\bulk_demo_m0de2029\\local",
+            "prepare",
+            "--brief",
+            "examples/bulk_01/brief.json",
+            "--key",
+            "original_demo",
+            "--fixture-demo"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 4.843,
+          "test_count": null,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "app.multi_ai_v2",
+            "--root",
+            "C:\\Users\\diffe\\AppData\\Local\\Temp\\bulk_demo_m0de2029\\local",
+            "resume",
+            "--run-id",
+            "run_98be3fa3ca5dbf6fa5c145b5"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.5,
+          "test_count": null,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    },
+    {
+      "directory": "full/20261021T104704100834Z_c71f5402ba8442ae989fccc4bb7b56ed",
+      "manifest_sha256": "fcf28546750fcf9a421c57a4a0a3dbb1302cc0c780ddbedc5b48b4f93f049a87",
+      "status": "passed",
+      "test_count": 449,
+      "skipped_count": 1,
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_multi_ai_v2",
+            "tests.test_multi_ai_v2_checker"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 121.703,
+          "test_count": 85,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_editorial",
+            "tests.test_production_bridge",
+            "tests.test_v2_sources",
+            "tests.test_v2_production",
+            "tests.test_v2_visuals",
+            "tests.test_v2_engine_bridge",
+            "tests.test_v2_offline_qa",
+            "tests.test_v2_release",
+            "tests.test_v2_offline",
+            "tests.test_v2_bulk_boundaries"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 81.047,
+          "test_count": 52,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_multi_ai",
+            "tests.test_multi_ai_configuration"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 12.61,
+          "test_count": 50,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_ai_adapters"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.422,
+          "test_count": 16,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_ai_accounts",
+            "tests.test_ai_cli_runtime",
+            "tests.test_multi_ai_accounts_ui",
+            "tests.test_ai_codex_diagnostics",
+            "tests.test_gemini_free_route"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 37.641,
+          "test_count": 107,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_multi_ai_ui",
+            "tests.test_multi_ai_ui_review",
+            "tests.test_multi_ai_preview"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 3.437,
+          "test_count": 12,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-X",
+            "utf8",
+            "-m",
+            "unittest",
+            "-v",
+            "tests.test_core",
+            "tests.test_cli",
+            "tests.test_library",
+            "tests.test_exchange",
+            "tests.test_production_profile",
+            "tests.test_quality",
+            "tests.test_asr",
+            "tests.test_asr_runtime",
+            "tests.test_speech_review",
+            "tests.test_fit_narration",
+            "tests.test_multishot.MultiShotContractTests",
+            "tests.test_multishot.ReviewRightsTests",
+            "tests.test_tts.TTSInputTests",
+            "tests.test_tts.SileroContinuityTests",
+            "tests.test_replace_narration.NarrationValidationTests",
+            "tests.test_timeline.TimelineTests.test_traversal_and_preserving_existing_builds"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 13.047,
+          "test_count": 127,
+          "model_requests": 0,
+          "skipped_count": 1
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-m",
+            "compileall",
+            "-q",
+            "app",
+            "scripts",
+            "tests"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.313,
+          "test_count": null,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "C:\\Users\\diffe\\OneDrive\\Документы\\ChatGPT\\AI_VIDEO_02\\.venv-core\\Scripts\\python.exe",
+            "-c",
+            "from scripts.check_multi_ai_v2 import audit_export; raise SystemExit(audit_export())"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 16.359,
+          "test_count": null,
+          "model_requests": 0,
+          "skipped_count": 0
+        },
+        {
+          "command": [
+            "git",
+            "diff",
+            "--check"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.078,
+          "test_count": null,
+          "model_requests": 0,
+          "skipped_count": 0
+        }
+      ]
+    }
+  ],
+  "full_manifest_sha256": "fcf28546750fcf9a421c57a4a0a3dbb1302cc0c780ddbedc5b48b4f93f049a87",
+  "source_unchanged_during_checks": true,
+  "local_dirty_evidence": true,
+  "independent_review": "UNVERIFIED",
+  "demo": {
+    "status": "VERIFIED",
+    "scope": "one_command_original_fixture_only",
+    "workspace": "C:\\Users\\diffe\\AppData\\Local\\Temp\\bulk_demo_m0de2029\\local",
+    "run_id": "run_98be3fa3ca5dbf6fa5c145b5",
+    "manifest_artifact": {
+      "artifact_id": "artifact_b1131b2644078d590764643b",
+      "run_id": "run_98be3fa3ca5dbf6fa5c145b5",
+      "version": 1,
+      "path": "runs/run_98be3fa3ca5dbf6fa5c145b5/artifacts/b1131b2644078d590764643bb5d6bfb067418c64cfa0f1522997ea031a72230e.json",
+      "sha256": "b1131b2644078d590764643bb5d6bfb067418c64cfa0f1522997ea031a72230e",
+      "size": 9643,
+      "simulated": true
+    },
+    "release": {
+      "artifact_id": "artifact_f688bfeaa74501cf5f2d5af5",
+      "path": "runs/run_98be3fa3ca5dbf6fa5c145b5/artifacts/f688bfeaa74501cf5f2d5af52ba2511c5c1cccf38fdc8e64405a325e5d4f7795.json",
+      "run_id": "run_98be3fa3ca5dbf6fa5c145b5",
+      "sha256": "f688bfeaa74501cf5f2d5af52ba2511c5c1cccf38fdc8e64405a325e5d4f7795",
+      "simulated": true,
+      "size": 7369,
+      "version": 1
+    },
+    "attempts_after_resume": 19,
+    "production_jobs_table_present": false,
+    "new_synthetic_media_bytes": 237,
+    "wav_files": 0,
+    "mp4_files": 0,
+    "replay_same_manifest": true,
+    "model_requests": 0,
+    "paid_api_requests": 0,
+    "production_started": false
+  },
+  "blockers": {
+    "production_readiness": "BLOCKED",
+    "real_tts_render": "IMPLEMENTED_NOT_LIVE_TESTED",
+    "creative_video_qa": "BLOCKED",
+    "remote_sync": "UNVERIFIED",
+    "Antigravity": "BLOCKED"
+  },
+  "model_requests": 0,
+  "paid_api_requests": 0,
+  "production_started": false,
+  "protected_production_core_unchanged": true,
+  "chatgpt_owned_files_unchanged": true
+}

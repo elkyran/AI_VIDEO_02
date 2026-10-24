@@ -1,0 +1,120 @@
+{
+  "status": "VERIFIED",
+  "checked_at": "2026-10-20T13:16:40.660171+00:00",
+  "provider": "codex",
+  "profile": "chatgpt_primary",
+  "auth_route": "official_codex_chatgpt",
+  "requested_model": null,
+  "returned_model": null,
+  "model_requests": 1,
+  "quota_source": "codex_app_server",
+  "identity_verified": true,
+  "version_exit_code": 0,
+  "client_version": "codex-cli 0.163.0-alpha.10.2",
+  "help_exit_code": 0,
+  "diagnosis": {
+    "authenticated": true,
+    "auth_mode": "chatgpt_subscription",
+    "account_type": "chatgpt",
+    "identity_hash": "da53c51cb2e3f84ae69c734751d1f15d6ab890364dbb1d66aba9cd5cc8f8de16",
+    "identity_source": "codex_app_server",
+    "identity_verified": true,
+    "plan_type": "plus",
+    "ordinary_usage_allowed": true,
+    "rate_limits": {
+      "limitId": "codex",
+      "planType": "plus",
+      "primary": {
+        "usedPercent": 16,
+        "windowDurationMins": 300,
+        "resetsAt": 1792509570
+      },
+      "secondary": {
+        "usedPercent": 3,
+        "windowDurationMins": 10080,
+        "resetsAt": 1793096370
+      },
+      "credits": {
+        "hasCredits": false,
+        "unlimited": false,
+        "balance": "0"
+      },
+      "rateLimitReachedType": null
+    },
+    "rate_limits_by_id": {
+      "codex": {
+        "limitId": "codex",
+        "planType": "plus",
+        "primary": {
+          "usedPercent": 16,
+          "windowDurationMins": 300,
+          "resetsAt": 1792509570
+        },
+        "secondary": {
+          "usedPercent": 3,
+          "windowDurationMins": 10080,
+          "resetsAt": 1793096370
+        },
+        "credits": {
+          "hasCredits": false,
+          "unlimited": false,
+          "balance": "0"
+        },
+        "rateLimitReachedType": null
+      }
+    },
+    "credits": {
+      "hasCredits": false,
+      "unlimited": false,
+      "balance": "0"
+    },
+    "checked_at": "2026-10-20T13:16:40.819956+00:00",
+    "error": null,
+    "model_requests": 0,
+    "billing_limitation": "Credit balances are observations, not proof that automatic purchases or future charges are disabled."
+  },
+  "account_fingerprint": "da53c51cb2e3f84ae69c734751d1f15d6ab890364dbb1d66aba9cd5cc8f8de16",
+  "command": [
+    "C:\\Users\\diffe\\AppData\\Local\\OpenAI\\Codex\\bin\\896a0166b774037a\\codex.exe",
+    "exec",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--skip-git-repo-check",
+    "--ephemeral",
+    "--sandbox",
+    "read-only",
+    "--color",
+    "never",
+    "--json",
+    "-c",
+    "forced_login_method=\"chatgpt\"",
+    "-c",
+    "model_provider=\"openai\"",
+    "-c",
+    "cli_auth_credentials_store=\"file\"",
+    "-c",
+    "features.shell_tool=false",
+    "-c",
+    "web_search=\"disabled\"",
+    "-c",
+    "features.remote_plugin=false",
+    "--output-schema",
+    "C:\\Users\\diffe\\AppData\\Local\\Temp\\v2_codex_probe_uyfiv26c\\output_schema.json",
+    "-"
+  ],
+  "exit_code": 0,
+  "duration_seconds": 9.813,
+  "usage": {
+    "input_tokens": 11408,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 38,
+    "reasoning_output_tokens": 0
+  },
+  "model_identity_source": null,
+  "result": {
+    "schema_version": 1,
+    "simulated": false,
+    "text": "MULTI-AI-V2-OK"
+  }
+}

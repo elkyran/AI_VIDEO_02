@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "source_baseline": "7a1e4058df09dbb66448a3624e0250129eaf7aa0",
+  "databases": {
+    "studio": {
+      "before_sha256": "5b0624345f396a50d13f0cf9f11258cff503ca5d382c211c18fc22c42ea056bb",
+      "after_sha256": "5b0624345f396a50d13f0cf9f11258cff503ca5d382c211c18fc22c42ea056bb",
+      "unchanged": true
+    },
+    "multi_ai_live": {
+      "before_sha256": "fec9b42d322ed6372c858d02c787d51af7a319993461bda98ba1157a28f906a5",
+      "after_sha256": "fec9b42d322ed6372c858d02c787d51af7a319993461bda98ba1157a28f906a5",
+      "unchanged": true
+    }
+  },
+  "legacy_app_diff": ""
+}

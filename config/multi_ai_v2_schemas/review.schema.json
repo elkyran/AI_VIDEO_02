@@ -1,0 +1,287 @@
+{
+  "$defs": {
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "start_ms": {
+          "minimum": 0,
+          "title": "Start Ms",
+          "type": "integer"
+        },
+        "end_ms": {
+          "exclusiveMinimum": 0,
+          "title": "End Ms",
+          "type": "integer"
+        },
+        "tracks": {
+          "items": {
+            "enum": [
+              "video",
+              "audio"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Tracks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "start_ms",
+        "end_ms",
+        "tracks"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "ReviewIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "issue_id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "title": "Issue Id",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "story_causality",
+            "motivation",
+            "visual_relevance",
+            "continuity",
+            "repetition",
+            "pacing",
+            "sound",
+            "subtitles",
+            "technical"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "critical"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "location": {
+          "minLength": 1,
+          "title": "Location",
+          "type": "string"
+        },
+        "observation": {
+          "minLength": 1,
+          "title": "Observation",
+          "type": "string"
+        },
+        "effect_on_viewer": {
+          "minLength": 1,
+          "title": "Effect On Viewer",
+          "type": "string"
+        },
+        "suggested_change": {
+          "minLength": 1,
+          "title": "Suggested Change",
+          "type": "string"
+        },
+        "required_evidence": {
+          "enum": [
+            "metadata_only",
+            "contact_sheet",
+            "frame_sequence",
+            "video_audio",
+            "human_review"
+          ],
+          "title": "Required Evidence",
+          "type": "string"
+        },
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "resolved",
+            "accepted_uncertainty"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "issue_id",
+        "category",
+        "severity",
+        "location",
+        "observation",
+        "effect_on_viewer",
+        "suggested_change",
+        "required_evidence"
+      ],
+      "title": "ReviewIssue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "simulated": {
+      "default": false,
+      "title": "Simulated",
+      "type": "boolean"
+    },
+    "project_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "review_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Review Id",
+      "type": "string"
+    },
+    "subject_type": {
+      "enum": [
+        "scene",
+        "edit_plan",
+        "render"
+      ],
+      "title": "Subject Type",
+      "type": "string"
+    },
+    "subject_id": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+      "title": "Subject Id",
+      "type": "string"
+    },
+    "subject_version": {
+      "minimum": 1,
+      "title": "Subject Version",
+      "type": "integer"
+    },
+    "subject_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Subject Hash",
+      "type": "string"
+    },
+    "evidence_mode": {
+      "default": "metadata_only",
+      "enum": [
+        "metadata_only",
+        "contact_sheet",
+        "frame_sequence",
+        "video_audio",
+        "human_review"
+      ],
+      "title": "Evidence Mode",
+      "type": "string"
+    },
+    "provided_coverage": {
+      "items": {
+        "$ref": "#/$defs/Coverage"
+      },
+      "title": "Provided Coverage",
+      "type": "array"
+    },
+    "reviewed_coverage": {
+      "items": {
+        "$ref": "#/$defs/Coverage"
+      },
+      "title": "Reviewed Coverage",
+      "type": "array"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/ReviewIssue"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "verdict": {
+      "default": "needs_review",
+      "enum": [
+        "needs_review",
+        "blocked",
+        "ready_for_review"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "render_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,95}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Render Id"
+    },
+    "render_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Render Hash"
+    },
+    "edit_plan_version": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Edit Plan Version"
+    }
+  },
+  "required": [
+    "project_id",
+    "review_id",
+    "subject_type",
+    "subject_id",
+    "subject_version",
+    "subject_hash"
+  ],
+  "title": "Review",
+  "type": "object"
+}
