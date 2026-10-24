@@ -42,10 +42,47 @@ PR9 успешно проверен и объединён в feature: merge comm
 - Проверка hashes/size/commit/tree выполнена самим hosted workflow.
   Архив на пользовательский компьютер не скачивался.
 
-Этот отчёт подготовлен после PR9, до финального решения по PR6. Для PR6 нужна
-отдельная свежая проверка итогового main+feature merge. Текущее решение, ссылка на
-финальный CI и SHA main фиксируются в [PR6](https://github.com/elkyran/AI_VIDEO_02/pull/6);
-до его зелёного gate интеграция в main не считается завершённой.
+PR6 также успешно проверен и объединён в main:
+d5481c618740eb85866ebbd67d159adb6a131855.
+
+- [Hosted Windows run 40078748459](https://github.com/elkyran/AI_VIDEO_02/actions/runs/40078748459): success.
+- Проверенный временный main+feature merge: afce7dfc5b3649d70d5bbc47c8f966fee6b1ec00.
+- Head feature на приёмке: 13c03b2200cbdbd43b112a5401dec49b73eb6e74.
+- 642 tests = 640 passed + 2 existing environment skips; failures/errors=0.
+- Все 17 checker groups, evidence envelope, оба 19-stage replay smoke
+  и clean checkout passed.
+- Manifest SHA-256: b7fcaad7198c6e165736dcf50015f71017b1f40262138decd56c8bab0f4d2c05.
+- GitHub artifact 12554791132, ZIP digest:
+  ba3c65a7988622a7604d651751c4120574077c672f3b4953b7443cf85f60af77.
+
+GitHub commit SHA отдельно от tree: фактические checkout SHA подтверждены в job logs;
+их manifest/файлы проверены hosted integrity step. Дополнительный локальный аудит
+скачанного ZIP не выполнялся по ограничению владельца.
+
+Проверенный набор unittest groups:
+
+| Группа | Тесты | Пропуски | Результат |
+|---|---:|---:|---|
+| v2 | 111 | 0 | passed |
+| contracts | 174 | 0 | passed |
+| queue | 50 | 0 | passed |
+| adapters | 16 | 0 | passed |
+| mai05 | 108 | 1 | passed |
+| panel | 12 | 0 | passed |
+| legacy | 127 | 1 | passed |
+| acquisition | 13 | 0 | passed |
+| closure | 12 | 0 | passed |
+| review_recovery | 11 | 0 | passed |
+| review_story | 1 | 0 | passed |
+| review_visual | 1 | 0 | passed |
+| review_source_revision | 1 | 0 | passed |
+| review_crash | 5 | 0 | passed |
+
+Компиляция, проверка Git export и whitespace также passed.
+Конфигурация production_profile.json совпадает с исходным main:
+Git blob 6a8bcc43a554b2e6827b9886d261ce2bce3625d6.
+Финальное обновление этого отчёта — только документация, без изменения
+проверенного Python/workflow/schema/profile кода.
 
 Прежний run 39857157487 остаётся историческим failed: 642 tests,
 639 passed, 2 environment skips, 1 error. Его результаты не переписаны.
@@ -58,8 +95,8 @@ PR9 успешно проверен и объединён в feature: merge comm
 
 | Направление | Состояние |
 |---|---|
-| Windows-пути | Однострочная нормализация общей fixture; результат CI указан выше |
-| GitHub-интеграция | PR9 -> feature; PR6 -> main; результаты и SHA указаны выше |
+| Windows-пути | Исправлено; closure 12/12 passed в обеих независимых проверках |
+| GitHub-интеграция | PR9 и PR6 объединены после успешных отдельных CI; main d5481c6 |
 | Реальные Story/Visual | Доступ не подтверждён; live workers остаются выключенными |
 | Windows self-hosted runner | Регистрация и запуск отложены владельцем |
 | Полный новый выпуск | Отложен; новый MP4 не создан |
